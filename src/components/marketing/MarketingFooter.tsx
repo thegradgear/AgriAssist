@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -17,8 +18,8 @@ export function MarketingFooter() {
           &copy; {currentYear} AgriAssist. All rights reserved.
         </p>
         <div className="mt-2 space-x-4">
-          <Link href="/privacy-policy" legacyBehavior><a className="text-xs hover:text-primary hover:underline">Privacy Policy</a></Link>
-          <Link href="/terms-of-service" legacyBehavior><a className="text-xs hover:text-primary hover:underline">Terms of Service</a></Link>
+          <Link href="/privacy-policy" className="text-xs hover:text-primary hover:underline">Privacy Policy</Link>
+          <Link href="/terms-of-service" className="text-xs hover:text-primary hover:underline">Terms of Service</Link>
         </div>
       </div>
     </footer>
