@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -81,10 +82,8 @@ export function LoginForm() {
                 <FormItem>
                   <div className="flex justify-between items-center">
                     <FormLabel>Password</FormLabel>
-                    <Link href="/forgot-password" passHref legacyBehavior>
-                      <a className="text-sm text-primary hover:underline">
-                        Forgot password?
-                      </a>
+                    <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                      Forgot password?
                     </Link>
                   </div>
                   <FormControl>
