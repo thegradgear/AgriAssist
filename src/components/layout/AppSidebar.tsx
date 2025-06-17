@@ -51,7 +51,9 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} asChild>
                 <SidebarMenuButton
-                  // No asChild here: let SidebarMenuButton decide based on props from Link
+                  // SidebarMenuButton's own asChild is false by default.
+                  // It will receive href and asChild=true from Link.
+                  // Its internal logic will render an 'a' tag and strip the asChild prop.
                   isActive={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}
                   tooltip={item.label}
                   disabled={item.disabled}

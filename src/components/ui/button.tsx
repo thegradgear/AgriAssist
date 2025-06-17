@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -37,25 +38,29 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  href?: string // Added to explicitly type href
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
-    
-    // If Comp is a DOM element (e.g. "button"), we must not pass `asChild` prop to it.
-    // `props` might contain `asChild` passed from a parent component like <Link asChild>.
-    let renderableProps = props;
-    if (Comp !== Slot && props.asChild !== undefined) {
-      const { asChild: _asChildFromProps, ...restProps } = props;
-      renderableProps = restProps;
+  ({ className, variant, size, asChild: ownAsChild = false, ...remainingProps }, ref) => {
+    const hasHref = typeof remainingProps.href === 'string';
+    const Comp = ownAsChild ? Slot : hasHref ? "a" : "button";
+
+    // Prepare final props, removing asChild if Comp is a DOM element and asChild was passed from parent
+    const finalProps: { [key: string]: any } = { ...remainingProps };
+    if (Comp !== Slot && finalProps.asChild !== undefined) {
+      delete finalProps.asChild;
     }
+    
+    // If Comp is 'a' but ownAsChild is false, ensure href is passed.
+    // If Comp is 'button', ensure href is not passed if it exists (though browsers might tolerate it).
+    // The main goal is to ensure 'asChild' is not passed to DOM elements.
 
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        {...renderableProps}
+        {...finalProps}
       />
     )
   }

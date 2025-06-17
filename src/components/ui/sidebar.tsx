@@ -8,7 +8,7 @@ import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button" // Ensure this Button is the fixed one
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -524,46 +524,49 @@ const sidebarMenuButtonVariants = cva(
 )
 
 interface SidebarMenuButtonProps
-  extends React.ComponentProps<"button">,
+  extends React.ComponentProps<"button">, // Can also be React.ComponentPropsWithoutRef<'a'> if href is present
     VariantProps<typeof sidebarMenuButtonVariants> {
   asChild?: boolean;
   isActive?: boolean;
   tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+  href?: string; // Explicitly type href
 }
 
-const SidebarMenuButton = React.forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
+const SidebarMenuButton = React.forwardRef<
+  HTMLButtonElement, // This can be HTMLAnchorElement if rendered as 'a'
+  SidebarMenuButtonProps
+>(
   (
     {
-      asChild = false, // SidebarMenuButton's own asChild prop
+      asChild: ownAsChild = false,
       isActive = false,
       variant = "default",
       size = "default",
       tooltip,
       className,
       children,
-      ...props // Potentially contains href and asChild from a parent Link
+      ...remainingProps // Contains props from Link, including href and asChild=true
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button";
     const { isMobile, state: sidebarState } = useSidebar();
+    const hasHref = typeof remainingProps.href === 'string';
+    const Comp = ownAsChild ? Slot : hasHref ? "a" : "button";
 
-    // If Comp is a DOM element (e.g. "button"), we must not pass `asChild` prop to it.
-    // `props` might contain `asChild` passed from a parent component like <Link asChild>.
-    let renderableProps = props;
-    if (Comp !== Slot && typeof props.asChild === 'boolean') { // Check if props.asChild exists and is boolean
-      const { asChild: _asChildFromProps, ...restProps } = props as SidebarMenuButtonProps;
-      renderableProps = restProps;
+    // Prepare final props, removing asChild if Comp is a DOM element and asChild was passed from parent
+    const finalCompProps: { [key: string]: any } = { ...remainingProps };
+    if (Comp !== Slot && finalCompProps.asChild !== undefined) {
+      delete finalCompProps.asChild;
     }
     
     const buttonElement = (
       <Comp
-        ref={ref}
+        ref={ref as any} // Cast ref as any to handle both button and anchor refs
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size, className }))}
-        {...renderableProps}
+        {...finalCompProps} 
       >
         {children}
       </Comp>
@@ -577,7 +580,7 @@ const SidebarMenuButton = React.forwardRef<HTMLButtonElement, SidebarMenuButtonP
 
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger asChild> 
           {buttonElement}
         </TooltipTrigger>
         <TooltipContent
