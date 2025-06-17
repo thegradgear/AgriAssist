@@ -42,11 +42,20 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    
+    // If Comp is a DOM element (e.g. "button"), we must not pass `asChild` prop to it.
+    // `props` might contain `asChild` passed from a parent component like <Link asChild>.
+    let renderableProps = props;
+    if (Comp !== Slot && props.asChild !== undefined) {
+      const { asChild: _asChildFromProps, ...restProps } = props;
+      renderableProps = restProps;
+    }
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        {...props}
+        {...renderableProps}
       />
     )
   }
