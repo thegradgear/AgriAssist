@@ -57,10 +57,10 @@ export function AppSidebar() {
                   disabled={item.disabled}
                   aria-label={item.label}
                 >
-                  <a>
+                  <>
                     <item.icon />
                     <span>{item.label}</span>
-                  </a>
+                  </>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
