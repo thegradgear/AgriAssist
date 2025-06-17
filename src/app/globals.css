@@ -33,16 +33,6 @@ body {
     --chart-4: 35 55% 70%;
     --chart-5: 25 45% 60%;
     --radius: 0.5rem;
-
-    /* Sidebar specific theme */
-    --sidebar-background: 37 60% 88%; /* Slightly darker warm beige for sidebar */
-    --sidebar-foreground: 20 10% 25%;
-    --sidebar-primary: 29 50% 60%; /* Muted orange for active sidebar items */
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 37 60% 80%; /* Lighter beige for hover */
-    --sidebar-accent-foreground: 20 10% 15%;
-    --sidebar-border: 37 50% 75%;
-    --sidebar-ring: 29 50% 66%;
   }
 
   .dark {
@@ -71,15 +61,6 @@ body {
     --chart-3: 20 30% 50%;
     --chart-4: 35 55% 60%;
     --chart-5: 25 45% 50%;
-
-    --sidebar-background: 20 10% 12%;
-    --sidebar-foreground: 36 45% 85%;
-    --sidebar-primary: 29 50% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 20 10% 20%;
-    --sidebar-accent-foreground: 36 45% 95%;
-    --sidebar-border: 20 10% 25%;
-    --sidebar-ring: 29 50% 66%;
   }
 }
 
