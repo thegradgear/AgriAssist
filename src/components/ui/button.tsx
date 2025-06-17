@@ -37,34 +37,47 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  asChild?: boolean
-  href?: string // Added to explicitly type href
+  asChild?: boolean // This prop dictates if THIS Button instance uses Slot
+  href?: string
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild: ownAsChild = false, ...remainingProps }, ref) => {
-    const hasHref = typeof remainingProps.href === 'string';
-    const Comp = ownAsChild ? Slot : hasHref ? "a" : "button";
+  ({ className, variant, size, asChild: useSlotParam = false, href, children, ...restProps }, ref) => {
+    // Determine the component to render:
+    // 1. If this Button instance is explicitly told to use Slot (`useSlotParam` is true), then use Slot.
+    // 2. Else, if an `href` is provided (often by <Link asChild>), it should render as an anchor tag `<a>`.
+    // 3. Otherwise, it renders as a standard `<button>`.
+    const Comp = useSlotParam ? Slot : (restProps as any).href || href ? "a" : "button";
 
-    // Prepare final props, removing asChild if Comp is a DOM element and asChild was passed from parent
-    const finalProps: { [key: string]: any } = { ...remainingProps };
-    if (Comp !== Slot && finalProps.asChild !== undefined) {
-      delete finalProps.asChild;
+    // `restProps` already excludes `asChild` because it was destructured into `useSlotParam`.
+    // So, if `Comp` is 'a' or 'button', `asChild` will not be in `restProps` that get spread.
+    // This correctly prevents `asChild` from appearing as a DOM attribute.
+
+    const effectiveProps: React.AllHTMLAttributes<HTMLElement> & Record<string, any> = { ...restProps };
+    
+    // If Comp is 'a', ensure href is present in the props.
+    // The `href` could come from the Button's own `href` prop or from `restProps.href` (passed by Link).
+    if (Comp === 'a') {
+      effectiveProps.href = href || (restProps as any).href;
     }
     
-    // If Comp is 'a' but ownAsChild is false, ensure href is passed.
-    // If Comp is 'button', ensure href is not passed if it exists (though browsers might tolerate it).
-    // The main goal is to ensure 'asChild' is not passed to DOM elements.
+    // If Comp is 'button' and href is somehow in restProps, remove it as it's not valid for button.
+    if (Comp === 'button' && effectiveProps.href) {
+        delete effectiveProps.href;
+    }
+
 
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        {...finalProps}
-      />
-    )
+        {...effectiveProps}
+      >
+        {children}
+      </Comp>
+    );
   }
-)
-Button.displayName = "Button"
+);
+Button.displayName = "Button";
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };
