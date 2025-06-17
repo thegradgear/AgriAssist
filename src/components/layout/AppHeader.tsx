@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -14,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { NAV_ITEMS } from '@/lib/constants';
@@ -105,14 +106,15 @@ export function AppHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] p-0 flex flex-col">
-              <div className="p-4 border-b">
+              <SheetHeader className="p-4 border-b">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <SheetClose asChild>
                   <Link href="/dashboard" className="flex items-center gap-2">
                     <Leaf className="h-7 w-7 text-primary" />
                     <span className="text-xl font-semibold font-headline">AgriAssist</span>
                   </Link>
                 </SheetClose>
-              </div>
+              </SheetHeader>
               <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
                 {NAV_ITEMS.map((item) => (
                   <SheetClose asChild key={item.href}>
