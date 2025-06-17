@@ -37,35 +37,44 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  asChild?: boolean // This prop dictates if THIS Button instance uses Slot
-  href?: string
+  asChild?: boolean;
+  href?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild: useSlotParam = false, href, children, ...restProps }, ref) => {
-    // Determine the component to render:
-    // 1. If this Button instance is explicitly told to use Slot (`useSlotParam` is true), then use Slot.
-    // 2. Else, if an `href` is provided (often by <Link asChild>), it should render as an anchor tag `<a>`.
-    // 3. Otherwise, it renders as a standard `<button>`.
-    const Comp = useSlotParam ? Slot : (restProps as any).href || href ? "a" : "button";
+  ({ className, variant, size, asChild: propAsChild = false, href: propHref, children, ...rest }, ref) => {
+    // Determine if this Button instance should use Slot, based on its own asChild prop.
+    const useSlot = propAsChild;
 
-    // `restProps` already excludes `asChild` because it was destructured into `useSlotParam`.
-    // So, if `Comp` is 'a' or 'button', `asChild` will not be in `restProps` that get spread.
-    // This correctly prevents `asChild` from appearing as a DOM attribute.
+    // Determine the component to render.
+    // If a href is present (either passed directly to Button or via rest props from a parent Link), it's an anchor.
+    // Otherwise, if not using Slot, it's a button. If using Slot, Comp will be Slot.
+    const hasHref = propHref || (rest as any).href;
 
-    const effectiveProps: React.AllHTMLAttributes<HTMLElement> & Record<string, any> = { ...restProps };
-    
-    // If Comp is 'a', ensure href is present in the props.
-    // The `href` could come from the Button's own `href` prop or from `restProps.href` (passed by Link).
+    let Comp: React.ElementType = 'button'; // Default
+    if (useSlot) {
+      Comp = Slot;
+    } else if (hasHref) {
+      Comp = 'a';
+    }
+
+    // Prepare props for the Comp
+    const effectiveProps: React.AllHTMLAttributes<HTMLElement> & Record<string, any> = { ...rest };
     if (Comp === 'a') {
-      effectiveProps.href = href || (restProps as any).href;
+      effectiveProps.href = propHref || (rest as any).href;
+    }
+
+    // CRITICAL: If Comp is a DOM element ('a' or 'button'), ensure 'asChild' from a parent (e.g. Link) is not passed.
+    // 'asChild' is not a valid DOM attribute. 'propAsChild' is the Button's own configuration.
+    // The 'asChild' potentially in 'rest' would be from a parent like <Link asChild>.
+    if ((Comp === 'a' || Comp === 'button') && 'asChild' in effectiveProps) {
+      delete (effectiveProps as any).asChild;
     }
     
-    // If Comp is 'button' and href is somehow in restProps, remove it as it's not valid for button.
+    // If Comp is 'button' and href is somehow in effectiveProps, remove it as it's not valid for button.
     if (Comp === 'button' && effectiveProps.href) {
         delete effectiveProps.href;
     }
-
 
     return (
       <Comp
