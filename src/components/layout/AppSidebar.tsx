@@ -49,18 +49,15 @@ export function AppSidebar() {
         <SidebarMenu>
           {NAV_ITEMS.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href}>
+              <Link href={item.href} asChild>
                 <SidebarMenuButton
-                  asChild
                   isActive={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}
                   tooltip={item.label}
                   disabled={item.disabled}
                   aria-label={item.label}
                 >
-                  <>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </>
+                  <item.icon />
+                  <span>{item.label}</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
