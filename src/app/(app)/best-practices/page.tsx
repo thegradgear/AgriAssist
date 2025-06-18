@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -8,9 +9,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, BookOpen, Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-// NEWSAPI_KEY is no longer accessed directly on the client.
-// It will be used by the /api/news route on the server.
 
 interface NewsApiArticle {
   source: { id: string | null; name: string };
@@ -23,7 +21,6 @@ interface NewsApiArticle {
   content: string | null;
 }
 
-// Function to map NewsAPI article to our Practice type
 const mapArticleToPractice = (article: NewsApiArticle, index: number): Practice => {
   return {
     id: `${article.source.name?.replace(/\s+/g, '-').toLowerCase() || 'news'}-${index}-${new Date(article.publishedAt).getTime()}`,
@@ -39,28 +36,29 @@ const mapArticleToPractice = (article: NewsApiArticle, index: number): Practice 
   };
 };
 
+const DEFAULT_ARTICLE_QUERY = 'sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture';
+
 export default function BestPracticesPage() {
   const [articles, setArticles] = useState<Practice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture');
-  const [currentQuery, setCurrentQuery] = useState(searchTerm);
+  const [searchTerm, setSearchTerm] = useState(DEFAULT_ARTICLE_QUERY);
+  const [currentQuery, setCurrentQuery] = useState(DEFAULT_ARTICLE_QUERY);
   const { toast } = useToast();
 
   const fetchArticles = useCallback(async (query: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch from our internal API route
       const response = await fetch(`/api/news?query=${encodeURIComponent(query)}&pageSize=12`);
       
       if (!response.ok) {
         let errorMsg = `Error: ${response.statusText} (${response.status})`;
         try {
             const errorData = await response.json();
-            if (errorData && errorData.error) { // Our API route returns 'error'
+            if (errorData && errorData.error) {
                  errorMsg = errorData.error;
-                 if(errorData.newsApiStatus === 401 || errorData.newsApiStatus === 426) { // 426 is NewsAPI's code for client-side requests on dev plan
+                 if(errorData.newsApiStatus === 401 || errorData.newsApiStatus === 426) {
                     errorMsg = "NewsAPI configuration error on the server or plan issue. Contact support.";
                  } else if (errorData.newsApiStatus === 429) {
                     errorMsg = "NewsAPI rate limit exceeded. Please try again later.";
@@ -69,17 +67,20 @@ export default function BestPracticesPage() {
         } catch(e) {/* ignore json parse error */}
         throw new Error(errorMsg);
       }
-      const data = await response.json(); // Data from our internal API
+      const data = await response.json();
       
       if (data.articles && data.articles.length > 0) {
         setArticles(data.articles.map(mapArticleToPractice));
       } else if (data.articles && data.articles.length === 0) {
         setArticles([]);
-        toast({
-            title: "No Articles Found",
-            description: `No articles found for your query: "${query}". Try a different search term.`,
-        });
-      } else if (data.error) { // Handle errors reported by our API wrapper
+        // Avoid toasting for empty default query results, only for user-initiated searches
+        if (query !== DEFAULT_ARTICLE_QUERY) {
+            toast({
+                title: "No Articles Found",
+                description: `No articles found for your query: "${query}". Try a different search term.`,
+            });
+        }
+      } else if (data.error) {
         throw new Error(data.error);
       }
     } catch (err: any) {
@@ -98,30 +99,35 @@ export default function BestPracticesPage() {
   }, [toast]);
 
   useEffect(() => {
-    // Initial fetch
-    fetchArticles(currentQuery);
+    if (currentQuery.trim()) {
+      fetchArticles(currentQuery);
+    } else {
+        // If currentQuery is empty (e.g., after clearing search and submitting)
+        setArticles([]); // Clear articles
+        setIsLoading(false); // Stop loading
+    }
   }, [fetchArticles, currentQuery]);
-
-  // Removed useEffect for client-side NEWSAPI_KEY check as it's now server-side.
-  // The API route itself handles the key check.
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       setCurrentQuery(searchTerm.trim());
+    } else {
+      // Handle empty search submission - clear results
+      setCurrentQuery(''); 
     }
   };
   
   const handleClearSearch = () => {
     setSearchTerm('');
-    // Optionally reset to default query or clear results.
-    // setCurrentQuery('sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture');
+    // Optionally, you could reset currentQuery to default or empty here and re-fetch.
+    // For now, it just clears the input. A subsequent empty search will clear results.
   };
 
   return (
     <div className="container mx-auto">
       <PageHeader
-        title="Agricultural Articles &amp; News"
+        title="Agricultural Articles & News"
         description="Explore recent articles and news related to farming techniques, soil health, and agricultural innovations."
       />
       
@@ -154,7 +160,6 @@ export default function BestPracticesPage() {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
-           {/* Display a generic message for server-side key issues now */}
            {(error.toLowerCase().includes("newsapi key") || error.toLowerCase().includes("newsapi configuration error")) && (
                 <p className="text-xs mt-2">
                     There might be an issue with the NewsAPI configuration on the server. Please contact support or check server logs.
@@ -168,7 +173,7 @@ export default function BestPracticesPage() {
             <BookOpen className="mx-auto h-16 w-16 text-primary mb-4" />
             <p className="text-xl font-semibold">No Articles Found</p>
             <p className="text-muted-foreground mt-1">
-              No articles were found for the current search query. Try broadening your search terms.
+              {currentQuery === DEFAULT_ARTICLE_QUERY ? "No default articles found. Try searching for specific topics." : `No articles found for your query: "${currentQuery}". Try a different search term.`}
             </p>
         </div>
       )}
