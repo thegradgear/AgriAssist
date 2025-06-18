@@ -16,6 +16,9 @@ interface Coordinates {
   longitude: number;
 }
 
+const isValidLatitude = (lat: number) => lat >= -90 && lat <= 90;
+const isValidLongitude = (lon: number) => lon >= -180 && lon <= 180;
+
 export default function WeatherPage() {
   const [locationInput, setLocationInput] = useState('');
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
@@ -50,14 +53,27 @@ export default function WeatherPage() {
 
   const fetchWeatherAlerts = useCallback(async (coords: Coordinates) => {
     if (!coords) return;
+
+    if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+      const latError = !isValidLatitude(coords.latitude) ? `Latitude (${coords.latitude}) must be between -90 and 90.` : '';
+      const lonError = !isValidLongitude(coords.longitude) ? `Longitude (${coords.longitude}) must be between -180 and 180.` : '';
+      const combinedError = [latError, lonError].filter(Boolean).join(' ');
+      setError(combinedError || 'Invalid coordinates provided.');
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Coordinates',
+        description: combinedError || 'Please check the latitude and longitude values.',
+      });
+      setIsLoadingAlerts(false);
+      setAlerts([]);
+      return;
+    }
+
     setIsLoadingAlerts(true);
     setError(null);
     setAlerts([]);
 
     try {
-      // Using a proxy for NWS API to avoid CORS issues if this were deployed to a different domain
-      // For local dev or same-domain, direct fetch is fine. For this environment, direct may work.
-      // If CORS becomes an issue, a simple Next.js API route could proxy this.
       const response = await fetch(`https://api.weather.gov/alerts/active?status=actual&point=${coords.latitude},${coords.longitude}`);
       
       if (!response.ok) {
@@ -65,6 +81,9 @@ export default function WeatherPage() {
         try {
             const errorData = await response.json();
             errorMsg = errorData.detail || errorData.title || errorMsg;
+            if (errorData.status === 400 && errorData.detail?.toLowerCase().includes("out of bounds")) {
+              errorMsg = "The provided location is outside the service area for weather alerts (typically US only) or the coordinates are invalid for the service.";
+            }
         } catch (e) {
             // Failed to parse error JSON
         }
@@ -106,7 +125,7 @@ export default function WeatherPage() {
       if (!isNaN(lat) && !isNaN(lon)) {
         const newCoords = { latitude: lat, longitude: lon };
         setCoordinates(newCoords);
-        fetchWeatherAlerts(newCoords);
+        fetchWeatherAlerts(newCoords); // Validation now happens inside fetchWeatherAlerts
         return;
       }
     }
@@ -151,7 +170,7 @@ export default function WeatherPage() {
         title="Weather Alerts"
         description="Get real-time weather alerts for your location (US only)."
         actions={coordinates && (
-          <Button onClick={() => fetchWeatherAlerts(coordinates)} variant="outline" disabled={isLoadingAlerts}>
+          <Button onClick={() => coordinates && fetchWeatherAlerts(coordinates)} variant="outline" disabled={isLoadingAlerts}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingAlerts ? 'animate-spin' : ''}`} />
             Refresh Alerts
           </Button>
@@ -177,7 +196,7 @@ export default function WeatherPage() {
               />
             </div>
             <Button type="submit" disabled={isLoadingAlerts || !locationInput.trim()} className="w-full md:w-auto">
-              {isLoadingAlerts && coordinates?.latitude.toString() === locationInput.split(',')[0].trim() ? (
+              {isLoadingAlerts && coordinates && locationInput.startsWith(coordinates.latitude.toString()) ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               Get Alerts
@@ -252,5 +271,4 @@ export default function WeatherPage() {
     </div>
   );
 }
-
     
