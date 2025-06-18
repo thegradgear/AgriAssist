@@ -7,7 +7,7 @@ import { NAV_ITEMS } from '@/lib/constants';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import type { LucideIcon } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -20,6 +20,8 @@ export default function DashboardPage() {
   };
   
   const displayName = user?.name ? getFirstName(user.name) : (user?.email ? getFirstName(user.email.split('@')[0]) : 'Farmer');
+
+  const ProfileIcon: LucideIcon | undefined = NAV_ITEMS.find(item => item.href === '/profile')?.icon;
 
   return (
     <div className="container mx-auto">
@@ -54,7 +56,7 @@ export default function DashboardPage() {
           <Link href="/profile" className="flex flex-col flex-grow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xl font-medium font-headline">My Profile</CardTitle>
-              {NAV_ITEMS.find(item => item.href === '/profile')?.icon({className: "h-6 w-6 text-muted-foreground"})}
+              {ProfileIcon && <ProfileIcon className="h-6 w-6 text-muted-foreground" />}
             </CardHeader>
             <CardContent className="flex-grow">
               <CardDescription>
