@@ -60,12 +60,7 @@ export default function WeatherPage() {
     if (!OPENWEATHERMAP_API_KEY) {
         const apiKeyError = "OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable.";
         setError(apiKeyError);
-        toast({
-            variant: "destructive",
-            title: "API Key Missing",
-            description: apiKeyError,
-            duration: Infinity,
-        });
+        // Toast is already shown by useEffect for this case
         setIsLoadingAlerts(false);
         setAlerts([]);
         return;
@@ -91,15 +86,12 @@ export default function WeatherPage() {
     setAlerts([]);
 
     try {
-      // Changed API endpoint from data/3.0/onecall to data/2.5/weather
-      // This endpoint is generally available on free plans and may include alerts.
       const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}`);
       
       if (!response.ok) {
         let errorMsg = `Error fetching weather data: ${response.statusText} (${response.status})`;
          try {
             const errorData = await response.json();
-            // OpenWeatherMap often returns a 'message' field in its error responses.
             if (errorData && errorData.message) {
                  errorMsg = errorData.message;
             }
@@ -111,7 +103,6 @@ export default function WeatherPage() {
       
       const data = await response.json();
 
-      // Alerts from /data/2.5/weather, if present, are in data.alerts
       if (data.alerts && data.alerts.length > 0) {
         const mappedAlerts = data.alerts.map(mapOpenWeatherMapAlert)
           .sort((a: WeatherAlert, b: WeatherAlert) => new Date(b.sent).getTime() - new Date(a.sent).getTime());
@@ -129,11 +120,12 @@ export default function WeatherPage() {
       }
     } catch (err: any) {
       console.error("Fetch weather alerts error:", err);
-      setError(err.message || 'Failed to fetch weather alerts.');
+      const errorMessage = err.message || 'Failed to fetch weather alerts.';
+      setError(errorMessage);
       toast({
         variant: 'destructive',
         title: 'Error Fetching Alerts',
-        description: err.message || 'Could not retrieve weather alerts. Check your API key, subscription, or network.',
+        description: `${errorMessage} Please check your API key, subscription, or network. If you recently updated your API key, try restarting the server.`,
       });
     } finally {
       setIsLoadingAlerts(false);
@@ -192,7 +184,7 @@ export default function WeatherPage() {
   useEffect(() => {
     if (!OPENWEATHERMAP_API_KEY) {
       const apiKeyError = "CRITICAL: OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable for the weather feature to work.";
-      setError(apiKeyError);
+      setError(apiKeyError); // Set error for visual display on page
       toast({
         variant: "destructive",
         title: "Configuration Error",
@@ -200,7 +192,7 @@ export default function WeatherPage() {
         duration: Infinity, 
       });
     }
-  }, [toast]);
+  }, [toast]); // Removed OPENWEATHERMAP_API_KEY from dep array as it's constant per render cycle from env.
 
   const disableActions = isLoadingAlerts || isLoadingLocation || !OPENWEATHERMAP_API_KEY;
 
@@ -265,6 +257,11 @@ export default function WeatherPage() {
               <AlertTriangle className="h-5 w-5 text-destructive mr-2" />
               <p className="text-sm text-destructive font-medium">{error}</p>
             </div>
+            {error.toLowerCase().includes("api key") && (
+                <p className="text-xs text-destructive mt-2">
+                    Please verify your OpenWeatherMap API key in the <code>.env</code> file and restart your development server.
+                </p>
+            )}
           </CardContent>
         </Card>
       )}
