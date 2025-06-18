@@ -19,9 +19,8 @@ interface Coordinates {
 const isValidLatitude = (lat: number) => lat >= -90 && lat <= 90;
 const isValidLongitude = (lon: number) => lon >= -180 && lon <= 180;
 
-// IMPORTANT: Replace this with your actual OpenWeatherMap API key
-// You should store this in an environment variable, e.g., process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY
-const OPENWEATHERMAP_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY || "YOUR_OPENWEATHERMAP_API_KEY";
+// API key is now solely sourced from environment variables
+const OPENWEATHERMAP_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
 
 export default function WeatherPage() {
@@ -34,22 +33,19 @@ export default function WeatherPage() {
   const { toast } = useToast();
 
   const mapOpenWeatherMapAlert = (alertData: any, index: number): WeatherAlert => {
-    // Basic severity inference - OpenWeatherMap doesn't have a direct severity field like NWS
-    // This is a simplistic example; you might need more sophisticated logic based on 'tags' or event names
     let severity: WeatherAlert['severity'] = 'Moderate'; // Default
     const eventLower = alertData.event?.toLowerCase() || "";
     if (eventLower.includes('warning')) severity = 'High';
     if (eventLower.includes('watch') || eventLower.includes('advisory')) severity = 'Moderate';
     if (eventLower.includes('statement')) severity = 'Low';
 
-
     return {
-      id: `${alertData.event?.replace(/\s+/g, '-') || 'alert'}-${index}`, // Create a simple ID
+      id: `${alertData.event?.replace(/\s+/g, '-') || 'alert'}-${index}`,
       event: alertData.event || "Weather Alert",
       severity: severity,
-      headline: alertData.description || "Important weather information.", // OWM description is more like a headline
-      description: alertData.description || "Details not available.", // OWM description is often the main content
-      instruction: alertData.instruction || undefined, // OWM doesn't typically provide specific instructions
+      headline: alertData.description || "Important weather information.",
+      description: alertData.description || "Details not available.",
+      instruction: alertData.instruction || undefined,
       sent: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       effective: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       expires: alertData.end ? new Date(alertData.end * 1000).toISOString() : undefined,
@@ -62,14 +58,17 @@ export default function WeatherPage() {
   const fetchWeatherAlerts = useCallback(async (coords: Coordinates) => {
     if (!coords) return;
 
-    if (OPENWEATHERMAP_API_KEY === "YOUR_OPENWEATHERMAP_API_KEY") {
-        setError("OpenWeatherMap API key is not configured. Please set it in the code or environment variable.");
+    if (!OPENWEATHERMAP_API_KEY) {
+        const apiKeyError = "OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable.";
+        setError(apiKeyError);
         toast({
             variant: "destructive",
             title: "API Key Missing",
-            description: "OpenWeatherMap API key is not configured.",
+            description: apiKeyError,
+            duration: Infinity,
         });
         setIsLoadingAlerts(false);
+        setAlerts([]);
         return;
     }
 
@@ -93,16 +92,13 @@ export default function WeatherPage() {
     setAlerts([]);
 
     try {
-      // Using OpenWeatherMap One Call API (v3.0 often preferred for new integrations)
-      // We exclude other parts to focus on alerts if available.
-      // Note: `alerts` might not always be present or detailed depending on location and events.
       const response = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${coords.latitude}&lon=${coords.longitude}&exclude=minutely,hourly,daily,current&appid=${OPENWEATHERMAP_API_KEY}`);
       
       if (!response.ok) {
         let errorMsg = `Error fetching alerts: ${response.statusText} (${response.status})`;
          try {
             const errorData = await response.json();
-            errorMsg = errorData.message || errorMsg; // OpenWeatherMap often uses 'message'
+            errorMsg = errorData.message || errorMsg; 
         } catch (e) {
             // Failed to parse error JSON
         }
@@ -136,7 +132,7 @@ export default function WeatherPage() {
     } finally {
       setIsLoadingAlerts(false);
     }
-  }, [toast]);
+  }, [toast, coordinates]); // Added coordinates to dependency array as it's used in mapOpenWeatherMapAlert
 
   const handleManualLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,17 +184,20 @@ export default function WeatherPage() {
   }, [fetchWeatherAlerts, toast]);
 
   useEffect(() => {
-    if (OPENWEATHERMAP_API_KEY === "YOUR_OPENWEATHERMAP_API_KEY") {
-      setError("CRITICAL: OpenWeatherMap API key is not configured in the application. Please replace the placeholder value with your actual API key for the weather feature to work.");
+    // Initial check for API key when component mounts
+    if (!OPENWEATHERMAP_API_KEY) {
+      const apiKeyError = "CRITICAL: OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable for the weather feature to work.";
+      setError(apiKeyError);
       toast({
         variant: "destructive",
         title: "Configuration Error",
-        description: "OpenWeatherMap API key is missing. Weather alerts will not function.",
+        description: apiKeyError,
         duration: Infinity, 
       });
     }
-  }, []);
+  }, [toast]); // Added toast to dependency array
 
+  const disableActions = isLoadingAlerts || isLoadingLocation || !OPENWEATHERMAP_API_KEY;
 
   return (
     <div className="container mx-auto">
@@ -206,7 +205,7 @@ export default function WeatherPage() {
         title="Weather Alerts"
         description="Get weather alerts for your location (powered by OpenWeatherMap)."
         actions={coordinates && (
-          <Button onClick={() => coordinates && fetchWeatherAlerts(coordinates)} variant="outline" disabled={isLoadingAlerts}>
+          <Button onClick={() => coordinates && fetchWeatherAlerts(coordinates)} variant="outline" disabled={disableActions}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingAlerts ? 'animate-spin' : ''}`} />
             Refresh Alerts
           </Button>
@@ -231,8 +230,8 @@ export default function WeatherPage() {
                 className="mt-1"
               />
             </div>
-            <Button type="submit" disabled={isLoadingAlerts || !locationInput.trim() || OPENWEATHERMAP_API_KEY === "YOUR_OPENWEATHERMAP_API_KEY"} className="w-full md:w-auto">
-              {isLoadingAlerts && coordinates && locationInput.startsWith(coordinates.latitude.toString()) ? (
+            <Button type="submit" disabled={disableActions || !locationInput.trim()} className="w-full md:w-auto">
+              {isLoadingAlerts && coordinates && locationInput.startsWith(String(coordinates.latitude)) ? ( // Check if loading for current input
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               Get Alerts
@@ -243,7 +242,7 @@ export default function WeatherPage() {
             <span className="flex-shrink mx-4 text-muted-foreground text-xs">OR</span>
             <div className="flex-grow border-t border-muted"></div>
           </div>
-          <Button onClick={getGPSLocation} variant="outline" className="w-full" disabled={isLoadingLocation || isLoadingAlerts || OPENWEATHERMAP_API_KEY === "YOUR_OPENWEATHERMAP_API_KEY"}>
+          <Button onClick={getGPSLocation} variant="outline" className="w-full" disabled={disableActions}>
             {isLoadingLocation ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -286,7 +285,7 @@ export default function WeatherPage() {
         </div>
       )}
 
-      {!isLoadingAlerts && alerts.length === 0 && coordinates && !error && OPENWEATHERMAP_API_KEY !== "YOUR_OPENWEATHERMAP_API_KEY" && (
+      {!isLoadingAlerts && alerts.length === 0 && coordinates && !error && OPENWEATHERMAP_API_KEY && (
         <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check mx-auto text-primary mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
           <p className="text-xl font-semibold">All Clear!</p>
@@ -295,7 +294,7 @@ export default function WeatherPage() {
           </p>
         </div>
       )}
-       {!isLoadingAlerts && !coordinates && !error && OPENWEATHERMAP_API_KEY !== "YOUR_OPENWEATHERMAP_API_KEY" && (
+       {!isLoadingAlerts && !coordinates && !error && OPENWEATHERMAP_API_KEY && (
          <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pin mx-auto text-primary mb-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
             <p className="text-xl font-semibold">Enter Location for Alerts</p>
@@ -307,6 +306,4 @@ export default function WeatherPage() {
     </div>
   );
 }
-    
-
     
