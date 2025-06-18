@@ -1,40 +1,96 @@
+
 'use client';
 
-import type { User } from 'firebase/auth';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '@/lib/firebase';
+import type { User as FirebaseUser } from 'firebase/auth';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { auth, db, getDoc, doc } from '@/lib/firebase';
 import type { ReactNode } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { usePathname, useRouter } from 'next/navigation';
 
+export interface UserProfile {
+  uid: string;
+  email: string | null;
+  name: string | null;
+  contactNumber?: string;
+  otherDetails?: string;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: UserProfile | null;
   loading: boolean;
   isAuthenticating: boolean;
+  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isAuthenticating: true,
+  refreshUserProfile: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticating, setIsAuthenticating] = useState(true); // Tracks initial auth check
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [firebaseUserInternal, setFirebaseUserInternal] = useState<FirebaseUser | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-      setIsAuthenticating(false);
-    });
-    return () => unsubscribe();
+  const fetchUserProfile = useCallback(async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
+      try {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data();
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: data.name || firebaseUser.displayName,
+            contactNumber: data.contactNumber,
+            otherDetails: data.otherDetails,
+          });
+        } else {
+          // User exists in auth but not in Firestore, create a basic profile
+           setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName || 'User', // Fallback
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        // Set a basic user profile from auth if Firestore fetch fails
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          name: firebaseUser.displayName || 'User',
+        });
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+    setIsAuthenticating(false);
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentAuthUser) => {
+      setFirebaseUserInternal(currentAuthUser);
+      fetchUserProfile(currentAuthUser);
+    });
+    return () => unsubscribe();
+  }, [fetchUserProfile]);
+
+  const refreshUserProfile = useCallback(async () => {
+    if (firebaseUserInternal) {
+      setLoading(true);
+      await fetchUserProfile(firebaseUserInternal);
+    }
+  }, [firebaseUserInternal, fetchUserProfile]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticating }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticating, refreshUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -48,12 +104,11 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isAuthenticating && !loading && !user && pathname !== '/login' && pathname !== '/signup') {
+    if (!isAuthenticating && !loading && !user && pathname !== '/login' && pathname !== '/signup' && pathname !== '/forgot-password' && pathname !== '/') {
       router.push('/login');
     }
   }, [user, loading, isAuthenticating, router, pathname]);
   
-  // If still authenticating, show a loader or nothing to prevent flicker
   if (isAuthenticating || loading) {
      return (
         <div className="flex h-screen w-screen items-center justify-center">
@@ -65,9 +120,8 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
       );
   }
 
-
-  if (!user && pathname !== '/login' && pathname !== '/signup') {
-    return null; // Or a loading spinner, redirect is handled by useEffect
+  if (!user && pathname !== '/login' && pathname !== '/signup' && pathname !== '/forgot-password' && pathname !== '/') {
+    return null; 
   }
 
   return <>{children}</>;

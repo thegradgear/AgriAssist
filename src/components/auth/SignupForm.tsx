@@ -10,7 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db, setDoc, doc, updateProfile } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -20,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
+  const { refreshUserProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -32,6 +34,7 @@ export function SignupForm() {
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -41,7 +44,23 @@ export function SignupForm() {
   async function onSubmit(data: SignupFormData) {
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      const firebaseUser = userCredential.user;
+
+      // Update Firebase Auth profile
+      await updateProfile(firebaseUser, { displayName: data.name });
+
+      // Create user document in Firestore
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
+        name: data.name,
+        email: data.email,
+        contactNumber: '',
+        otherDetails: '',
+        createdAt: new Date().toISOString(),
+      });
+      
+      await refreshUserProfile(); // Refresh context to pick up new user details
+
       toast({
         title: 'Account Created',
         description: 'Welcome to AgriAssist! You can now log in.',
@@ -51,7 +70,9 @@ export function SignupForm() {
       toast({
         variant: 'destructive',
         title: 'Signup Failed',
-        description: error.message || 'An unexpected error occurred. Please try again.',
+        description: error.code === 'auth/email-already-in-use' 
+          ? 'This email address is already in use. Please try another.'
+          : error.message || 'An unexpected error occurred. Please try again.',
       });
     } finally {
       setIsLoading(false);
@@ -82,6 +103,10 @@ export function SignupForm() {
               <Skeleton className="h-4 w-1/4" />
               <Skeleton className="h-10 w-full" />
             </div>
+             <div className="space-y-2">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-10 w-full" />
+            </div>
             <Skeleton className="h-10 w-full" />
           </div>
           <Skeleton className="h-5 w-2/3 mx-auto mt-6" />
@@ -102,6 +127,19 @@ export function SignupForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your full name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="email"
