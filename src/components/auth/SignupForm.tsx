@@ -54,8 +54,8 @@ export function SignupForm() {
       await setDoc(doc(db, 'users', firebaseUser.uid), {
         name: data.name,
         email: data.email,
-        contactNumber: '',
-        otherDetails: '',
+        contactNumber: '', // Initialize contactNumber as empty
+        // otherDetails: '', // otherDetails removed
         createdAt: new Date().toISOString(),
       });
       

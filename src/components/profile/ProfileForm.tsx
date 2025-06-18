@@ -8,29 +8,41 @@ import type { UserProfile } from '@/contexts/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, User } from 'lucide-react';
 import { db, doc, updateDoc } from '@/lib/firebase';
 
 interface ProfileFormProps {
   currentUser: UserProfile;
 }
 
+const getInitials = (name?: string | null): string => {
+  if (!name) return '?';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1 && parts[0].length > 0) return parts[0].substring(0, 2).toUpperCase();
+  if (parts.length > 1 && parts[0].length > 0 && parts[parts.length -1].length > 0) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  if (parts[0].length > 0) return parts[0][0].toUpperCase();
+  return '?';
+};
+
 export function ProfileForm({ currentUser }: ProfileFormProps) {
   const { toast } = useToast();
   const { refreshUserProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const userInitials = getInitials(currentUser.name);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: currentUser.name || '',
       contactNumber: currentUser.contactNumber || '',
-      otherDetails: currentUser.otherDetails || '',
     },
   });
 
@@ -41,10 +53,10 @@ export function ProfileForm({ currentUser }: ProfileFormProps) {
       await updateDoc(userDocRef, {
         name: data.name,
         contactNumber: data.contactNumber || '',
-        otherDetails: data.otherDetails || '',
+        // 'otherDetails' is no longer updated from this form
       });
       
-      await refreshUserProfile(); // Refresh context to pick up new user details
+      await refreshUserProfile(); 
 
       toast({
         title: 'Profile Updated',
@@ -65,8 +77,22 @@ export function ProfileForm({ currentUser }: ProfileFormProps) {
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline">Edit Your Profile</CardTitle>
-        <CardDescription>Keep your personal information up to date.</CardDescription>
+        <div className="flex items-center space-x-4 mb-6">
+          <Avatar className="h-20 w-20">
+            {/* <AvatarImage src={currentUser.photoURL || undefined} alt={currentUser.name || 'User'} /> */}
+            <AvatarFallback className="text-3xl">{userInitials}</AvatarFallback>
+          </Avatar>
+          <div>
+            <CardTitle className="font-headline text-2xl">{currentUser.name || 'Your Profile'}</CardTitle>
+            {currentUser.email && (
+              <div className="flex items-center text-sm text-muted-foreground mt-1">
+                <Mail className="mr-2 h-4 w-4" />
+                {currentUser.email}
+              </div>
+            )}
+          </div>
+        </div>
+        <CardDescription>Keep your personal information up to date. Email is not editable here.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -97,23 +123,7 @@ export function ProfileForm({ currentUser }: ProfileFormProps) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="otherDetails"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Other Details (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Tell us a bit more about your farm or interests (max 500 characters)"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* "Other Details" field removed */}
             <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
               {isLoading ? (
                 <>
