@@ -26,6 +26,15 @@ interface PlaceSuggestion {
   displayName: string;
 }
 
+// Ensure CurrentWeatherData interface here includes all fields for localStorage and state
+interface ExtendedCurrentWeatherData extends CurrentWeatherData {
+  sunrise: number; // Unix timestamp
+  sunset: number; // Unix timestamp
+  cloudiness: number; // Percentage
+  pressure: number; // hPa
+}
+
+
 const OPENWEATHERMAP_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
 export default function WeatherPage() {
@@ -34,7 +43,7 @@ export default function WeatherPage() {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   
   const [selectedCoordinates, setSelectedCoordinates] = useState<Coordinates | null>(null);
-  const [currentWeather, setCurrentWeather] = useState<CurrentWeatherData | null>(null);
+  const [currentWeather, setCurrentWeather] = useState<ExtendedCurrentWeatherData | null>(null);
   const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
   
   const [isLoadingWeatherData, setIsLoadingWeatherData] = useState(false);
@@ -47,19 +56,23 @@ export default function WeatherPage() {
 
 
   const mapOpenWeatherMapAlert = (alertData: any, index: number): WeatherAlert => {
-    let severity: WeatherAlert['severity'] = 'Moderate';
+    let severity: WeatherAlert['severity'] = 'Moderate'; // Default severity
     const eventLower = alertData.event?.toLowerCase() || "";
+
+    // Infer severity based on keywords, this is a heuristic
     if (eventLower.includes('warning')) severity = 'High';
-    if (eventLower.includes('watch') || eventLower.includes('advisory')) severity = 'Moderate';
-    if (eventLower.includes('statement')) severity = 'Low';
+    else if (eventLower.includes('watch') || eventLower.includes('advisory') || eventLower.includes('statement')) severity = 'Moderate';
+    else if (eventLower.includes('emergency')) severity = 'Critical';
+    else if (eventLower.includes('information') || eventLower.includes('notice')) severity = 'Low';
+
 
     return {
       id: `${alertData.event?.replace(/\s+/g, '-') || 'alert'}-${index}`,
       event: alertData.event || "Weather Alert",
       severity: severity,
-      headline: alertData.description || "Important weather information.",
+      headline: alertData.description || "Important weather information.", // Using OWM description as headline
       description: alertData.description || "Details not available.",
-      instruction: alertData.instruction || undefined,
+      instruction: alertData.instruction || "Take necessary precautions.", // Generic instruction if not provided
       sent: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       effective: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       expires: alertData.end ? new Date(alertData.end * 1000).toISOString() : undefined,
@@ -71,27 +84,49 @@ export default function WeatherPage() {
 
   const fetchWeatherData = useCallback(async (coords: Coordinates) => {
     if (!OPENWEATHERMAP_API_KEY) {
-      setError("OpenWeatherMap API key is not configured.");
+      setError("OpenWeatherMap API key is not configured. Please set NEXT_PUBLIC_OPENWEATHERMAP_API_KEY in your .env file and restart the server.");
       setIsLoadingWeatherData(false);
       return;
     }
+
+    if (coords.latitude < -90 || coords.latitude > 90 || coords.longitude < -180 || coords.longitude > 180) {
+      setError("Invalid coordinates. Latitude must be between -90 and 90, Longitude between -180 and 180.");
+      setIsLoadingWeatherData(false);
+      return;
+    }
+
     setIsLoadingWeatherData(true);
     setError(null);
 
     try {
-      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric&alerts=true`);
+      // Use /data/2.5/weather endpoint which is generally available on free tiers
+      // and can include alerts if available.
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`);
+      
       if (!response.ok) {
         let errorMsg = `Error fetching weather data: ${response.statusText} (${response.status})`;
         try {
           const errorData = await response.json();
-          if (errorData && errorData.message) errorMsg = errorData.message;
-        } catch (e) { /* ignore */ }
+          if (errorData && errorData.message) {
+            errorMsg = errorData.message;
+            if (errorData.cod === 401) { // Unauthorized - typically API key issue
+                 errorMsg = "Invalid API key. Please check your OpenWeatherMap API key.";
+            } else if (errorData.cod === 404) { // Not Found
+                 errorMsg = `Weather data not found for the specified location (Lat: ${coords.latitude}, Lon: ${coords.longitude}).`;
+            } else if (errorData.cod === 429) { // Too many requests
+                 errorMsg = "API rate limit exceeded. Please try again later.";
+            }
+          }
+        } catch (e) {
+            // Failed to parse error JSON, stick with the statusText
+        }
         throw new Error(errorMsg);
       }
+      
       const data = await response.json();
       
-      let mappedCurrentWeather: CurrentWeatherData | null = null;
-      if (data.weather && data.weather.length > 0 && data.main) {
+      let mappedCurrentWeather: ExtendedCurrentWeatherData | null = null;
+      if (data.weather && data.weather.length > 0 && data.main && data.sys) {
         mappedCurrentWeather = {
           cityName: data.name,
           temperature: data.main.temp,
@@ -100,22 +135,29 @@ export default function WeatherPage() {
           humidity: data.main.humidity,
           windSpeed: data.wind.speed,
           feelsLike: data.main.feels_like,
+          sunrise: data.sys.sunrise, // Unix timestamp UTC
+          sunset: data.sys.sunset,   // Unix timestamp UTC
+          cloudiness: data.clouds?.all || 0, // Percentage
+          pressure: data.main.pressure, // hPa
         };
       }
       setCurrentWeather(mappedCurrentWeather);
 
       let mappedAlerts: WeatherAlert[] = [];
-      // OpenWeatherMap's /weather endpoint may not have rich alerts. The 'alerts' field is not standard.
-      // This is an optimistic check. For robust alerts, OneCall API (paid) is better.
+      // OpenWeatherMap's /weather endpoint may not have rich alerts or any alerts.
+      // The 'alerts' field is not standard on this endpoint unlike the OneCall API.
+      // This is an optimistic check. If their /weather endpoint *does* include an `alerts` array.
       if (data.alerts && Array.isArray(data.alerts) && data.alerts.length > 0) {
         mappedAlerts = data.alerts.map(mapOpenWeatherMapAlert)
           .sort((a: WeatherAlert, b: WeatherAlert) => new Date(b.sent).getTime() - new Date(a.sent).getTime());
       }
       setAlerts(mappedAlerts);
       
+      // Save to localStorage
       localStorage.setItem('weatherCoordinates', JSON.stringify(coords));
       if (mappedCurrentWeather) localStorage.setItem('currentWeather', JSON.stringify(mappedCurrentWeather)); else localStorage.removeItem('currentWeather');
       localStorage.setItem('weatherAlerts', JSON.stringify(mappedAlerts));
+      // Save last searched city name if cityInput was used and weather was found
       if (cityInput && mappedCurrentWeather) localStorage.setItem('lastSearchedCityName', mappedCurrentWeather.cityName || cityInput)
 
 
@@ -133,7 +175,7 @@ export default function WeatherPage() {
     } finally {
       setIsLoadingWeatherData(false);
     }
-  }, [toast, cityInput]); // Added cityInput to dependencies for localStorage
+  }, [toast, cityInput]);
 
   const fetchPlaceSuggestions = useCallback(async (query: string) => {
     if (!query.trim() || !OPENWEATHERMAP_API_KEY) {
@@ -162,7 +204,6 @@ export default function WeatherPage() {
       console.error("Fetch suggestions error:", err);
       setSuggestions([]);
       setShowSuggestions(false);
-      // Optionally toast an error for suggestions if needed
     } finally {
       setIsLoadingSuggestions(false);
     }
@@ -172,10 +213,10 @@ export default function WeatherPage() {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
-    if (cityInput.trim().length > 2) { // Start fetching after 2 characters
+    if (cityInput.trim().length > 2) { 
       debounceTimeoutRef.current = setTimeout(() => {
         fetchPlaceSuggestions(cityInput);
-      }, 500); // 500ms debounce
+      }, 500); 
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -194,39 +235,40 @@ export default function WeatherPage() {
       const storedCoordsStr = localStorage.getItem('weatherCoordinates');
       if (storedCityName && storedCoordsStr) {
         const storedCoords = JSON.parse(storedCoordsStr);
-        setCityInput(storedCityName);
-        setSelectedCoordinates(storedCoords);
-        // fetchWeatherData(storedCoords); // Fetch on load
+        setCityInput(storedCityName); // Set city input to the stored name
+        setSelectedCoordinates(storedCoords); // Set coordinates for potential refresh
         
+        // Load stored weather and alerts directly without re-fetching initially
         const storedCurrentWeatherStr = localStorage.getItem('currentWeather');
-        if (storedCurrentWeatherStr) setCurrentWeather(JSON.parse(storedCurrentWeatherStr));
+        if (storedCurrentWeatherStr) setCurrentWeather(JSON.parse(storedCurrentWeatherStr) as ExtendedCurrentWeatherData);
         const storedAlertsStr = localStorage.getItem('weatherAlerts');
         if (storedAlertsStr) setAlerts(JSON.parse(storedAlertsStr));
 
       }
     } catch (e) {
       console.error("Error loading from localStorage", e);
+      // Clear potentially corrupted localStorage items
       localStorage.removeItem('lastSearchedCityName');
       localStorage.removeItem('weatherCoordinates');
       localStorage.removeItem('currentWeather');
       localStorage.removeItem('weatherAlerts');
     }
-  }, []); // Removed fetchWeatherData from initial load to avoid redundant calls
+  }, []); // Empty dependency array means this runs once on mount
 
   useEffect(() => {
     if (!OPENWEATHERMAP_API_KEY) {
-      setError("CRITICAL: OpenWeatherMap API key is not configured.");
-      toast({ variant: "destructive", title: "Configuration Error", description: "OpenWeatherMap API key missing.", duration: Infinity });
+      setError("CRITICAL: OpenWeatherMap API key is not configured. Please set NEXT_PUBLIC_OPENWEATHERMAP_API_KEY in your .env file and restart your development server.");
+      toast({ variant: "destructive", title: "Configuration Error", description: "OpenWeatherMap API key missing. Weather functionality will be disabled.", duration: Infinity });
     }
   }, [toast]);
   
   const handleSuggestionClick = (suggestion: PlaceSuggestion) => {
-    setCityInput(suggestion.displayName);
+    setCityInput(suggestion.displayName); // Update input field to full suggested name
     const coords = { latitude: suggestion.lat, longitude: suggestion.lon };
     setSelectedCoordinates(coords);
-    setSuggestions([]);
-    setShowSuggestions(false);
-    fetchWeatherData(coords);
+    setSuggestions([]); // Clear suggestions
+    setShowSuggestions(false); // Hide suggestions box
+    fetchWeatherData(coords); // Fetch weather for the selected suggestion
   };
   
   const handleManualCitySearch = async () => {
@@ -236,6 +278,7 @@ export default function WeatherPage() {
       return;
     }
     if (!OPENWEATHERMAP_API_KEY) {
+      // Error already handled by useEffect, but good to check here too
       setError("OpenWeatherMap API key is not configured.");
       return;
     }
@@ -250,14 +293,17 @@ export default function WeatherPage() {
         setError(`Could not find location: ${cityInput}`);
         toast({variant: 'destructive', title: 'Location Not Found', description: `No results for "${cityInput}".`});
         setIsLoadingWeatherData(false);
+        setCurrentWeather(null); // Clear previous weather if location not found
+        setAlerts([]);
         return;
       }
       const { lat, lon, name, country, state } = geoData[0];
       const coords = { latitude: lat, longitude: lon };
       setSelectedCoordinates(coords);
       // Update cityInput to the name returned by geocoding API for consistency
-      setCityInput(`${name}${state ? ', ' + state : ''}, ${country}`); 
-      localStorage.setItem('lastSearchedCityName', `${name}${state ? ', ' + state : ''}, ${country}`);
+      const consistentCityName = `${name}${state ? ', ' + state : ''}, ${country}`;
+      setCityInput(consistentCityName); 
+      localStorage.setItem('lastSearchedCityName', consistentCityName); // Save the consistent name
       fetchWeatherData(coords); // Now fetch weather with the obtained coordinates
     } catch (err: any) {
       console.error("Geocoding or weather fetch error:", err);
@@ -265,7 +311,7 @@ export default function WeatherPage() {
       toast({variant: 'destructive', title: 'Search Failed', description: err.message});
       setIsLoadingWeatherData(false);
     }
-    setShowSuggestions(false);
+    setShowSuggestions(false); // Hide suggestions after search attempt
   };
 
   // Close suggestions when clicking outside
@@ -312,11 +358,12 @@ export default function WeatherPage() {
                 value={cityInput}
                 onChange={(e) => {
                   setCityInput(e.target.value);
+                  // Show suggestions if input is long enough, otherwise hide
                   if (e.target.value.trim().length > 2) setShowSuggestions(true); else setShowSuggestions(false);
                 }}
                 onFocus={() => cityInput.trim().length > 2 && suggestions.length > 0 && setShowSuggestions(true)}
                 placeholder="e.g., London, New Delhi, Tokyo"
-                className="pr-10"
+                className="pr-10" // Make space for loader
               />
               {isLoadingSuggestions && (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />
@@ -326,7 +373,7 @@ export default function WeatherPage() {
                   <ul>
                     {suggestions.map((s, index) => (
                       <li
-                        key={`${s.lat}-${s.lon}-${index}`}
+                        key={`${s.lat}-${s.lon}-${index}`} // Ensure unique key
                         className="px-3 py-2 text-sm hover:bg-accent cursor-pointer"
                         onClick={() => handleSuggestionClick(s)}
                       >
@@ -352,9 +399,9 @@ export default function WeatherPage() {
               <AlertTriangle className="h-5 w-5 text-destructive mr-2" />
               <p className="text-sm text-destructive font-medium">{error}</p>
             </div>
-            {error.toLowerCase().includes("api key") && (
+            {(error.toLowerCase().includes("api key") || error.toLowerCase().includes("nex_public_openweathermap_api_key")) && (
                 <p className="text-xs text-destructive mt-2">
-                    Please verify your OpenWeatherMap API key in your <code>.env</code> file by setting <code>NEXT_PUBLIC_OPENWEATHERMAP_API_KEY</code> and restart your development server.
+                    Please verify your OpenWeatherMap API key in your <code>.env</code> or <code>src/.env</code> file (as <code>NEXT_PUBLIC_OPENWEATHERMAP_API_KEY</code>) and restart your development server.
                 </p>
             )}
           </CardContent>
@@ -376,6 +423,8 @@ export default function WeatherPage() {
                     <div className="h-4 bg-muted rounded w-1/2"></div>
                 </div>
                 <div className="space-y-3 p-4 bg-muted/50 rounded-md">
+                    <div className="h-5 bg-muted rounded w-full"></div>
+                    <div className="h-5 bg-muted rounded w-full"></div>
                     <div className="h-5 bg-muted rounded w-full"></div>
                     <div className="h-5 bg-muted rounded w-full"></div>
                 </div>

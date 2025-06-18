@@ -3,7 +3,8 @@
 
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Thermometer, Droplet, Wind, CloudSun, Sunrise, Sunset } from 'lucide-react';
+import { Thermometer, Droplet, Wind, CloudSun, Sunrise, Sunset, Cloud, Gauge } from 'lucide-react';
+import { format } from 'date-fns';
 
 export interface CurrentWeatherData {
   cityName: string;
@@ -13,6 +14,10 @@ export interface CurrentWeatherData {
   humidity: number; // Percentage
   windSpeed: number; // m/s
   feelsLike: number; // Celsius
+  sunrise: number; // Unix timestamp UTC
+  sunset: number;  // Unix timestamp UTC
+  cloudiness: number; // Percentage cloud cover
+  pressure: number; // hPa
 }
 
 interface CurrentWeatherDisplayProps {
@@ -20,8 +25,27 @@ interface CurrentWeatherDisplayProps {
 }
 
 const capitalizeWords = (str: string) => {
+  if (!str) return '';
   return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
+
+const formatTimeFromTimestamp = (timestamp: number, timezoneOffset: number = 0): string => {
+  // OpenWeatherMap `dt`, `sunrise`, `sunset` are UTC timestamps.
+  // The `timezone` field from the API response is the shift in seconds from UTC for the location.
+  // However, for simplicity here, we'll format directly to local time of the browser,
+  // acknowledging this might not be the location's actual local time if the user is elsewhere.
+  // For true location local time, you'd apply the `data.timezone` offset.
+  // For this example, we'll assume the browser's local time is close enough.
+  // Or, if OpenWeatherMap provides timezone string, use that with date-fns-tz.
+  try {
+    const date = new Date(timestamp * 1000); // Convert Unix timestamp (seconds) to milliseconds
+    return format(date, 'h:mm a'); // e.g., 6:30 AM
+  } catch (e) {
+    console.error("Error formatting time:", e);
+    return "N/A";
+  }
+};
+
 
 export function CurrentWeatherDisplay({ weather }: CurrentWeatherDisplayProps) {
   if (!weather) return null;
@@ -72,7 +96,31 @@ export function CurrentWeatherDisplay({ weather }: CurrentWeatherDisplayProps) {
             <span className="font-medium text-foreground">Wind:</span>
             <span className="ml-auto text-muted-foreground">{weather.windSpeed.toFixed(1)} m/s</span>
           </div>
+          <div className="flex items-center text-sm">
+            <Cloud className="h-5 w-5 mr-2 text-primary/80" />
+            <span className="font-medium text-foreground">Cloud Cover:</span>
+            <span className="ml-auto text-muted-foreground">{weather.cloudiness}%</span>
+          </div>
+          <div className="flex items-center text-sm">
+            <Gauge className="h-5 w-5 mr-2 text-primary/80" />
+            <span className="font-medium text-foreground">Pressure:</span>
+            <span className="ml-auto text-muted-foreground">{weather.pressure} hPa</span>
+          </div>
         </div>
+        
+        <div className="sm:col-span-2 grid grid-cols-2 gap-4 p-4 bg-background/50 rounded-md shadow">
+            <div className="flex flex-col items-center">
+                <Sunrise className="h-8 w-8 text-amber-500 mb-1" />
+                <p className="text-sm font-medium text-foreground">Sunrise</p>
+                <p className="text-sm text-muted-foreground">{formatTimeFromTimestamp(weather.sunrise)}</p>
+            </div>
+            <div className="flex flex-col items-center">
+                <Sunset className="h-8 w-8 text-orange-600 mb-1" />
+                <p className="text-sm font-medium text-foreground">Sunset</p>
+                <p className="text-sm text-muted-foreground">{formatTimeFromTimestamp(weather.sunset)}</p>
+            </div>
+        </div>
+
       </CardContent>
     </Card>
   );
