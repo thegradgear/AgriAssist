@@ -26,29 +26,29 @@ export function AppSidebar() {
               <ul role="list" className="-mx-2 space-y-1">
                 {NAV_ITEMS.map((item) => (
                   <li key={item.label}>
-                    <Link href={item.href} passHref legacyBehavior>
-                      <a
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
+                          ? 'bg-accent text-accent-foreground'
+                          : 'hover:bg-accent/50 hover:text-accent-foreground',
+                        'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold items-center',
+                        item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                      )}
+                      aria-disabled={item.disabled}
+                      tabIndex={item.disabled ? -1 : undefined}
+                      onClick={item.disabled ? (e) => e.preventDefault() : undefined}
+                    >
+                      <item.icon
                         className={cn(
                           (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
-                            ? 'bg-accent text-accent-foreground'
-                            : 'hover:bg-accent/50 hover:text-accent-foreground',
-                          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold items-center',
-                          item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                            ? 'text-accent-foreground'
+                            : 'text-muted-foreground group-hover:text-accent-foreground',
+                          'h-5 w-5 shrink-0'
                         )}
-                        aria-disabled={item.disabled}
-                        tabIndex={item.disabled ? -1 : undefined}
-                      >
-                        <item.icon
-                          className={cn(
-                            (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
-                              ? 'text-accent-foreground'
-                              : 'text-muted-foreground group-hover:text-accent-foreground',
-                            'h-5 w-5 shrink-0'
-                          )}
-                          aria-hidden="true"
-                        />
-                        {item.label}
-                      </a>
+                        aria-hidden="true"
+                      />
+                      {item.label}
                     </Link>
                   </li>
                 ))}
