@@ -19,7 +19,6 @@ interface Coordinates {
 const isValidLatitude = (lat: number) => lat >= -90 && lat <= 90;
 const isValidLongitude = (lon: number) => lon >= -180 && lon <= 180;
 
-// API key is now solely sourced from environment variables
 const OPENWEATHERMAP_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
 
@@ -92,20 +91,27 @@ export default function WeatherPage() {
     setAlerts([]);
 
     try {
-      const response = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${coords.latitude}&lon=${coords.longitude}&exclude=minutely,hourly,daily,current&appid=${OPENWEATHERMAP_API_KEY}`);
+      // Changed API endpoint from data/3.0/onecall to data/2.5/weather
+      // This endpoint is generally available on free plans and may include alerts.
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}`);
       
       if (!response.ok) {
-        let errorMsg = `Error fetching alerts: ${response.statusText} (${response.status})`;
+        let errorMsg = `Error fetching weather data: ${response.statusText} (${response.status})`;
          try {
             const errorData = await response.json();
-            errorMsg = errorData.message || errorMsg; 
+            // OpenWeatherMap often returns a 'message' field in its error responses.
+            if (errorData && errorData.message) {
+                 errorMsg = errorData.message;
+            }
         } catch (e) {
-            // Failed to parse error JSON
+            // Failed to parse error JSON, stick with the statusText
         }
         throw new Error(errorMsg);
       }
       
       const data = await response.json();
+
+      // Alerts from /data/2.5/weather, if present, are in data.alerts
       if (data.alerts && data.alerts.length > 0) {
         const mappedAlerts = data.alerts.map(mapOpenWeatherMapAlert)
           .sort((a: WeatherAlert, b: WeatherAlert) => new Date(b.sent).getTime() - new Date(a.sent).getTime());
@@ -118,7 +124,7 @@ export default function WeatherPage() {
         setAlerts([]);
         toast({
             title: 'No Active Alerts',
-            description: 'No active weather alerts reported by OpenWeatherMap for this location.',
+            description: 'No active weather alerts reported by OpenWeatherMap for this location using the current weather endpoint.',
         });
       }
     } catch (err: any) {
@@ -127,12 +133,12 @@ export default function WeatherPage() {
       toast({
         variant: 'destructive',
         title: 'Error Fetching Alerts',
-        description: err.message || 'Could not retrieve weather alerts. Check your API key or network.',
+        description: err.message || 'Could not retrieve weather alerts. Check your API key, subscription, or network.',
       });
     } finally {
       setIsLoadingAlerts(false);
     }
-  }, [toast, coordinates]); // Added coordinates to dependency array as it's used in mapOpenWeatherMapAlert
+  }, [toast, coordinates]);
 
   const handleManualLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,7 +190,6 @@ export default function WeatherPage() {
   }, [fetchWeatherAlerts, toast]);
 
   useEffect(() => {
-    // Initial check for API key when component mounts
     if (!OPENWEATHERMAP_API_KEY) {
       const apiKeyError = "CRITICAL: OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable for the weather feature to work.";
       setError(apiKeyError);
@@ -195,7 +200,7 @@ export default function WeatherPage() {
         duration: Infinity, 
       });
     }
-  }, [toast]); // Added toast to dependency array
+  }, [toast]);
 
   const disableActions = isLoadingAlerts || isLoadingLocation || !OPENWEATHERMAP_API_KEY;
 
@@ -231,7 +236,7 @@ export default function WeatherPage() {
               />
             </div>
             <Button type="submit" disabled={disableActions || !locationInput.trim()} className="w-full md:w-auto">
-              {isLoadingAlerts && coordinates && locationInput.startsWith(String(coordinates.latitude)) ? ( // Check if loading for current input
+              {isLoadingAlerts && coordinates && locationInput.startsWith(String(coordinates.latitude)) ? ( 
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               Get Alerts
