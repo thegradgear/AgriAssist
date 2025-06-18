@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, BarChart3, Leaf, CloudSun, BookOpen, UserSquare } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Leaf, CloudSun, BookOpen, Microscope } from 'lucide-react';
 
 export interface NavItem {
   href: string;
@@ -16,5 +16,6 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/crop-recommendation', label: 'Crop Recommendation', icon: Leaf },
   { href: '/weather', label: 'Weather Alerts', icon: CloudSun },
   { href: '/best-practices', label: 'Best Practices', icon: BookOpen },
+  { href: '/crop-disease-detection', label: 'Disease Detection', icon: Microscope },
 ];
 
