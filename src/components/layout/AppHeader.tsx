@@ -71,7 +71,7 @@ export function AppHeader() {
                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <SheetClose asChild>
                 <Button variant="link" asChild className="p-0 h-auto self-start">
-                  <Link href="/dashboard" className="flex items-center gap-2">
+                  <Link href="/" className="flex items-center gap-2">
                     <Leaf className="h-7 w-7 text-primary" />
                     <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
                   </Link>
@@ -111,7 +111,7 @@ export function AppHeader() {
 
         {/* Mobile Logo Link (next to hamburger) */}
         <Button variant="link" asChild className="p-0 h-auto">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Leaf className="h-7 w-7 text-primary" />
             <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
           </Link>
