@@ -1,93 +1,216 @@
+
 'use client';
 
 import { PageHeader } from '@/components/shared/PageHeader';
-import { WeatherAlertCard, type WeatherAlert } from '@/components/weather/WeatherAlertCard';
-import { useState, useEffect } from 'react';
+import { WeatherAlertCard, type NWSWeatherAlert } from '@/components/weather/WeatherAlertCard';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from 'react';
+import { Loader2, LocateFixed, RefreshCw, AlertTriangle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-
-// Mock data for weather alerts - replace with actual API calls
-const mockAlerts: WeatherAlert[] = [
-  {
-    id: '1',
-    type: 'Extreme Heat',
-    severity: 'High',
-    title: 'Heatwave Warning',
-    description: 'Temperatures expected to exceed 40°C for the next 3 days.',
-    advice: 'Ensure adequate irrigation for crops. Avoid strenuous outdoor activity during peak sun hours. Provide shade for vulnerable livestock.',
-    timestamp: new Date(Date.now() - 3600 * 1000 * 2).toISOString(), // 2 hours ago
-  },
-  {
-    id: '2',
-    type: 'Heavy Rainfall',
-    severity: 'Moderate',
-    title: 'Heavy Rain Forecast',
-    description: 'Possibility of heavy showers and localized waterlogging in the afternoon.',
-    advice: 'Check drainage systems. Postpone spraying or fertilizing if rain is imminent. Secure loose items.',
-    timestamp: new Date(Date.now() - 3600 * 1000 * 5).toISOString(), // 5 hours ago
-  },
-  {
-    id: '3',
-    type: 'Strong Winds',
-    severity: 'Low',
-    title: 'Gusty Winds Expected',
-    description: 'Winds may reach speeds of 20-30 km/h later today.',
-    advice: 'Check for loose structures or materials. Young or tall crops might need support.',
-    timestamp: new Date(Date.now() - 3600 * 1000 * 24).toISOString(), // 1 day ago
-  },
-];
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
 
 export default function WeatherPage() {
-  const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filterSeverity, setFilterSeverity] = useState<WeatherAlert['severity'] | 'All'>('All');
+  const [locationInput, setLocationInput] = useState('');
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [alerts, setAlerts] = useState<NWSWeatherAlert[]>([]);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [isLoadingAlerts, setIsLoadingAlerts] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const fetchAlerts = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setAlerts(mockAlerts.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
-      setIsLoading(false);
-    }, 1000);
+  const mapNWSAlert = (feature: any): NWSWeatherAlert => {
+    const props = feature.properties;
+    let severity: NWSWeatherAlert['severity'] = 'Low'; // Default
+    if (props.severity === 'Minor') severity = 'Low';
+    else if (props.severity === 'Moderate') severity = 'Moderate';
+    else if (props.severity === 'Severe') severity = 'High';
+    else if (props.severity === 'Extreme') severity = 'Critical';
+
+    return {
+      id: props.id,
+      event: props.event,
+      severity: severity,
+      headline: props.headline,
+      description: props.description,
+      instruction: props.instruction,
+      sent: props.sent,
+      effective: props.effective,
+      expires: props.expires,
+      areaDesc: props.areaDesc,
+      senderName: props.senderName,
+    };
   };
 
-  useEffect(() => {
-    fetchAlerts();
-  }, []);
+  const fetchWeatherAlerts = useCallback(async (coords: Coordinates) => {
+    if (!coords) return;
+    setIsLoadingAlerts(true);
+    setError(null);
+    setAlerts([]);
 
-  const filteredAlerts = alerts.filter(alert => 
-    filterSeverity === 'All' || alert.severity === filterSeverity
-  );
+    try {
+      // Using a proxy for NWS API to avoid CORS issues if this were deployed to a different domain
+      // For local dev or same-domain, direct fetch is fine. For this environment, direct may work.
+      // If CORS becomes an issue, a simple Next.js API route could proxy this.
+      const response = await fetch(`https://api.weather.gov/alerts/active?status=actual&point=${coords.latitude},${coords.longitude}`);
+      
+      if (!response.ok) {
+        let errorMsg = `Error fetching alerts: ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            errorMsg = errorData.detail || errorData.title || errorMsg;
+        } catch (e) {
+            // Failed to parse error JSON
+        }
+        throw new Error(errorMsg);
+      }
+      
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const mappedAlerts = data.features.map(mapNWSAlert)
+          .sort((a: NWSWeatherAlert, b: NWSWeatherAlert) => new Date(b.sent).getTime() - new Date(a.sent).getTime());
+        setAlerts(mappedAlerts);
+      } else {
+        setAlerts([]);
+      }
+      toast({
+        title: 'Weather Alerts Updated',
+        description: data.features?.length > 0 ? `${data.features.length} alerts found.` : 'No active alerts for this location.',
+      });
+    } catch (err: any) {
+      console.error("Fetch weather alerts error:", err);
+      setError(err.message || 'Failed to fetch weather alerts.');
+      toast({
+        variant: 'destructive',
+        title: 'Error Fetching Alerts',
+        description: err.message || 'Could not retrieve weather alerts. The NWS API might be temporarily unavailable or the location is outside the US.',
+      });
+    } finally {
+      setIsLoadingAlerts(false);
+    }
+  }, [toast]);
+
+  const handleManualLocationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const parts = locationInput.split(',').map(s => s.trim());
+    if (parts.length === 2) {
+      const lat = parseFloat(parts[0]);
+      const lon = parseFloat(parts[1]);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        const newCoords = { latitude: lat, longitude: lon };
+        setCoordinates(newCoords);
+        fetchWeatherAlerts(newCoords);
+        return;
+      }
+    }
+    setError('Invalid format. Please use "latitude,longitude" (e.g., "40.71,-74.00").');
+    toast({
+        variant: 'destructive',
+        title: 'Invalid Location Format',
+        description: 'Please enter coordinates as "latitude,longitude".',
+    });
+  };
+
+  const getGPSLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.');
+      toast({ variant: 'destructive', title: 'Geolocation Not Supported'});
+      return;
+    }
+    setIsLoadingLocation(true);
+    setError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newCoords = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+        setCoordinates(newCoords);
+        setLocationInput(`${newCoords.latitude.toFixed(4)}, ${newCoords.longitude.toFixed(4)}`);
+        fetchWeatherAlerts(newCoords);
+        setIsLoadingLocation(false);
+      },
+      (err) => {
+        setError(`Error getting location: ${err.message}`);
+        toast({ variant: 'destructive', title: 'Location Error', description: err.message });
+        setIsLoadingLocation(false);
+      }
+    );
+  }, [fetchWeatherAlerts, toast]);
 
   return (
     <div className="container mx-auto">
       <PageHeader
         title="Weather Alerts"
-        description="Stay updated with the latest weather conditions and advisories for your farm."
-        actions={
-          <div className="flex items-center gap-2">
-            <Select value={filterSeverity} onValueChange={(value) => setFilterSeverity(value as WeatherAlert['severity'] | 'All')}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Severities</SelectItem>
-                <SelectItem value="Low">Low</SelectItem>
-                <SelectItem value="Moderate">Moderate</SelectItem>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={fetchAlerts} variant="outline" disabled={isLoading}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
-        }
+        description="Get real-time weather alerts for your location (US only)."
+        actions={coordinates && (
+          <Button onClick={() => fetchWeatherAlerts(coordinates)} variant="outline" disabled={isLoadingAlerts}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingAlerts ? 'animate-spin' : ''}`} />
+            Refresh Alerts
+          </Button>
+        )}
       />
-      {isLoading ? (
+
+      <Card className="mb-8 shadow-lg rounded-lg">
+        <CardHeader>
+          <CardTitle className="font-headline">Set Your Location</CardTitle>
+          <CardDescription>Enter latitude and longitude manually or use your device's GPS.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={handleManualLocationSubmit} className="space-y-4 md:space-y-0 md:flex md:items-end md:gap-4">
+            <div className="flex-grow">
+              <Label htmlFor="location-input">Latitude,Longitude</Label>
+              <Input
+                id="location-input"
+                type="text"
+                value={locationInput}
+                onChange={(e) => setLocationInput(e.target.value)}
+                placeholder="e.g., 40.7128,-74.0060"
+                className="mt-1"
+              />
+            </div>
+            <Button type="submit" disabled={isLoadingAlerts || !locationInput.trim()} className="w-full md:w-auto">
+              {isLoadingAlerts && coordinates?.latitude.toString() === locationInput.split(',')[0].trim() ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Get Alerts
+            </Button>
+          </form>
+          <div className="relative flex items-center">
+            <div className="flex-grow border-t border-muted"></div>
+            <span className="flex-shrink mx-4 text-muted-foreground text-xs">OR</span>
+            <div className="flex-grow border-t border-muted"></div>
+          </div>
+          <Button onClick={getGPSLocation} variant="outline" className="w-full" disabled={isLoadingLocation || isLoadingAlerts}>
+            {isLoadingLocation ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <LocateFixed className="mr-2 h-4 w-4" />
+            )}
+            Use My Current Location
+          </Button>
+        </CardContent>
+      </Card>
+      
+      {error && (
+         <Card className="mb-8 border-destructive bg-destructive/10">
+          <CardContent className="p-4">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-destructive mr-2" />
+              <p className="text-sm text-destructive font-medium">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isLoadingAlerts && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map(i => (
             <div key={i} className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 animate-pulse">
@@ -98,21 +221,36 @@ export default function WeatherPage() {
             </div>
           ))}
         </div>
-      ) : filteredAlerts.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredAlerts.map((alert) => (
+      )}
+
+      {!isLoadingAlerts && alerts.length > 0 && (
+        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+          {alerts.map((alert) => (
             <WeatherAlertCard key={alert.id} alert={alert} />
           ))}
         </div>
-      ) : (
-        <div className="text-center py-10">
-          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud-sun mx-auto text-muted-foreground mb-4"><path d="M12 16.5V22"/><path d="M12 2v4.5"/><path d="M4.2 10.2 2 12"/><path d="m22 12-2.2-1.8"/><path d="M20 20.2 17.5 18"/><path d="M6.5 18 4 20.2"/><path d="M18 7H6.2c-2 0-3.5 1.5-3.5 3.5s1.5 3.5 3.5 3.5h.3A3.2 3.2 0 0 0 6 15c0 1.6 1.4 3 3 3h5c1.7 0 3-1.3 3-3s-1.3-3-3-3h-1a3.5 3.5 0 0 0-3.5-3.5Z"/></svg>
-          <p className="text-lg font-medium">No Weather Alerts</p>
-          <p className="text-muted-foreground">
-            {filterSeverity === 'All' ? 'There are currently no active weather alerts.' : `No alerts matching '${filterSeverity}' severity.`}
+      )}
+
+      {!isLoadingAlerts && alerts.length === 0 && coordinates && !error && (
+        <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
+           <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check mx-auto text-primary mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+          <p className="text-xl font-semibold">All Clear!</p>
+          <p className="text-muted-foreground mt-1">
+            No active weather alerts for the selected location.
           </p>
+        </div>
+      )}
+       {!isLoadingAlerts && !coordinates && !error && (
+         <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pin mx-auto text-primary mb-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            <p className="text-xl font-semibold">Enter Location for Alerts</p>
+            <p className="text-muted-foreground mt-1">
+              Please provide your location above to fetch weather alerts.
+            </p>
         </div>
       )}
     </div>
   );
 }
+
+    
