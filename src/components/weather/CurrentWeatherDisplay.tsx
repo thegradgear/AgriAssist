@@ -30,15 +30,18 @@ const capitalizeWords = (str: string) => {
 };
 
 const formatTimeFromTimestamp = (timestamp: number, timezoneOffset: number = 0): string => {
-  // OpenWeatherMap `dt`, `sunrise`, `sunset` are UTC timestamps.
-  // The `timezone` field from the API response is the shift in seconds from UTC for the location.
-  // However, for simplicity here, we'll format directly to local time of the browser,
-  // acknowledging this might not be the location's actual local time if the user is elsewhere.
-  // For true location local time, you'd apply the `data.timezone` offset.
-  // For this example, we'll assume the browser's local time is close enough.
-  // Or, if OpenWeatherMap provides timezone string, use that with date-fns-tz.
+  // Check if timestamp is a valid, finite number
+  if (timestamp === null || timestamp === undefined || !isFinite(timestamp)) {
+    console.warn("Invalid timestamp received for formatting:", timestamp);
+    return "N/A";
+  }
+
   try {
     const date = new Date(timestamp * 1000); // Convert Unix timestamp (seconds) to milliseconds
+    if (isNaN(date.getTime())) { // Double check if date object is valid
+        console.warn("Failed to create valid date from timestamp:", timestamp);
+        return "N/A";
+    }
     return format(date, 'h:mm a'); // e.g., 6:30 AM
   } catch (e) {
     console.error("Error formatting time:", e);
