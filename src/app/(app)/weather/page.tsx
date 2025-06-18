@@ -3,12 +3,13 @@
 
 import { PageHeader } from '@/components/shared/PageHeader';
 import { WeatherAlertCard, type WeatherAlert } from '@/components/weather/WeatherAlertCard';
+import { CurrentWeatherDisplay, type CurrentWeatherData } from '@/components/weather/CurrentWeatherDisplay';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, LocateFixed, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Loader2, LocateFixed, RefreshCw, AlertTriangle, CloudSun } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Coordinates {
@@ -26,8 +27,9 @@ export default function WeatherPage() {
   const [locationInput, setLocationInput] = useState('');
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
+  const [currentWeather, setCurrentWeather] = useState<CurrentWeatherData | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const [isLoadingAlerts, setIsLoadingAlerts] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -42,9 +44,9 @@ export default function WeatherPage() {
       id: `${alertData.event?.replace(/\s+/g, '-') || 'alert'}-${index}`,
       event: alertData.event || "Weather Alert",
       severity: severity,
-      headline: alertData.description || "Important weather information.",
+      headline: alertData.description || "Important weather information.", // OWM often puts headline-like content in description
       description: alertData.description || "Details not available.",
-      instruction: alertData.instruction || undefined,
+      instruction: alertData.instruction || undefined, // OWM alerts might not have separate instruction field often
       sent: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       effective: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       expires: alertData.end ? new Date(alertData.end * 1000).toISOString() : undefined,
@@ -54,15 +56,15 @@ export default function WeatherPage() {
     };
   };
 
-  const fetchWeatherAlerts = useCallback(async (coords: Coordinates) => {
+  const fetchWeatherData = useCallback(async (coords: Coordinates) => {
     if (!coords) return;
 
     if (!OPENWEATHERMAP_API_KEY) {
         const apiKeyError = "OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable.";
         setError(apiKeyError);
-        // Toast is already shown by useEffect for this case
-        setIsLoadingAlerts(false);
+        setIsLoadingData(false);
         setAlerts([]);
+        setCurrentWeather(null);
         return;
     }
 
@@ -76,17 +78,19 @@ export default function WeatherPage() {
         title: 'Invalid Coordinates',
         description: combinedError || 'Please check the latitude and longitude values.',
       });
-      setIsLoadingAlerts(false);
+      setIsLoadingData(false);
       setAlerts([]);
+      setCurrentWeather(null);
       return;
     }
 
-    setIsLoadingAlerts(true);
+    setIsLoadingData(true);
     setError(null);
     setAlerts([]);
+    setCurrentWeather(null);
 
     try {
-      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}`);
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`);
       
       if (!response.ok) {
         let errorMsg = `Error fetching weather data: ${response.statusText} (${response.status})`;
@@ -103,34 +107,50 @@ export default function WeatherPage() {
       
       const data = await response.json();
 
+      // Process current weather
+      if (data.weather && data.weather.length > 0 && data.main) {
+        setCurrentWeather({
+          cityName: data.name,
+          temperature: data.main.temp,
+          description: data.weather[0].description,
+          icon: data.weather[0].icon,
+          humidity: data.main.humidity,
+          windSpeed: data.wind.speed,
+          feelsLike: data.main.feels_like,
+        });
+      } else {
+        setCurrentWeather(null); // No current weather data or malformed
+      }
+
+      // Process alerts
       if (data.alerts && data.alerts.length > 0) {
         const mappedAlerts = data.alerts.map(mapOpenWeatherMapAlert)
           .sort((a: WeatherAlert, b: WeatherAlert) => new Date(b.sent).getTime() - new Date(a.sent).getTime());
         setAlerts(mappedAlerts);
          toast({
-            title: 'Weather Alerts Updated',
-            description: `${mappedAlerts.length} alerts found for this location.`,
+            title: 'Weather Data Updated',
+            description: `Current weather and ${mappedAlerts.length} alerts found.`,
         });
       } else {
         setAlerts([]);
         toast({
-            title: 'No Active Alerts',
-            description: 'No active weather alerts reported by OpenWeatherMap for this location using the current weather endpoint.',
+            title: 'Weather Data Updated',
+            description: 'Current weather fetched. No active alerts reported by OpenWeatherMap for this location.',
         });
       }
     } catch (err: any) {
-      console.error("Fetch weather alerts error:", err);
-      const errorMessage = err.message || 'Failed to fetch weather alerts.';
+      console.error("Fetch weather data error:", err);
+      const errorMessage = err.message || 'Failed to fetch weather data.';
       setError(errorMessage);
       toast({
         variant: 'destructive',
-        title: 'Error Fetching Alerts',
+        title: 'Error Fetching Data',
         description: `${errorMessage} Please check your API key, subscription, or network. If you recently updated your API key, try restarting the server.`,
       });
     } finally {
-      setIsLoadingAlerts(false);
+      setIsLoadingData(false);
     }
-  }, [toast, coordinates]);
+  }, [toast]); // Removed coordinates from dep array as it's passed as arg
 
   const handleManualLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,7 +162,7 @@ export default function WeatherPage() {
       if (!isNaN(lat) && !isNaN(lon)) {
         const newCoords = { latitude: lat, longitude: lon };
         setCoordinates(newCoords);
-        fetchWeatherAlerts(newCoords);
+        fetchWeatherData(newCoords);
         return;
       }
     }
@@ -170,7 +190,7 @@ export default function WeatherPage() {
         };
         setCoordinates(newCoords);
         setLocationInput(`${newCoords.latitude.toFixed(4)}, ${newCoords.longitude.toFixed(4)}`);
-        fetchWeatherAlerts(newCoords);
+        fetchWeatherData(newCoords);
         setIsLoadingLocation(false);
       },
       (err) => {
@@ -179,12 +199,12 @@ export default function WeatherPage() {
         setIsLoadingLocation(false);
       }
     );
-  }, [fetchWeatherAlerts, toast]);
+  }, [fetchWeatherData, toast]);
 
   useEffect(() => {
     if (!OPENWEATHERMAP_API_KEY) {
       const apiKeyError = "CRITICAL: OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable for the weather feature to work.";
-      setError(apiKeyError); // Set error for visual display on page
+      setError(apiKeyError);
       toast({
         variant: "destructive",
         title: "Configuration Error",
@@ -192,19 +212,19 @@ export default function WeatherPage() {
         duration: Infinity, 
       });
     }
-  }, [toast]); // Removed OPENWEATHERMAP_API_KEY from dep array as it's constant per render cycle from env.
+  }, [toast]);
 
-  const disableActions = isLoadingAlerts || isLoadingLocation || !OPENWEATHERMAP_API_KEY;
+  const disableActions = isLoadingData || isLoadingLocation || !OPENWEATHERMAP_API_KEY;
 
   return (
     <div className="container mx-auto">
       <PageHeader
-        title="Weather Alerts"
-        description="Get weather alerts for your location (powered by OpenWeatherMap)."
+        title="Weather Information"
+        description="Get current weather conditions and alerts for your location (powered by OpenWeatherMap)."
         actions={coordinates && (
-          <Button onClick={() => coordinates && fetchWeatherAlerts(coordinates)} variant="outline" disabled={disableActions}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingAlerts ? 'animate-spin' : ''}`} />
-            Refresh Alerts
+          <Button onClick={() => coordinates && fetchWeatherData(coordinates)} variant="outline" disabled={disableActions}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingData ? 'animate-spin' : ''}`} />
+            Refresh Data
           </Button>
         )}
       />
@@ -228,10 +248,10 @@ export default function WeatherPage() {
               />
             </div>
             <Button type="submit" disabled={disableActions || !locationInput.trim()} className="w-full md:w-auto">
-              {isLoadingAlerts && coordinates && locationInput.startsWith(String(coordinates.latitude)) ? ( 
+              {isLoadingData && coordinates && locationInput.startsWith(String(coordinates.latitude)) ? ( 
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
-              Get Alerts
+              Get Weather
             </Button>
           </form>
           <div className="relative flex items-center">
@@ -266,42 +286,81 @@ export default function WeatherPage() {
         </Card>
       )}
 
-      {isLoadingAlerts && (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 animate-pulse">
-              <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
-              <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
-              <div className="h-4 bg-muted rounded w-full mb-2"></div>
-              <div className="h-4 bg-muted rounded w-5/6"></div>
+      {isLoadingData && (
+        <div className="space-y-6">
+          <Card className="shadow-lg animate-pulse">
+            <CardHeader>
+              <div className="h-6 bg-muted rounded w-1/2 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="h-8 bg-muted rounded w-1/4"></div>
+              <div className="h-5 bg-muted rounded w-1/3"></div>
+              <div className="flex justify-between">
+                <div className="h-4 bg-muted rounded w-1/4"></div>
+                <div className="h-4 bg-muted rounded w-1/4"></div>
+              </div>
+            </CardContent>
+          </Card>
+           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2].map(i => (
+              <div key={i} className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 animate-pulse">
+                <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
+                <div className="h-4 bg-muted rounded w-full mb-2"></div>
+                <div className="h-4 bg-muted rounded w-5/6"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!isLoadingData && coordinates && !error && OPENWEATHERMAP_API_KEY && (
+        <div className="space-y-8">
+          {currentWeather && <CurrentWeatherDisplay weather={currentWeather} />}
+          
+          {alerts.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-semibold font-headline mb-4 mt-8 flex items-center">
+                <AlertTriangle className="mr-3 h-6 w-6 text-orange-500" />
+                Active Weather Alerts
+              </h2>
+              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+                {alerts.map((alert) => (
+                  <WeatherAlertCard key={alert.id} alert={alert} />
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {!isLoadingAlerts && alerts.length > 0 && (
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-          {alerts.map((alert) => (
-            <WeatherAlertCard key={alert.id} alert={alert} />
-          ))}
-        </div>
-      )}
+          {!currentWeather && alerts.length === 0 && (
+             <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud-off mx-auto text-muted-foreground mb-4"><path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"/><path d="m2 2 20 20"/></svg>
+                <p className="text-xl font-semibold">No Data Available</p>
+                <p className="text-muted-foreground mt-1">
+                  Could not fetch current weather or alerts for the selected location.
+                </p>
+            </div>
+          )}
 
-      {!isLoadingAlerts && alerts.length === 0 && coordinates && !error && OPENWEATHERMAP_API_KEY && (
-        <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
-           <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check mx-auto text-primary mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-          <p className="text-xl font-semibold">All Clear!</p>
-          <p className="text-muted-foreground mt-1">
-            No active weather alerts from OpenWeatherMap for the selected location.
-          </p>
+           {currentWeather && alerts.length === 0 && (
+            <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check mx-auto text-primary mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+              <p className="text-xl font-semibold">No Active Alerts</p>
+              <p className="text-muted-foreground mt-1">
+                No active weather alerts from OpenWeatherMap for the selected location. Current weather is displayed above.
+              </p>
+            </div>
+          )}
         </div>
       )}
-       {!isLoadingAlerts && !coordinates && !error && OPENWEATHERMAP_API_KEY && (
+      
+       {!isLoadingData && !coordinates && !error && OPENWEATHERMAP_API_KEY && (
          <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pin mx-auto text-primary mb-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-            <p className="text-xl font-semibold">Enter Location for Alerts</p>
+            <p className="text-xl font-semibold">Enter Location for Weather Info</p>
             <p className="text-muted-foreground mt-1">
-              Please provide your location above to fetch weather alerts.
+              Please provide your location above to fetch current weather and alerts.
             </p>
         </div>
       )}
