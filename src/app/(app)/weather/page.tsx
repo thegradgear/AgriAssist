@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, LocateFixed, RefreshCw, AlertTriangle, CloudSun } from 'lucide-react';
+import { Loader2, LocateFixed, RefreshCw, AlertTriangle, CloudSun, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Coordinates {
@@ -44,9 +44,9 @@ export default function WeatherPage() {
       id: `${alertData.event?.replace(/\s+/g, '-') || 'alert'}-${index}`,
       event: alertData.event || "Weather Alert",
       severity: severity,
-      headline: alertData.description || "Important weather information.", // OWM often puts headline-like content in description
+      headline: alertData.description || "Important weather information.", 
       description: alertData.description || "Details not available.",
-      instruction: alertData.instruction || undefined, // OWM alerts might not have separate instruction field often
+      instruction: alertData.instruction || undefined, 
       sent: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       effective: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       expires: alertData.end ? new Date(alertData.end * 1000).toISOString() : undefined,
@@ -63,8 +63,7 @@ export default function WeatherPage() {
         const apiKeyError = "OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable.";
         setError(apiKeyError);
         setIsLoadingData(false);
-        setAlerts([]);
-        setCurrentWeather(null);
+        // Do not clear localStorage here, let user see stale data if API key is missing for new fetch
         return;
     }
 
@@ -79,15 +78,12 @@ export default function WeatherPage() {
         description: combinedError || 'Please check the latitude and longitude values.',
       });
       setIsLoadingData(false);
-      setAlerts([]);
-      setCurrentWeather(null);
       return;
     }
 
     setIsLoadingData(true);
     setError(null);
-    setAlerts([]);
-    setCurrentWeather(null);
+    // Don't clear current weather/alerts immediately, only on successful fetch or if API returns no data for them
 
     try {
       const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`);
@@ -106,10 +102,12 @@ export default function WeatherPage() {
       }
       
       const data = await response.json();
+      let mappedCurrentWeather: CurrentWeatherData | null = null;
+      let mappedAlerts: WeatherAlert[] = [];
 
       // Process current weather
       if (data.weather && data.weather.length > 0 && data.main) {
-        setCurrentWeather({
+        mappedCurrentWeather = {
           cityName: data.name,
           temperature: data.main.temp,
           description: data.weather[0].description,
@@ -117,27 +115,51 @@ export default function WeatherPage() {
           humidity: data.main.humidity,
           windSpeed: data.wind.speed,
           feelsLike: data.main.feels_like,
-        });
-      } else {
-        setCurrentWeather(null); // No current weather data or malformed
+        };
       }
+      setCurrentWeather(mappedCurrentWeather);
 
-      // Process alerts
+      // Process alerts (if present in /data/2.5/weather response)
+      // Note: OpenWeatherMap's /weather endpoint doesn't typically provide the rich 'alerts' array like the OneCall API.
+      // This part is kept for potential future API changes or if some basic alert info is included.
+      // Often, for detailed alerts, a different endpoint or the OneCall API (subscription needed) is better.
       if (data.alerts && data.alerts.length > 0) {
-        const mappedAlerts = data.alerts.map(mapOpenWeatherMapAlert)
+        mappedAlerts = data.alerts.map(mapOpenWeatherMapAlert)
           .sort((a: WeatherAlert, b: WeatherAlert) => new Date(b.sent).getTime() - new Date(a.sent).getTime());
-        setAlerts(mappedAlerts);
-         toast({
-            title: 'Weather Data Updated',
-            description: `Current weather and ${mappedAlerts.length} alerts found.`,
-        });
-      } else {
-        setAlerts([]);
+      }
+      setAlerts(mappedAlerts);
+
+      // Save to localStorage
+      try {
+        localStorage.setItem('weatherCoordinates', JSON.stringify(coords));
+        if (mappedCurrentWeather) {
+          localStorage.setItem('currentWeather', JSON.stringify(mappedCurrentWeather));
+        } else {
+          localStorage.removeItem('currentWeather');
+        }
+        localStorage.setItem('weatherAlerts', JSON.stringify(mappedAlerts));
+      } catch (e) {
+        console.error("Error saving to localStorage", e);
+      }
+      
+      if (mappedAlerts.length > 0 && mappedCurrentWeather) {
         toast({
             title: 'Weather Data Updated',
-            description: 'Current weather fetched. No active alerts reported by OpenWeatherMap for this location.',
+            description: `Current weather and ${mappedAlerts.length} alert(s) found.`,
+        });
+      } else if (mappedCurrentWeather) {
+         toast({
+            title: 'Weather Data Updated',
+            description: 'Current weather fetched. No active alerts reported for this location.',
+        });
+      } else {
+         toast({
+            variant: 'destructive',
+            title: 'Weather Data Issue',
+            description: 'Could not fetch complete weather information.',
         });
       }
+
     } catch (err: any) {
       console.error("Fetch weather data error:", err);
       const errorMessage = err.message || 'Failed to fetch weather data.';
@@ -147,10 +169,53 @@ export default function WeatherPage() {
         title: 'Error Fetching Data',
         description: `${errorMessage} Please check your API key, subscription, or network. If you recently updated your API key, try restarting the server.`,
       });
+      // Do not clear localStorage on error, keep stale data if available
     } finally {
       setIsLoadingData(false);
     }
-  }, [toast]); // Removed coordinates from dep array as it's passed as arg
+  }, [toast]);
+
+  // Effect to load data from localStorage on initial mount
+  useEffect(() => {
+    try {
+      const storedCoordsStr = localStorage.getItem('weatherCoordinates');
+      if (storedCoordsStr) {
+        const storedCoords = JSON.parse(storedCoordsStr);
+        setCoordinates(storedCoords);
+        setLocationInput(`${storedCoords.latitude.toFixed(4)}, ${storedCoords.longitude.toFixed(4)}`);
+
+        const storedCurrentWeatherStr = localStorage.getItem('currentWeather');
+        if (storedCurrentWeatherStr) {
+          setCurrentWeather(JSON.parse(storedCurrentWeatherStr));
+        }
+        const storedAlertsStr = localStorage.getItem('weatherAlerts');
+        if (storedAlertsStr) {
+          setAlerts(JSON.parse(storedAlertsStr));
+        }
+      }
+    } catch (e) {
+      console.error("Error loading weather data from localStorage", e);
+      // Clear potentially corrupted data
+      localStorage.removeItem('weatherCoordinates');
+      localStorage.removeItem('currentWeather');
+      localStorage.removeItem('weatherAlerts');
+    }
+  }, []); // Runs once on mount
+
+  // Effect to check for API Key (runs once after localStorage load attempt)
+   useEffect(() => {
+    if (!OPENWEATHERMAP_API_KEY) {
+      const apiKeyError = "CRITICAL: OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable for the weather feature to work.";
+      setError(apiKeyError); // Set error state
+      toast({
+        variant: "destructive",
+        title: "Configuration Error",
+        description: apiKeyError,
+        duration: Infinity, 
+      });
+    }
+  }, [toast]);
+
 
   const handleManualLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,7 +226,7 @@ export default function WeatherPage() {
       const lon = parseFloat(parts[1]);
       if (!isNaN(lat) && !isNaN(lon)) {
         const newCoords = { latitude: lat, longitude: lon };
-        setCoordinates(newCoords);
+        setCoordinates(newCoords); // Update coordinates state
         fetchWeatherData(newCoords);
         return;
       }
@@ -188,7 +253,7 @@ export default function WeatherPage() {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         };
-        setCoordinates(newCoords);
+        setCoordinates(newCoords); // Update coordinates state
         setLocationInput(`${newCoords.latitude.toFixed(4)}, ${newCoords.longitude.toFixed(4)}`);
         fetchWeatherData(newCoords);
         setIsLoadingLocation(false);
@@ -200,19 +265,6 @@ export default function WeatherPage() {
       }
     );
   }, [fetchWeatherData, toast]);
-
-  useEffect(() => {
-    if (!OPENWEATHERMAP_API_KEY) {
-      const apiKeyError = "CRITICAL: OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable for the weather feature to work.";
-      setError(apiKeyError);
-      toast({
-        variant: "destructive",
-        title: "Configuration Error",
-        description: apiKeyError,
-        duration: Infinity, 
-      });
-    }
-  }, [toast]);
 
   const disableActions = isLoadingData || isLoadingLocation || !OPENWEATHERMAP_API_KEY;
 
@@ -279,7 +331,7 @@ export default function WeatherPage() {
             </div>
             {error.toLowerCase().includes("api key") && (
                 <p className="text-xs text-destructive mt-2">
-                    Please verify your OpenWeatherMap API key in the <code>.env</code> file and restart your development server.
+                    Please verify your OpenWeatherMap API key in the <code>.env</code> file (e.g., <code>src/.env</code> or root <code>.env</code>) by setting <code>NEXT_PUBLIC_OPENWEATHERMAP_API_KEY</code> and restart your development server.
                 </p>
             )}
           </CardContent>
@@ -348,7 +400,7 @@ export default function WeatherPage() {
               <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check mx-auto text-primary mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
               <p className="text-xl font-semibold">No Active Alerts</p>
               <p className="text-muted-foreground mt-1">
-                No active weather alerts from OpenWeatherMap for the selected location. Current weather is displayed above.
+                No active weather alerts from OpenWeatherMap for this location. Current weather is displayed above.
               </p>
             </div>
           )}
@@ -357,7 +409,7 @@ export default function WeatherPage() {
       
        {!isLoadingData && !coordinates && !error && OPENWEATHERMAP_API_KEY && (
          <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pin mx-auto text-primary mb-4"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            <MapPin className="mx-auto h-16 w-16 text-primary mb-4" />
             <p className="text-xl font-semibold">Enter Location for Weather Info</p>
             <p className="text-muted-foreground mt-1">
               Please provide your location above to fetch current weather and alerts.
