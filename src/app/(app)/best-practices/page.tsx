@@ -9,7 +9,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, BookOpen, Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const NEWSAPI_KEY = process.env.NEXT_PUBLIC_NEWSAPI_KEY;
+// NEWSAPI_KEY is no longer accessed directly on the client.
+// It will be used by the /api/news route on the server.
 
 interface NewsApiArticle {
   source: { id: string | null; name: string };
@@ -27,13 +28,13 @@ const mapArticleToPractice = (article: NewsApiArticle, index: number): Practice 
   return {
     id: `${article.source.name?.replace(/\s+/g, '-').toLowerCase() || 'news'}-${index}-${new Date(article.publishedAt).getTime()}`,
     title: article.title,
-    category: article.source.name || 'General Agriculture', // Or derive from keywords
+    category: article.source.name || 'General Agriculture',
     summary: article.description || 'Read more for details.',
-    imageUrl: article.urlToImage || `https://placehold.co/600x400.png`, // Fallback
-    imageHint: article.title.split(' ').slice(0, 2).join(' ').toLowerCase() || 'agriculture news', // Basic hint
+    imageUrl: article.urlToImage || `https://placehold.co/600x400.png`,
+    imageHint: article.title.split(' ').slice(0, 2).join(' ').toLowerCase() || 'agriculture news',
     link: article.url,
     type: 'Article',
-    isExternal: true, // Mark as external to use <img> tag
+    isExternal: true,
     publishedAt: article.publishedAt,
   };
 };
@@ -42,57 +43,54 @@ export default function BestPracticesPage() {
   const [articles, setArticles] = useState<Practice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture'); // Default search
+  const [searchTerm, setSearchTerm] = useState('sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture');
   const [currentQuery, setCurrentQuery] = useState(searchTerm);
   const { toast } = useToast();
 
   const fetchArticles = useCallback(async (query: string) => {
-    if (!NEWSAPI_KEY || NEWSAPI_KEY === "YOUR_NEWSAPI_KEY") {
-      setError("NewsAPI key is not configured. Please set NEXT_PUBLIC_NEWSAPI_KEY in your .env file.");
-      setIsLoading(false);
-      setArticles([]); // Clear articles if API key is missing
-      return;
-    }
     setIsLoading(true);
     setError(null);
     try {
-      // Fetching general news from 'everything' endpoint, sorted by relevancy.
-      // Language set to English.
-      // Added common agricultural terms.
-      const response = await fetch(
-        `https://newsapi.org/v2/everything?q=(${encodeURIComponent(query)})&language=en&sortBy=relevancy&pageSize=12&apiKey=${NEWSAPI_KEY}`
-      );
+      // Fetch from our internal API route
+      const response = await fetch(`/api/news?query=${encodeURIComponent(query)}&pageSize=12`);
+      
       if (!response.ok) {
-        let errorMsg = `Error: ${response.statusText}`;
+        let errorMsg = `Error: ${response.statusText} (${response.status})`;
         try {
             const errorData = await response.json();
-            if (errorData && errorData.message) {
-                 errorMsg = errorData.message;
-                 if(errorData.code === 'apiKeyMissing' || errorData.code === 'apiKeyInvalid') {
-                    errorMsg = "Invalid or missing NewsAPI key. Please check your configuration.";
+            if (errorData && errorData.error) { // Our API route returns 'error'
+                 errorMsg = errorData.error;
+                 if(errorData.newsApiStatus === 401 || errorData.newsApiStatus === 426) { // 426 is NewsAPI's code for client-side requests on dev plan
+                    errorMsg = "NewsAPI configuration error on the server or plan issue. Contact support.";
+                 } else if (errorData.newsApiStatus === 429) {
+                    errorMsg = "NewsAPI rate limit exceeded. Please try again later.";
                  }
             }
         } catch(e) {/* ignore json parse error */}
         throw new Error(errorMsg);
       }
-      const data = await response.json();
+      const data = await response.json(); // Data from our internal API
+      
       if (data.articles && data.articles.length > 0) {
         setArticles(data.articles.map(mapArticleToPractice));
-      } else {
+      } else if (data.articles && data.articles.length === 0) {
         setArticles([]);
         toast({
             title: "No Articles Found",
             description: `No articles found for your query: "${query}". Try a different search term.`,
         });
+      } else if (data.error) { // Handle errors reported by our API wrapper
+        throw new Error(data.error);
       }
     } catch (err: any) {
       console.error("Failed to fetch articles:", err);
-      setError(err.message || 'Failed to fetch articles.');
-      setArticles([]); // Clear articles on error
+      const displayError = err.message || 'Failed to fetch articles.';
+      setError(displayError);
+      setArticles([]);
       toast({
         variant: "destructive",
         title: "Error Fetching Articles",
-        description: err.message || "An unexpected error occurred.",
+        description: displayError,
       });
     } finally {
       setIsLoading(false);
@@ -100,19 +98,12 @@ export default function BestPracticesPage() {
   }, [toast]);
 
   useEffect(() => {
+    // Initial fetch
     fetchArticles(currentQuery);
   }, [fetchArticles, currentQuery]);
 
-  useEffect(() => {
-    if (!NEWSAPI_KEY || NEWSAPI_KEY === "YOUR_NEWSAPI_KEY") {
-        toast({
-            variant: "destructive",
-            title: "Configuration Error",
-            description: "NewsAPI key is not configured. Please set NEXT_PUBLIC_NEWSAPI_KEY in your .env file to see articles.",
-            duration: Infinity
-        });
-    }
-  }, [toast]);
+  // Removed useEffect for client-side NEWSAPI_KEY check as it's now server-side.
+  // The API route itself handles the key check.
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -123,8 +114,7 @@ export default function BestPracticesPage() {
   
   const handleClearSearch = () => {
     setSearchTerm('');
-    // Optionally, reset to default query or leave as is. For now, just clears input.
-    // If you want to reset to default, uncomment:
+    // Optionally reset to default query or clear results.
     // setCurrentQuery('sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture');
   };
 
@@ -164,9 +154,10 @@ export default function BestPracticesPage() {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
-           {(error.toLowerCase().includes("newsapi key") || error.toLowerCase().includes("next_public_newsapi_key")) && (
+           {/* Display a generic message for server-side key issues now */}
+           {(error.toLowerCase().includes("newsapi key") || error.toLowerCase().includes("newsapi configuration error")) && (
                 <p className="text-xs mt-2">
-                    Please verify your NewsAPI key in your <code>.env</code> or <code>src/.env</code> file (as <code>NEXT_PUBLIC_NEWSAPI_KEY</code>) and restart your development server.
+                    There might be an issue with the NewsAPI configuration on the server. Please contact support or check server logs.
                 </p>
             )}
         </Alert>
