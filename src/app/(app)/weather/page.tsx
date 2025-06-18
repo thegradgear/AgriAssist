@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useState, useEffect, useCallback } from 'react';
-import { Loader2, LocateFixed, RefreshCw, AlertTriangle, CloudSun, MapPin } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Loader2, RefreshCw, AlertTriangle, CloudSun, MapPin, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Coordinates {
@@ -17,24 +17,37 @@ interface Coordinates {
   longitude: number;
 }
 
-const isValidLatitude = (lat: number) => lat >= -90 && lat <= 90;
-const isValidLongitude = (lon: number) => lon >= -180 && lon <= 180;
+interface PlaceSuggestion {
+  name: string;
+  country: string;
+  state?: string;
+  lat: number;
+  lon: number;
+  displayName: string;
+}
 
 const OPENWEATHERMAP_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
-
 export default function WeatherPage() {
-  const [locationInput, setLocationInput] = useState('');
-  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
-  const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
+  const [cityInput, setCityInput] = useState('');
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  
+  const [selectedCoordinates, setSelectedCoordinates] = useState<Coordinates | null>(null);
   const [currentWeather, setCurrentWeather] = useState<CurrentWeatherData | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
+  
+  const [isLoadingWeatherData, setIsLoadingWeatherData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const suggestionsBoxRef = useRef<HTMLDivElement>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+
   const mapOpenWeatherMapAlert = (alertData: any, index: number): WeatherAlert => {
-    let severity: WeatherAlert['severity'] = 'Moderate'; // Default
+    let severity: WeatherAlert['severity'] = 'Moderate';
     const eventLower = alertData.event?.toLowerCase() || "";
     if (eventLower.includes('warning')) severity = 'High';
     if (eventLower.includes('watch') || eventLower.includes('advisory')) severity = 'Moderate';
@@ -44,68 +57,40 @@ export default function WeatherPage() {
       id: `${alertData.event?.replace(/\s+/g, '-') || 'alert'}-${index}`,
       event: alertData.event || "Weather Alert",
       severity: severity,
-      headline: alertData.description || "Important weather information.", 
+      headline: alertData.description || "Important weather information.",
       description: alertData.description || "Details not available.",
-      instruction: alertData.instruction || undefined, 
+      instruction: alertData.instruction || undefined,
       sent: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       effective: alertData.start ? new Date(alertData.start * 1000).toISOString() : new Date().toISOString(),
       expires: alertData.end ? new Date(alertData.end * 1000).toISOString() : undefined,
-      areaDesc: coordinates ? `Around Lat: ${coordinates.latitude.toFixed(2)}, Lon: ${coordinates.longitude.toFixed(2)}` : "Selected area",
+      areaDesc: selectedCoordinates ? `Around Lat: ${selectedCoordinates.latitude.toFixed(2)}, Lon: ${selectedCoordinates.longitude.toFixed(2)}` : "Selected area",
       senderName: alertData.sender_name || "Weather Service",
       tags: alertData.tags || [],
     };
   };
 
   const fetchWeatherData = useCallback(async (coords: Coordinates) => {
-    if (!coords) return;
-
     if (!OPENWEATHERMAP_API_KEY) {
-        const apiKeyError = "OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable.";
-        setError(apiKeyError);
-        setIsLoadingData(false);
-        // Do not clear localStorage here, let user see stale data if API key is missing for new fetch
-        return;
-    }
-
-    if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
-      const latError = !isValidLatitude(coords.latitude) ? `Latitude (${coords.latitude}) must be between -90 and 90.` : '';
-      const lonError = !isValidLongitude(coords.longitude) ? `Longitude (${coords.longitude}) must be between -180 and 180.` : '';
-      const combinedError = [latError, lonError].filter(Boolean).join(' ');
-      setError(combinedError || 'Invalid coordinates provided.');
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Coordinates',
-        description: combinedError || 'Please check the latitude and longitude values.',
-      });
-      setIsLoadingData(false);
+      setError("OpenWeatherMap API key is not configured.");
+      setIsLoadingWeatherData(false);
       return;
     }
-
-    setIsLoadingData(true);
+    setIsLoadingWeatherData(true);
     setError(null);
-    // Don't clear current weather/alerts immediately, only on successful fetch or if API returns no data for them
 
     try {
-      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`);
-      
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric&alerts=true`);
       if (!response.ok) {
         let errorMsg = `Error fetching weather data: ${response.statusText} (${response.status})`;
-         try {
-            const errorData = await response.json();
-            if (errorData && errorData.message) {
-                 errorMsg = errorData.message;
-            }
-        } catch (e) {
-            // Failed to parse error JSON, stick with the statusText
-        }
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.message) errorMsg = errorData.message;
+        } catch (e) { /* ignore */ }
         throw new Error(errorMsg);
       }
-      
       const data = await response.json();
+      
       let mappedCurrentWeather: CurrentWeatherData | null = null;
-      let mappedAlerts: WeatherAlert[] = [];
-
-      // Process current weather
       if (data.weather && data.weather.length > 0 && data.main) {
         mappedCurrentWeather = {
           cityName: data.name,
@@ -119,163 +104,194 @@ export default function WeatherPage() {
       }
       setCurrentWeather(mappedCurrentWeather);
 
-      // Process alerts (if present in /data/2.5/weather response)
-      // Note: OpenWeatherMap's /weather endpoint doesn't typically provide the rich 'alerts' array like the OneCall API.
-      // This part is kept for potential future API changes or if some basic alert info is included.
-      // Often, for detailed alerts, a different endpoint or the OneCall API (subscription needed) is better.
-      if (data.alerts && data.alerts.length > 0) {
+      let mappedAlerts: WeatherAlert[] = [];
+      // OpenWeatherMap's /weather endpoint may not have rich alerts. The 'alerts' field is not standard.
+      // This is an optimistic check. For robust alerts, OneCall API (paid) is better.
+      if (data.alerts && Array.isArray(data.alerts) && data.alerts.length > 0) {
         mappedAlerts = data.alerts.map(mapOpenWeatherMapAlert)
           .sort((a: WeatherAlert, b: WeatherAlert) => new Date(b.sent).getTime() - new Date(a.sent).getTime());
       }
       setAlerts(mappedAlerts);
-
-      // Save to localStorage
-      try {
-        localStorage.setItem('weatherCoordinates', JSON.stringify(coords));
-        if (mappedCurrentWeather) {
-          localStorage.setItem('currentWeather', JSON.stringify(mappedCurrentWeather));
-        } else {
-          localStorage.removeItem('currentWeather');
-        }
-        localStorage.setItem('weatherAlerts', JSON.stringify(mappedAlerts));
-      } catch (e) {
-        console.error("Error saving to localStorage", e);
-      }
       
-      if (mappedAlerts.length > 0 && mappedCurrentWeather) {
-        toast({
-            title: 'Weather Data Updated',
-            description: `Current weather and ${mappedAlerts.length} alert(s) found.`,
-        });
-      } else if (mappedCurrentWeather) {
-         toast({
-            title: 'Weather Data Updated',
-            description: 'Current weather fetched. No active alerts reported for this location.',
-        });
+      localStorage.setItem('weatherCoordinates', JSON.stringify(coords));
+      if (mappedCurrentWeather) localStorage.setItem('currentWeather', JSON.stringify(mappedCurrentWeather)); else localStorage.removeItem('currentWeather');
+      localStorage.setItem('weatherAlerts', JSON.stringify(mappedAlerts));
+      if (cityInput && mappedCurrentWeather) localStorage.setItem('lastSearchedCityName', mappedCurrentWeather.cityName || cityInput)
+
+
+      if (mappedCurrentWeather) {
+         toast({ title: 'Weather Data Updated', description: `Current weather for ${mappedCurrentWeather.cityName} fetched.`});
       } else {
-         toast({
-            variant: 'destructive',
-            title: 'Weather Data Issue',
-            description: 'Could not fetch complete weather information.',
-        });
+         toast({ variant: 'destructive', title: 'Weather Data Issue', description: 'Could not fetch complete weather information.'});
       }
 
     } catch (err: any) {
       console.error("Fetch weather data error:", err);
       const errorMessage = err.message || 'Failed to fetch weather data.';
       setError(errorMessage);
-      toast({
-        variant: 'destructive',
-        title: 'Error Fetching Data',
-        description: `${errorMessage} Please check your API key, subscription, or network. If you recently updated your API key, try restarting the server.`,
-      });
-      // Do not clear localStorage on error, keep stale data if available
+      toast({ variant: 'destructive', title: 'Error Fetching Data', description: `${errorMessage}` });
     } finally {
-      setIsLoadingData(false);
+      setIsLoadingWeatherData(false);
     }
-  }, [toast]);
+  }, [toast, cityInput]); // Added cityInput to dependencies for localStorage
 
-  // Effect to load data from localStorage on initial mount
+  const fetchPlaceSuggestions = useCallback(async (query: string) => {
+    if (!query.trim() || !OPENWEATHERMAP_API_KEY) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    setIsLoadingSuggestions(true);
+    try {
+      const response = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${OPENWEATHERMAP_API_KEY}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch suggestions');
+      }
+      const data = await response.json();
+      const mappedSuggestions: PlaceSuggestion[] = data.map((item: any) => ({
+        name: item.name,
+        country: item.country,
+        state: item.state,
+        lat: item.lat,
+        lon: item.lon,
+        displayName: `${item.name}${item.state ? ', ' + item.state : ''}, ${item.country}`
+      }));
+      setSuggestions(mappedSuggestions);
+      setShowSuggestions(mappedSuggestions.length > 0);
+    } catch (err) {
+      console.error("Fetch suggestions error:", err);
+      setSuggestions([]);
+      setShowSuggestions(false);
+      // Optionally toast an error for suggestions if needed
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    if (cityInput.trim().length > 2) { // Start fetching after 2 characters
+      debounceTimeoutRef.current = setTimeout(() => {
+        fetchPlaceSuggestions(cityInput);
+      }, 500); // 500ms debounce
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [cityInput, fetchPlaceSuggestions]);
+
+  // Load from localStorage on mount
   useEffect(() => {
     try {
+      const storedCityName = localStorage.getItem('lastSearchedCityName');
       const storedCoordsStr = localStorage.getItem('weatherCoordinates');
-      if (storedCoordsStr) {
+      if (storedCityName && storedCoordsStr) {
         const storedCoords = JSON.parse(storedCoordsStr);
-        setCoordinates(storedCoords);
-        setLocationInput(`${storedCoords.latitude.toFixed(4)}, ${storedCoords.longitude.toFixed(4)}`);
-
+        setCityInput(storedCityName);
+        setSelectedCoordinates(storedCoords);
+        // fetchWeatherData(storedCoords); // Fetch on load
+        
         const storedCurrentWeatherStr = localStorage.getItem('currentWeather');
-        if (storedCurrentWeatherStr) {
-          setCurrentWeather(JSON.parse(storedCurrentWeatherStr));
-        }
+        if (storedCurrentWeatherStr) setCurrentWeather(JSON.parse(storedCurrentWeatherStr));
         const storedAlertsStr = localStorage.getItem('weatherAlerts');
-        if (storedAlertsStr) {
-          setAlerts(JSON.parse(storedAlertsStr));
-        }
+        if (storedAlertsStr) setAlerts(JSON.parse(storedAlertsStr));
+
       }
     } catch (e) {
-      console.error("Error loading weather data from localStorage", e);
-      // Clear potentially corrupted data
+      console.error("Error loading from localStorage", e);
+      localStorage.removeItem('lastSearchedCityName');
       localStorage.removeItem('weatherCoordinates');
       localStorage.removeItem('currentWeather');
       localStorage.removeItem('weatherAlerts');
     }
-  }, []); // Runs once on mount
+  }, []); // Removed fetchWeatherData from initial load to avoid redundant calls
 
-  // Effect to check for API Key (runs once after localStorage load attempt)
-   useEffect(() => {
+  useEffect(() => {
     if (!OPENWEATHERMAP_API_KEY) {
-      const apiKeyError = "CRITICAL: OpenWeatherMap API key is not configured. Please set the NEXT_PUBLIC_OPENWEATHERMAP_API_KEY environment variable for the weather feature to work.";
-      setError(apiKeyError); // Set error state
-      toast({
-        variant: "destructive",
-        title: "Configuration Error",
-        description: apiKeyError,
-        duration: Infinity, 
-      });
+      setError("CRITICAL: OpenWeatherMap API key is not configured.");
+      toast({ variant: "destructive", title: "Configuration Error", description: "OpenWeatherMap API key missing.", duration: Infinity });
     }
   }, [toast]);
-
-
-  const handleManualLocationSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const parts = locationInput.split(',').map(s => s.trim());
-    if (parts.length === 2) {
-      const lat = parseFloat(parts[0]);
-      const lon = parseFloat(parts[1]);
-      if (!isNaN(lat) && !isNaN(lon)) {
-        const newCoords = { latitude: lat, longitude: lon };
-        setCoordinates(newCoords); // Update coordinates state
-        fetchWeatherData(newCoords);
-        return;
-      }
-    }
-    setError('Invalid format. Please use "latitude,longitude" (e.g., "28.61,77.23").');
-    toast({
-        variant: 'destructive',
-        title: 'Invalid Location Format',
-        description: 'Please enter coordinates as "latitude,longitude".',
-    });
+  
+  const handleSuggestionClick = (suggestion: PlaceSuggestion) => {
+    setCityInput(suggestion.displayName);
+    const coords = { latitude: suggestion.lat, longitude: suggestion.lon };
+    setSelectedCoordinates(coords);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    fetchWeatherData(coords);
   };
-
-  const getGPSLocation = useCallback(() => {
-    if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.');
-      toast({ variant: 'destructive', title: 'Geolocation Not Supported'});
+  
+  const handleManualCitySearch = async () => {
+    if (!cityInput.trim()) {
+      setError("Please enter a city name.");
+      toast({variant: 'destructive', title: 'Input Required', description: "City name cannot be empty."});
       return;
     }
-    setIsLoadingLocation(true);
+    if (!OPENWEATHERMAP_API_KEY) {
+      setError("OpenWeatherMap API key is not configured.");
+      return;
+    }
+    setIsLoadingWeatherData(true); // Indicate loading for geocoding + weather fetch
     setError(null);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const newCoords = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
-        setCoordinates(newCoords); // Update coordinates state
-        setLocationInput(`${newCoords.latitude.toFixed(4)}, ${newCoords.longitude.toFixed(4)}`);
-        fetchWeatherData(newCoords);
-        setIsLoadingLocation(false);
-      },
-      (err) => {
-        setError(`Error getting location: ${err.message}`);
-        toast({ variant: 'destructive', title: 'Location Error', description: err.message });
-        setIsLoadingLocation(false);
+    try {
+      // First, geocode the cityInput to get lat/lon
+      const geoResponse = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(cityInput)}&limit=1&appid=${OPENWEATHERMAP_API_KEY}`);
+      if (!geoResponse.ok) throw new Error('Failed to geocode city');
+      const geoData = await geoResponse.json();
+      if (geoData.length === 0) {
+        setError(`Could not find location: ${cityInput}`);
+        toast({variant: 'destructive', title: 'Location Not Found', description: `No results for "${cityInput}".`});
+        setIsLoadingWeatherData(false);
+        return;
       }
-    );
-  }, [fetchWeatherData, toast]);
+      const { lat, lon, name, country, state } = geoData[0];
+      const coords = { latitude: lat, longitude: lon };
+      setSelectedCoordinates(coords);
+      // Update cityInput to the name returned by geocoding API for consistency
+      setCityInput(`${name}${state ? ', ' + state : ''}, ${country}`); 
+      localStorage.setItem('lastSearchedCityName', `${name}${state ? ', ' + state : ''}, ${country}`);
+      fetchWeatherData(coords); // Now fetch weather with the obtained coordinates
+    } catch (err: any) {
+      console.error("Geocoding or weather fetch error:", err);
+      setError(err.message || "Failed to get weather for the city.");
+      toast({variant: 'destructive', title: 'Search Failed', description: err.message});
+      setIsLoadingWeatherData(false);
+    }
+    setShowSuggestions(false);
+  };
 
-  const disableActions = isLoadingData || isLoadingLocation || !OPENWEATHERMAP_API_KEY;
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsBoxRef.current && !suggestionsBoxRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+
+  const disableActions = isLoadingWeatherData || isLoadingSuggestions || !OPENWEATHERMAP_API_KEY;
 
   return (
     <div className="container mx-auto">
       <PageHeader
         title="Weather Information"
-        description="Get current weather conditions and alerts for your location (powered by OpenWeatherMap)."
-        actions={coordinates && (
-          <Button onClick={() => coordinates && fetchWeatherData(coordinates)} variant="outline" disabled={disableActions}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingData ? 'animate-spin' : ''}`} />
+        description="Get current weather and alerts by city name (powered by OpenWeatherMap)."
+        actions={selectedCoordinates && (
+          <Button onClick={() => selectedCoordinates && fetchWeatherData(selectedCoordinates)} variant="outline" disabled={disableActions || isLoadingWeatherData}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingWeatherData ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
         )}
@@ -283,42 +299,49 @@ export default function WeatherPage() {
 
       <Card className="mb-8 shadow-lg rounded-lg">
         <CardHeader>
-          <CardTitle className="font-headline">Set Your Location</CardTitle>
-          <CardDescription>Enter latitude and longitude (e.g., for New Delhi: 28.61,77.23) or use GPS.</CardDescription>
+          <CardTitle className="font-headline">Enter City Name</CardTitle>
+          <CardDescription>Type a city name to get weather information and suggestions.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={handleManualLocationSubmit} className="space-y-4 md:space-y-0 md:flex md:items-end md:gap-4">
-            <div className="flex-grow">
-              <Label htmlFor="location-input">Latitude,Longitude</Label>
+          <div className="flex items-start gap-2">
+            <div className="flex-grow relative" ref={suggestionsBoxRef}>
+              <Label htmlFor="city-input" className="sr-only">City Name</Label>
               <Input
-                id="location-input"
+                id="city-input"
                 type="text"
-                value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value)}
-                placeholder="e.g., 28.6139,77.2090"
-                className="mt-1"
+                value={cityInput}
+                onChange={(e) => {
+                  setCityInput(e.target.value);
+                  if (e.target.value.trim().length > 2) setShowSuggestions(true); else setShowSuggestions(false);
+                }}
+                onFocus={() => cityInput.trim().length > 2 && suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="e.g., London, New Delhi, Tokyo"
+                className="pr-10"
               />
+              {isLoadingSuggestions && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />
+              )}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  <ul>
+                    {suggestions.map((s, index) => (
+                      <li
+                        key={`${s.lat}-${s.lon}-${index}`}
+                        className="px-3 py-2 text-sm hover:bg-accent cursor-pointer"
+                        onClick={() => handleSuggestionClick(s)}
+                      >
+                        {s.displayName}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-            <Button type="submit" disabled={disableActions || !locationInput.trim()} className="w-full md:w-auto">
-              {isLoadingData && coordinates && locationInput.startsWith(String(coordinates.latitude)) ? ( 
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
-              Get Weather
+            <Button onClick={handleManualCitySearch} disabled={disableActions || !cityInput.trim() || isLoadingWeatherData}>
+              {isLoadingWeatherData && !isLoadingSuggestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-0 md:mr-2 h-4 w-4" />}
+              <span className="hidden md:inline">Get Weather</span>
             </Button>
-          </form>
-          <div className="relative flex items-center">
-            <div className="flex-grow border-t border-muted"></div>
-            <span className="flex-shrink mx-4 text-muted-foreground text-xs">OR</span>
-            <div className="flex-grow border-t border-muted"></div>
           </div>
-          <Button onClick={getGPSLocation} variant="outline" className="w-full" disabled={disableActions}>
-            {isLoadingLocation ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <LocateFixed className="mr-2 h-4 w-4" />
-            )}
-            Use My Current Location
-          </Button>
         </CardContent>
       </Card>
       
@@ -331,30 +354,35 @@ export default function WeatherPage() {
             </div>
             {error.toLowerCase().includes("api key") && (
                 <p className="text-xs text-destructive mt-2">
-                    Please verify your OpenWeatherMap API key in the <code>.env</code> file (e.g., <code>src/.env</code> or root <code>.env</code>) by setting <code>NEXT_PUBLIC_OPENWEATHERMAP_API_KEY</code> and restart your development server.
+                    Please verify your OpenWeatherMap API key in your <code>.env</code> file by setting <code>NEXT_PUBLIC_OPENWEATHERMAP_API_KEY</code> and restart your development server.
                 </p>
             )}
           </CardContent>
         </Card>
       )}
 
-      {isLoadingData && (
+      {isLoadingWeatherData && (
         <div className="space-y-6">
+          {/* Skeleton for CurrentWeatherDisplay */}
           <Card className="shadow-lg animate-pulse">
-            <CardHeader>
-              <div className="h-6 bg-muted rounded w-1/2 mb-2"></div>
-              <div className="h-4 bg-muted rounded w-3/4"></div>
+            <CardHeader className="bg-primary/10 p-4 sm:p-6">
+                <div className="h-6 bg-muted rounded w-1/2 mb-1"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="h-8 bg-muted rounded w-1/4"></div>
-              <div className="h-5 bg-muted rounded w-1/3"></div>
-              <div className="flex justify-between">
-                <div className="h-4 bg-muted rounded w-1/4"></div>
-                <div className="h-4 bg-muted rounded w-1/4"></div>
-              </div>
+            <CardContent className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-2 p-4 bg-muted/50 rounded-md">
+                    <div className="h-10 bg-muted rounded w-1/2"></div>
+                    <div className="h-5 bg-muted rounded w-3/4"></div>
+                    <div className="h-4 bg-muted rounded w-1/2"></div>
+                </div>
+                <div className="space-y-3 p-4 bg-muted/50 rounded-md">
+                    <div className="h-5 bg-muted rounded w-full"></div>
+                    <div className="h-5 bg-muted rounded w-full"></div>
+                </div>
             </CardContent>
           </Card>
-           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Skeleton for WeatherAlertCard (if any expected) */}
+           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
             {[1, 2].map(i => (
               <div key={i} className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 animate-pulse">
                 <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
@@ -367,7 +395,7 @@ export default function WeatherPage() {
         </div>
       )}
 
-      {!isLoadingData && coordinates && !error && OPENWEATHERMAP_API_KEY && (
+      {!isLoadingWeatherData && selectedCoordinates && !error && OPENWEATHERMAP_API_KEY && (
         <div className="space-y-8">
           {currentWeather && <CurrentWeatherDisplay weather={currentWeather} />}
           
@@ -400,19 +428,19 @@ export default function WeatherPage() {
               <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check mx-auto text-primary mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
               <p className="text-xl font-semibold">No Active Alerts</p>
               <p className="text-muted-foreground mt-1">
-                No active weather alerts from OpenWeatherMap for this location. Current weather is displayed above.
+                No active weather alerts reported for this location. Current weather is displayed above.
               </p>
             </div>
           )}
         </div>
       )}
       
-       {!isLoadingData && !coordinates && !error && OPENWEATHERMAP_API_KEY && (
+       {!isLoadingWeatherData && !selectedCoordinates && !error && OPENWEATHERMAP_API_KEY && (
          <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
             <MapPin className="mx-auto h-16 w-16 text-primary mb-4" />
-            <p className="text-xl font-semibold">Enter Location for Weather Info</p>
+            <p className="text-xl font-semibold">Enter City for Weather Info</p>
             <p className="text-muted-foreground mt-1">
-              Please provide your location above to fetch current weather and alerts.
+              Please type a city name above to fetch current weather and alerts.
             </p>
         </div>
       )}
