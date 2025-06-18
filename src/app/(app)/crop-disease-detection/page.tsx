@@ -11,9 +11,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from "@/components/ui/progress";
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Microscope, Leaf, CheckCircle, AlertTriangle, Lightbulb, Loader2, Sparkles, XCircle } from 'lucide-react';
+import { UploadCloud, Microscope, Leaf, CheckCircle, AlertTriangle, Lightbulb, Loader2, Sparkles, XCircle, HelpCircle } from 'lucide-react';
 import type { DiagnoseCropDiseaseOutput } from '@/ai/flows/diagnose-crop-disease';
 import { diagnoseCropDisease } from '@/ai/flows/diagnose-crop-disease';
+import { Form } from '@/components/ui/form'; // Added missing import
 
 const fileToDataUri = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
