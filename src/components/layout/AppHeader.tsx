@@ -56,40 +56,76 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-md sm:px-6">
-      <div className="flex items-center gap-4">
-        <Button variant="link" asChild className="p-0 h-auto">
+      <div className="flex items-center gap-4 lg:hidden"> {/* Logo only for mobile in header, or remove if sidebar shows it */}
+         <Button variant="link" asChild className="p-0 h-auto">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Leaf className="h-7 w-7 text-primary" />
             <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
           </Link>
         </Button>
-        
-        <nav className="hidden md:flex items-center gap-1">
-          {NAV_ITEMS.map((item) => (
-            <Button
-              key={item.href}
-              variant="ghost"
-              className={cn(
-                "text-sm",
-                (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) 
-                  ? "bg-accent text-accent-foreground" 
-                  : "hover:bg-accent/50",
-                item.disabled && "opacity-50 cursor-not-allowed"
-              )}
-              disabled={item.disabled}
-              aria-label={item.label}
-              asChild
-            >
-              <Link href={item.href}>
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.label}
-              </Link>
-            </Button>
-          ))}
-        </nav>
+      </div>
+      <div className="flex-1 lg:hidden">
+        {/* This div is to push user menu to the right on mobile when logo is shown. 
+            If logo is removed from mobile header (as it's in Sheet), this might not be needed or simplified.
+            For now, keeping structure that allows a logo on left, menu icon on far left for sheet, user on far right.
+        */}
       </div>
 
-      <div className="flex items-center gap-3">
+
+      <div className="lg:hidden"> {/* Mobile Menu Trigger - shown only on small screens */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="h-9 w-9">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Open navigation menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col"> {/* Changed side to left */}
+             <SheetHeader className="p-4 border-b">
+               <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <SheetClose asChild>
+                <Button variant="link" asChild className="p-0 h-auto self-start">
+                  <Link href="/dashboard" className="flex items-center gap-2">
+                    <Leaf className="h-7 w-7 text-primary" />
+                    <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
+                  </Link>
+                </Button>
+              </SheetClose>
+            </SheetHeader>
+            <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
+              {NAV_ITEMS.map((item) => (
+                <SheetClose asChild key={item.href}>
+                   <Button
+                    variant={(pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) ? "secondary" : "ghost"}
+                    className="w-full justify-start text-left text-md py-3 h-auto"
+                    disabled={item.disabled}
+                    aria-label={item.label}
+                    asChild
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  </Button>
+                </SheetClose>
+              ))}
+            </nav>
+            {user && (
+              <div className="p-4 border-t mt-auto">
+                 <SheetClose asChild>
+                  <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2 text-md py-3 h-auto">
+                    <LogOut className="mr-3 h-5 w-5" />
+                    <span>Logout</span>
+                  </Button>
+                </SheetClose>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      {/* User menu - aligned to the right, always visible */}
+      <div className="ml-auto flex items-center gap-3">
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -123,58 +159,6 @@ export function AppHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-
-        <div className="md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Open navigation menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] p-0 flex flex-col">
-               <SheetHeader className="p-4 border-b">
-                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                <SheetClose asChild>
-                  <Button variant="link" asChild className="p-0 h-auto self-start">
-                    <Link href="/dashboard" className="flex items-center gap-2">
-                      <Leaf className="h-7 w-7 text-primary" />
-                      <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
-                    </Link>
-                  </Button>
-                </SheetClose>
-              </SheetHeader>
-              <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
-                {NAV_ITEMS.map((item) => (
-                  <SheetClose asChild key={item.href}>
-                     <Button
-                      variant={(pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) ? "secondary" : "ghost"}
-                      className="w-full justify-start text-left text-md py-3 h-auto"
-                      disabled={item.disabled}
-                      aria-label={item.label}
-                      asChild
-                    >
-                      <Link href={item.href}>
-                        <item.icon className="mr-3 h-5 w-5" />
-                        {item.label}
-                      </Link>
-                    </Button>
-                  </SheetClose>
-                ))}
-              </nav>
-              {user && (
-                <div className="p-4 border-t mt-auto">
-                   <SheetClose asChild>
-                    <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2 text-md py-3 h-auto">
-                      <LogOut className="mr-3 h-5 w-5" />
-                      <span>Logout</span>
-                    </Button>
-                  </SheetClose>
-                </div>
-              )}
-            </SheetContent>
-          </Sheet>
-        </div>
       </div>
     </header>
   );
