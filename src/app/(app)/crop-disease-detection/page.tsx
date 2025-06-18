@@ -14,7 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Microscope, Leaf, CheckCircle, AlertTriangle, Lightbulb, Loader2, Sparkles, XCircle, HelpCircle } from 'lucide-react';
 import type { DiagnoseCropDiseaseOutput } from '@/ai/flows/diagnose-crop-disease';
 import { diagnoseCropDisease } from '@/ai/flows/diagnose-crop-disease';
-import { Form } from '@/components/ui/form'; // Added missing import
 
 const fileToDataUri = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -129,7 +128,7 @@ export default function CropDiseaseDetectionPage() {
               Select an image file (JPG, PNG, WEBP, max 5MB). For best results, use a clear image focusing on the affected area.
             </CardDescription>
           </CardHeader>
-          <Form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div>
                 <Label htmlFor="crop-image" className="sr-only">Crop Image</Label>
@@ -194,7 +193,7 @@ export default function CropDiseaseDetectionPage() {
                 )}
               </Button>
             </CardFooter>
-          </Form>
+          </form>
         </Card>
 
         {isLoading && (
