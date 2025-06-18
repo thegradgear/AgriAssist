@@ -56,23 +56,9 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-md sm:px-6">
-      <div className="flex items-center gap-4 lg:hidden"> {/* Logo only for mobile in header, or remove if sidebar shows it */}
-         <Button variant="link" asChild className="p-0 h-auto">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Leaf className="h-7 w-7 text-primary" />
-            <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
-          </Link>
-        </Button>
-      </div>
-      <div className="flex-1 lg:hidden">
-        {/* This div is to push user menu to the right on mobile when logo is shown. 
-            If logo is removed from mobile header (as it's in Sheet), this might not be needed or simplified.
-            For now, keeping structure that allows a logo on left, menu icon on far left for sheet, user on far right.
-        */}
-      </div>
-
-
-      <div className="lg:hidden"> {/* Mobile Menu Trigger - shown only on small screens */}
+      {/* Container for items on the left side on mobile/tablet screens */}
+      <div className="flex items-center gap-2 lg:hidden">
+        {/* Mobile Menu Trigger (Hamburger Icon) */}
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="h-9 w-9">
@@ -80,7 +66,7 @@ export function AppHeader() {
               <span className="sr-only">Open navigation menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[280px] p-0 flex flex-col"> {/* Changed side to left */}
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
              <SheetHeader className="p-4 border-b">
                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <SheetClose asChild>
@@ -122,6 +108,14 @@ export function AppHeader() {
             )}
           </SheetContent>
         </Sheet>
+
+        {/* Mobile Logo Link (next to hamburger) */}
+        <Button variant="link" asChild className="p-0 h-auto">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Leaf className="h-7 w-7 text-primary" />
+            <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
+          </Link>
+        </Button>
       </div>
 
       {/* User menu - aligned to the right, always visible */}
