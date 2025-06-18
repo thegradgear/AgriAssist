@@ -1,5 +1,6 @@
+
 import type { LucideIcon } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
 interface FeatureCardProps {
   icon: LucideIcon;
@@ -9,16 +10,18 @@ interface FeatureCardProps {
 
 export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
   return (
-    <Card className="bg-card/80 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-      <CardHeader className="items-center text-center">
-        <div className="p-3 bg-primary/10 rounded-full mb-4">
-          <Icon className="h-8 w-8 text-primary" />
+    <Card className="bg-card shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full group hover:-translate-y-1 transform">
+      <CardHeader className="items-center text-center pt-6 pb-4">
+        <div className="p-3 bg-primary/10 rounded-full mb-3 group-hover:bg-primary/20 transition-colors">
+          <Icon className="h-7 w-7 text-primary" />
         </div>
-        <CardTitle className="font-headline text-xl">{title}</CardTitle>
+        <CardTitle className="font-headline text-lg text-foreground">{title}</CardTitle>
       </CardHeader>
-      <CardDescription className="px-6 pb-6 text-center flex-grow">
-        {description}
-      </CardDescription>
+      <CardContent className="px-5 pb-6 text-center flex-grow">
+        <CardDescription className="text-sm text-muted-foreground leading-relaxed">
+          {description}
+        </CardDescription>
+      </CardContent>
     </Card>
   );
 }

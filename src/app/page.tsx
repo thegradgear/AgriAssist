@@ -7,27 +7,65 @@ import { HeroSection } from '@/components/marketing/HeroSection';
 import { FeaturesSection } from '@/components/marketing/FeaturesSection';
 import { CallToActionSection } from '@/components/marketing/CallToActionSection';
 import { MarketingFooter } from '@/components/marketing/MarketingFooter';
+import { Skeleton } from '@/components/ui/skeleton'; // For initial loading state
 
 export default function LandingPage() {
   const { loading, isAuthenticating } = useAuth();
-  // The user object is available from useAuth() if needed for conditional rendering
-  // directly on this page, but we are no longer using it for redirection from here.
 
-  // Show a global loading spinner only during the initial authentication check.
-  // Once that's done, the page content will render.
   if (loading || isAuthenticating) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <svg className="animate-spin h-12 w-12 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
+      <div className="flex flex-col min-h-screen bg-background">
+        {/* Skeleton for Header */}
+        <header className="py-4 px-4 sm:px-6 lg:px-8 bg-background/80 backdrop-blur-md sticky top-0 z-50 border-b">
+          <div className="container mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-6 w-24" />
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-24" />
+            </div>
+          </div>
+        </header>
+        {/* Skeleton for Hero Section */}
+        <section className="py-16 md:py-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-6">
+              <Skeleton className="h-12 w-3/4" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <div className="flex gap-4">
+                <Skeleton className="h-12 w-32" />
+                <Skeleton className="h-12 w-32" />
+              </div>
+            </div>
+            <Skeleton className="h-64 md:h-96 rounded-lg" />
+          </div>
+        </section>
+        {/* Skeleton for Features Section */}
+        <section className="py-16 md:py-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Skeleton className="h-10 w-1/2 mx-auto" />
+              <Skeleton className="h-6 w-3/4 mx-auto mt-4" />
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-card/80 shadow-lg rounded-lg p-6">
+                  <Skeleton className="h-10 w-10 mx-auto rounded-full mb-4" />
+                  <Skeleton className="h-6 w-3/4 mx-auto mb-2" />
+                  <Skeleton className="h-4 w-full mx-auto" />
+                  <Skeleton className="h-4 w-5/6 mx-auto mt-1" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
 
-  // If loading and isAuthenticating are false, render the landing page content.
-  // The MarketingHeader component is now responsible for showing appropriate auth-related buttons.
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <MarketingHeader />
