@@ -1,113 +1,194 @@
+'use client';
+
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PracticeCard, type Practice } from '@/components/best-practices/PracticeCard';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle, BookOpen, Loader2, Search } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
+const NEWSAPI_KEY = process.env.NEXT_PUBLIC_NEWSAPI_KEY;
 
-const practices: Practice[] = [
-  {
-    id: '1',
-    title: 'Effective Water Management for Rice Cultivation',
-    category: 'Water Management',
-    summary: 'Learn techniques for optimizing water usage in rice fields, including SRI methods and alternate wetting and drying (AWD).',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'rice paddy',
-    link: '#', // Placeholder link
+interface NewsApiArticle {
+  source: { id: string | null; name: string };
+  author: string | null;
+  title: string;
+  description: string | null;
+  url: string;
+  urlToImage: string | null;
+  publishedAt: string;
+  content: string | null;
+}
+
+// Function to map NewsAPI article to our Practice type
+const mapArticleToPractice = (article: NewsApiArticle, index: number): Practice => {
+  return {
+    id: `${article.source.name?.replace(/\s+/g, '-').toLowerCase() || 'news'}-${index}-${new Date(article.publishedAt).getTime()}`,
+    title: article.title,
+    category: article.source.name || 'General Agriculture', // Or derive from keywords
+    summary: article.description || 'Read more for details.',
+    imageUrl: article.urlToImage || `https://placehold.co/600x400.png`, // Fallback
+    imageHint: article.title.split(' ').slice(0, 2).join(' ').toLowerCase() || 'agriculture news', // Basic hint
+    link: article.url,
     type: 'Article',
-  },
-  {
-    id: '2',
-    title: 'Integrated Pest Management (IPM) for Cotton Crops',
-    category: 'Pest Control',
-    summary: 'A comprehensive guide to IPM strategies that minimize chemical use while effectively controlling pests in cotton.',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'cotton crop',
-    link: '#',
-    type: 'Case Study',
-  },
-  {
-    id: '3',
-    title: 'Soil Health Improvement with Cover Cropping',
-    category: 'Soil Health',
-    summary: 'Discover the benefits of cover crops for soil fertility, structure, and water retention. Includes a video demonstration.',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'cover crops',
-    link: '#',
-    type: 'Video Tutorial',
-  },
-  {
-    id: '4',
-    title: 'Precision Fertilization for Wheat',
-    category: 'Fertilization',
-    summary: 'Techniques for applying the right amount of fertilizer at the right time to maximize wheat yield and minimize environmental impact.',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'wheat field',
-    link: '#',
-    type: 'Article',
-  },
-  {
-    id: '5',
-    title: 'Organic Farming Techniques for Vegetables',
-    category: 'Organic Farming',
-    summary: 'A practical guide to transitioning to organic vegetable farming, covering composting, natural pest control, and certification.',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'organic vegetables',
-    link: '#',
-    type: 'Video Tutorial',
-  },
-  {
-    id: '6',
-    title: 'Post-Harvest Management of Maize to Reduce Losses',
-    category: 'Post-Harvest',
-    summary: 'Best practices for drying, storing, and transporting maize to minimize spoilage and maintain quality.',
-    imageUrl: 'https://placehold.co/600x400.png',
-    imageHint: 'maize harvest',
-    link: '#',
-    type: 'Case Study',
-  },
-];
+    isExternal: true, // Mark as external to use <img> tag
+    publishedAt: article.publishedAt,
+  };
+};
 
-// This would ideally be a client component if search/filter state is managed locally
 export default function BestPracticesPage() {
-  // TODO: Implement search and filter functionality if needed as a client component
-  // For now, this is a server component displaying all practices.
-  const allCategories = ['All', ...new Set(practices.map(p => p.category))];
+  const [articles, setArticles] = useState<Practice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture'); // Default search
+  const [currentQuery, setCurrentQuery] = useState(searchTerm);
+  const { toast } = useToast();
 
+  const fetchArticles = useCallback(async (query: string) => {
+    if (!NEWSAPI_KEY || NEWSAPI_KEY === "YOUR_NEWSAPI_KEY") {
+      setError("NewsAPI key is not configured. Please set NEXT_PUBLIC_NEWSAPI_KEY in your .env file.");
+      setIsLoading(false);
+      setArticles([]); // Clear articles if API key is missing
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Fetching general news from 'everything' endpoint, sorted by relevancy.
+      // Language set to English.
+      // Added common agricultural terms.
+      const response = await fetch(
+        `https://newsapi.org/v2/everything?q=(${encodeURIComponent(query)})&language=en&sortBy=relevancy&pageSize=12&apiKey=${NEWSAPI_KEY}`
+      );
+      if (!response.ok) {
+        let errorMsg = `Error: ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            if (errorData && errorData.message) {
+                 errorMsg = errorData.message;
+                 if(errorData.code === 'apiKeyMissing' || errorData.code === 'apiKeyInvalid') {
+                    errorMsg = "Invalid or missing NewsAPI key. Please check your configuration.";
+                 }
+            }
+        } catch(e) {/* ignore json parse error */}
+        throw new Error(errorMsg);
+      }
+      const data = await response.json();
+      if (data.articles && data.articles.length > 0) {
+        setArticles(data.articles.map(mapArticleToPractice));
+      } else {
+        setArticles([]);
+        toast({
+            title: "No Articles Found",
+            description: `No articles found for your query: "${query}". Try a different search term.`,
+        });
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch articles:", err);
+      setError(err.message || 'Failed to fetch articles.');
+      setArticles([]); // Clear articles on error
+      toast({
+        variant: "destructive",
+        title: "Error Fetching Articles",
+        description: err.message || "An unexpected error occurred.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchArticles(currentQuery);
+  }, [fetchArticles, currentQuery]);
+
+  useEffect(() => {
+    if (!NEWSAPI_KEY || NEWSAPI_KEY === "YOUR_NEWSAPI_KEY") {
+        toast({
+            variant: "destructive",
+            title: "Configuration Error",
+            description: "NewsAPI key is not configured. Please set NEXT_PUBLIC_NEWSAPI_KEY in your .env file to see articles.",
+            duration: Infinity
+        });
+    }
+  }, [toast]);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      setCurrentQuery(searchTerm.trim());
+    }
+  };
+  
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    // Optionally, reset to default query or leave as is. For now, just clears input.
+    // If you want to reset to default, uncomment:
+    // setCurrentQuery('sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture');
+  };
 
   return (
     <div className="container mx-auto">
       <PageHeader
-        title="Best Practices Library"
-        description="Explore curated farming techniques, case studies, and video tutorials to enhance your agricultural practices."
+        title="Agricultural Articles &amp; News"
+        description="Explore recent articles and news related to farming techniques, soil health, and agricultural innovations."
       />
       
-      {/* Search and Filter Section - Future Enhancement */}
-      {/* <div className="mb-8 flex flex-col md:flex-row gap-4">
-        <Input placeholder="Search practices..." className="max-w-sm" />
-      </div> */}
+      <form onSubmit={handleSearch} className="mb-8 flex flex-col sm:flex-row gap-2 items-center">
+        <Input 
+          placeholder="Search articles (e.g., 'organic pest control')" 
+          className="flex-grow" 
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Button type="submit" disabled={isLoading || !searchTerm.trim()}>
+          <Search className="mr-2 h-4 w-4" /> Search
+        </Button>
+         {searchTerm && (
+          <Button type="button" variant="outline" onClick={handleClearSearch} disabled={isLoading}>
+            Clear
+          </Button>
+        )}
+      </form>
 
-      <Tabs defaultValue="All" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:flex xl:flex-wrap xl:w-auto mb-6">
-          {allCategories.map(category => (
-            <TabsTrigger key={category} value={category}>{category}</TabsTrigger>
+      {isLoading && (
+        <div className="flex justify-center items-center py-10">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="ml-3 text-lg text-muted-foreground">Loading articles...</p>
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <Alert variant="destructive" className="mb-8">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+           {(error.toLowerCase().includes("newsapi key") || error.toLowerCase().includes("next_public_newsapi_key")) && (
+                <p className="text-xs mt-2">
+                    Please verify your NewsAPI key in your <code>.env</code> or <code>src/.env</code> file (as <code>NEXT_PUBLIC_NEWSAPI_KEY</code>) and restart your development server.
+                </p>
+            )}
+        </Alert>
+      )}
+
+      {!isLoading && !error && articles.length === 0 && (
+        <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
+            <BookOpen className="mx-auto h-16 w-16 text-primary mb-4" />
+            <p className="text-xl font-semibold">No Articles Found</p>
+            <p className="text-muted-foreground mt-1">
+              No articles were found for the current search query. Try broadening your search terms.
+            </p>
+        </div>
+      )}
+
+      {!isLoading && !error && articles.length > 0 && (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {articles.map((practice) => (
+            <PracticeCard key={practice.id} practice={practice} />
           ))}
-        </TabsList>
-        
-        {allCategories.map(category => (
-          <TabsContent key={category} value={category}>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {practices
-                .filter(p => category === 'All' || p.category === category)
-                .map((practice) => (
-                  <PracticeCard key={practice.id} practice={practice} />
-              ))}
-              {practices.filter(p => category === 'All' || p.category === category).length === 0 && (
-                <p className="col-span-full text-center text-muted-foreground py-10">No practices found for this category.</p>
-              )}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
+        </div>
+      )}
     </div>
   );
 }
