@@ -178,16 +178,38 @@ export default function WeatherPage() {
   }, [toast, cityInput]);
 
   const fetchPlaceSuggestions = useCallback(async (query: string) => {
-    if (!query.trim() || !OPENWEATHERMAP_API_KEY) {
+    if (!query.trim()) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
+    if (!OPENWEATHERMAP_API_KEY) {
+      const errorMsg = "OpenWeatherMap API key is not configured for geocoding. Please set NEXT_PUBLIC_OPENWEATHERMAP_API_KEY.";
+      setError(errorMsg);
+      toast({ variant: 'destructive', title: 'Configuration Error', description: errorMsg });
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
     setIsLoadingSuggestions(true);
+    setError(null); // Clear previous errors related to suggestions
     try {
       const response = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${OPENWEATHERMAP_API_KEY}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch suggestions');
+        let errorMsg = `Error fetching suggestions: ${response.statusText} (${response.status})`;
+        try {
+            const errorData = await response.json();
+            if (errorData && errorData.message) {
+                errorMsg = errorData.message;
+                if (response.status === 401) {
+                     errorMsg = "Invalid API key for geocoding. Please check your OpenWeatherMap API key.";
+                } else if (response.status === 429) {
+                     errorMsg = "Geocoding API rate limit exceeded. Please try again later.";
+                }
+            }
+        } catch (e) { /* Failed to parse JSON, stick with statusText */ }
+        throw new Error(errorMsg);
       }
       const data = await response.json();
       const mappedSuggestions: PlaceSuggestion[] = data.map((item: any) => ({
@@ -200,14 +222,17 @@ export default function WeatherPage() {
       }));
       setSuggestions(mappedSuggestions);
       setShowSuggestions(mappedSuggestions.length > 0);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Fetch suggestions error:", err);
+      const errorMessage = err.message || 'Failed to fetch place suggestions.';
+      setError(errorMessage); // Set the page-level error
+      toast({ variant: 'destructive', title: 'Suggestion Error', description: errorMessage });
       setSuggestions([]);
       setShowSuggestions(false);
     } finally {
       setIsLoadingSuggestions(false);
     }
-  }, []);
+  }, [toast]); // Added toast as a dependency
 
   useEffect(() => {
     if (debounceTimeoutRef.current) {
@@ -278,8 +303,8 @@ export default function WeatherPage() {
       return;
     }
     if (!OPENWEATHERMAP_API_KEY) {
-      // Error already handled by useEffect, but good to check here too
-      setError("OpenWeatherMap API key is not configured.");
+      setError("OpenWeatherMap API key is not configured for geocoding.");
+      toast({variant: 'destructive', title: 'Configuration Error', description: "OpenWeatherMap API key missing."});
       return;
     }
     setIsLoadingWeatherData(true); // Indicate loading for geocoding + weather fetch
@@ -287,11 +312,28 @@ export default function WeatherPage() {
     try {
       // First, geocode the cityInput to get lat/lon
       const geoResponse = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(cityInput)}&limit=1&appid=${OPENWEATHERMAP_API_KEY}`);
-      if (!geoResponse.ok) throw new Error('Failed to geocode city');
+      if (!geoResponse.ok) {
+        let errorMsg = `Failed to geocode city '${cityInput}': ${geoResponse.statusText} (${geoResponse.status})`;
+          try {
+              const errorData = await geoResponse.json();
+              if (errorData && errorData.message) {
+                  errorMsg = errorData.message;
+                  if (geoResponse.status === 401) {
+                       errorMsg = "Invalid API key for geocoding. Please check your OpenWeatherMap API key.";
+                  } else if (geoResponse.status === 429) {
+                       errorMsg = "Geocoding API rate limit exceeded. Please try again later.";
+                  } else if (geoResponse.status === 404 && errorData.message === "city not found") {
+                       errorMsg = `Could not find location: ${cityInput}. Please check the spelling or try a nearby city.`;
+                  }
+              }
+          } catch(e) { /* stick to statusText or original message */ }
+          throw new Error(errorMsg);
+      }
       const geoData = await geoResponse.json();
       if (geoData.length === 0) {
-        setError(`Could not find location: ${cityInput}`);
-        toast({variant: 'destructive', title: 'Location Not Found', description: `No results for "${cityInput}".`});
+        const notFoundError = `Could not find location: ${cityInput}. Please check the spelling or try a different name.`;
+        setError(notFoundError);
+        toast({variant: 'destructive', title: 'Location Not Found', description: notFoundError});
         setIsLoadingWeatherData(false);
         setCurrentWeather(null); // Clear previous weather if location not found
         setAlerts([]);
@@ -307,8 +349,9 @@ export default function WeatherPage() {
       fetchWeatherData(coords); // Now fetch weather with the obtained coordinates
     } catch (err: any) {
       console.error("Geocoding or weather fetch error:", err);
-      setError(err.message || "Failed to get weather for the city.");
-      toast({variant: 'destructive', title: 'Search Failed', description: err.message});
+      const errorMessage = err.message || "Failed to get weather for the city.";
+      setError(errorMessage);
+      toast({variant: 'destructive', title: 'Search Failed', description: errorMessage});
       setIsLoadingWeatherData(false);
     }
     setShowSuggestions(false); // Hide suggestions after search attempt
@@ -399,7 +442,7 @@ export default function WeatherPage() {
               <AlertTriangle className="h-5 w-5 text-destructive mr-2" />
               <p className="text-sm text-destructive font-medium">{error}</p>
             </div>
-            {(error.toLowerCase().includes("api key") || error.toLowerCase().includes("nex_public_openweathermap_api_key")) && (
+            {(error.toLowerCase().includes("api key") || error.toLowerCase().includes("next_public_openweathermap_api_key")) && (
                 <p className="text-xs text-destructive mt-2">
                     Please verify your OpenWeatherMap API key in your <code>.env</code> or <code>src/.env</code> file (as <code>NEXT_PUBLIC_OPENWEATHERMAP_API_KEY</code>) and restart your development server.
                 </p>
@@ -496,4 +539,6 @@ export default function WeatherPage() {
     </div>
   );
 }
+    
+
     
