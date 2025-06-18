@@ -1,29 +1,31 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { AlertTriangle, Info, CalendarClock, BookUser } from 'lucide-react';
+import { AlertTriangle, Info, CalendarClock, BookUser, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 
-export interface NWSWeatherAlert {
+// Updated interface to better match potential OpenWeatherMap alert structure or general alerts
+export interface WeatherAlert {
   id: string;
   event: string;
-  severity: 'Low' | 'Moderate' | 'High' | 'Critical';
-  headline: string;
-  description: string;
+  severity: 'Low' | 'Moderate' | 'High' | 'Critical'; // Severity might be inferred
+  headline: string; // This might be the main description from OWM
+  description: string; // More detailed text if available
   instruction?: string;
-  sent: string;
-  effective: string;
-  expires?: string;
-  areaDesc: string;
+  sent: string; // ISO string
+  effective: string; // ISO string
+  expires?: string; // ISO string
+  areaDesc: string; // Could be less specific depending on API
   senderName: string;
+  tags?: string[]; // OpenWeatherMap might provide tags
 }
 
 interface WeatherAlertCardProps {
-  alert: NWSWeatherAlert;
+  alert: WeatherAlert;
 }
 
-const severityConfig: Record<NWSWeatherAlert['severity'], { colorClasses: string; icon: JSX.Element }> = {
+const severityConfig: Record<WeatherAlert['severity'], { colorClasses: string; icon: JSX.Element }> = {
     Low: { colorClasses: 'border-blue-500 bg-blue-500/10 text-blue-700 dark:border-blue-400 dark:bg-blue-400/10 dark:text-blue-300', icon: <Info className="h-5 w-5" /> },
     Moderate: { colorClasses: 'border-yellow-500 bg-yellow-500/10 text-yellow-700 dark:border-yellow-400 dark:bg-yellow-400/10 dark:text-yellow-300', icon: <AlertTriangle className="h-5 w-5" /> },
     High: { colorClasses: 'border-orange-500 bg-orange-500/10 text-orange-700 dark:border-orange-400 dark:bg-orange-400/10 dark:text-orange-300', icon: <AlertTriangle className="h-5 w-5" /> },
@@ -35,12 +37,14 @@ const formatDate = (dateString?: string): string => {
   try {
     return format(parseISO(dateString), "MMM d, yyyy 'at' h:mm a");
   } catch (e) {
-    return dateString; // Fallback to original string if parsing fails
+    // If parseISO fails, it might be an already formatted string or an invalid one.
+    // Try to return it as is, or handle specific known formats if necessary.
+    return dateString; 
   }
 };
 
 export function WeatherAlertCard({ alert }: WeatherAlertCardProps) {
-  const config = severityConfig[alert.severity];
+  const config = severityConfig[alert.severity] || severityConfig.Moderate; // Fallback to Moderate
   const cardClasses = cn(
     "shadow-md hover:shadow-lg transition-shadow rounded-lg flex flex-col h-full",
     config.colorClasses
@@ -60,7 +64,8 @@ export function WeatherAlertCard({ alert }: WeatherAlertCardProps) {
           </span>
         </div>
          <CardDescription className="text-xs pt-1 text-muted-foreground">
-          Sent: {formatDate(alert.sent)} by {alert.senderName}
+          Reported by: {alert.senderName} <br />
+          Sent: {formatDate(alert.sent)}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col space-y-3 pt-0 pb-4">
@@ -81,21 +86,32 @@ export function WeatherAlertCard({ alert }: WeatherAlertCardProps) {
 
         <p className="text-sm text-muted-foreground"><strong className="font-medium text-current">Areas Affected:</strong> {alert.areaDesc}</p>
         
+        {alert.tags && alert.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 items-center">
+            <Tag className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+            {alert.tags.map((tag, index) => (
+              <span key={index} className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
         <Accordion type="single" collapsible className="w-full text-sm">
-          <AccordionItem value="item-1" className="border-b-0">
-            {alert.description && (
+          {alert.description && alert.description !== alert.headline && ( // Only show if different from headline
+            <AccordionItem value="item-desc" className="border-b-0">
                 <AccordionTrigger className="py-2 text-xs hover:no-underline [&[data-state=open]>svg]:text-primary">
                     Show Full Description
                 </AccordionTrigger>
-            )}
-            <AccordionContent className="pt-1 pb-0">
-              <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line overflow-y-auto max-h-60 p-2 border rounded-md bg-background/50">
-                {alert.description}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+                <AccordionContent className="pt-1 pb-0">
+                  <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line overflow-y-auto max-h-60 p-2 border rounded-md bg-background/50">
+                    {alert.description}
+                  </div>
+                </AccordionContent>
+            </AccordionItem>
+          )}
           {alert.instruction && (
-            <AccordionItem value="item-2" className="border-b-0">
+            <AccordionItem value="item-instr" className="border-b-0">
                  <AccordionTrigger className="py-2 text-xs hover:no-underline [&[data-state=open]>svg]:text-primary">
                     Show Instructions
                 </AccordionTrigger>
