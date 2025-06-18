@@ -16,15 +16,14 @@ export default function CostCalculatorPage() {
         title="Farming Cost Calculator"
         description="Estimate your farming expenses and analyze potential profit margins."
       />
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-        <div className="lg:col-span-2">
+      <div className="space-y-8"> {/* Use space-y for vertical spacing */}
+        <div>
           <CostCalculatorForm onCalculated={setCalculatedResults} />
         </div>
-        <div className="lg:col-span-3">
+        <div>
           <CostCalculatorResults results={calculatedResults} loading={isLoading} />
         </div>
       </div>
     </div>
   );
 }
-
