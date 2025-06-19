@@ -2,13 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Button, buttonVariants } from '@/components/ui/button'; // Imported buttonVariants
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Leaf, Menu, BarChart3, Calculator, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { ThemeToggle } from '@/components/shared/ThemeToggle'; 
-import { cn } from '@/lib/utils'; // Imported cn
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '#hero', label: 'Home', icon: Home },
@@ -38,7 +38,7 @@ export function MarketingHeader() {
             <span className="text-xl font-semibold font-headline opacity-50">AgriAssist</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <div className="w-9 h-9 bg-muted rounded-md opacity-50"></div> 
+            <div className="w-9 h-9 bg-muted rounded-md opacity-50"></div>
             <div className="w-20 h-9 bg-muted rounded-md opacity-50"></div>
             <div className="w-24 h-9 bg-muted rounded-md opacity-50"></div>
           </div>
@@ -49,7 +49,7 @@ export function MarketingHeader() {
 
 
   return (
-    <header 
+    <header
       className={`py-3 px-4 sm:px-6 lg:px-8 sticky top-0 z-50 transition-all duration-300 ease-in-out ${
         isScrolled ? 'bg-background/95 shadow-md backdrop-blur-lg border-b' : 'bg-transparent border-b border-transparent'
       }`}
@@ -57,16 +57,24 @@ export function MarketingHeader() {
       <div className="container mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group" aria-label="Go to AgriAssist homepage">
           <Leaf className="h-8 w-8 text-primary group-hover:text-primary/80 transition-colors" />
-          <span className="text-xl font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span> {/* App name in header */}
+          <span className="text-xl font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span>
         </Link>
-        
+
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
-            <Button variant="ghost" asChild key={link.label}>
-              <Link href={link.href} className="text-foreground/80 hover:text-primary hover:bg-primary/10 px-3 py-2 rounded-md text-base font-medium"> {/* Nav link text style */}
-                {link.label}
-              </Link>
-            </Button>
+            <Link
+              key={link.label}
+              href={link.href}
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "default" }),
+                "text-foreground/80 hover:text-primary hover:bg-primary/10",
+                "px-3 py-2", // Custom padding
+                "text-base font-medium",
+                "h-auto" // Reset height from buttonVariants if needed
+              )}
+            >
+              {link.label}
+            </Link>
           ))}
         </nav>
 
@@ -76,17 +84,35 @@ export function MarketingHeader() {
           </div>
 
           {user ? (
-            <Button asChild className="shadow-sm hover:shadow-md transition-shadow text-sm font-medium"> {/* Button text style */}
-              <Link href="/dashboard">Go to Dashboard</Link>
-            </Button>
+            <Link
+              href="/dashboard"
+              className={cn(
+                buttonVariants({ variant: "default", size: "sm" }),
+                "shadow-sm hover:shadow-md transition-shadow text-sm font-medium"
+              )}
+            >
+              Go to Dashboard
+            </Link>
           ) : (
             <>
-              <Button variant="ghost" asChild className="hover:text-primary hover:bg-primary/10 text-sm font-medium"> {/* Button text style */}
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button asChild className="shadow-sm hover:shadow-md transition-shadow text-sm font-medium"> {/* Button text style */}
-                <Link href="/signup">Sign Up</Link>
-              </Button>
+              <Link
+                href="/login"
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  "hover:text-primary hover:bg-primary/10 text-sm font-medium"
+                )}
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className={cn(
+                  buttonVariants({ variant: "default", size: "sm" }),
+                  "shadow-sm hover:shadow-md transition-shadow text-sm font-medium"
+                )}
+              >
+                Sign Up
+              </Link>
             </>
           )}
           <div className="md:hidden">
@@ -102,25 +128,25 @@ export function MarketingHeader() {
                   <SheetClose asChild>
                     <Link href="/" className="flex items-center gap-2 group mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                       <Leaf className="h-7 w-7 text-primary group-hover:text-primary/80 transition-colors" />
-                      <span className="text-lg font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span> {/* App name in mobile menu */}
+                      <span className="text-lg font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span>
                     </Link>
                   </SheetClose>
                 </div>
                 <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
                   {navLinks.map((item) => (
-                    <SheetClose asChild key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          buttonVariants({ variant: "ghost" }), // Apply button styles
-                          "w-full justify-start text-left text-base py-3 h-auto font-medium" // Custom/override styles
-                        )}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <item.icon className="mr-3 h-5 w-5 text-muted-foreground" />
-                        {item.label}
-                      </Link>
-                    </SheetClose>
+                     <SheetClose asChild key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={cn(
+                            buttonVariants({ variant: "ghost" }),
+                            "w-full justify-start text-left text-base py-3 h-auto font-medium"
+                          )}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <item.icon className="mr-3 h-5 w-5 text-muted-foreground" />
+                          {item.label}
+                        </Link>
+                      </SheetClose>
                   ))}
                 </nav>
                 <div className="p-4 border-t">
