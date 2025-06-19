@@ -47,12 +47,12 @@ export function AppHeader() {
     try {
       await signOut(auth);
       toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
-      router.push('/'); 
+      router.push('/');
     } catch (error) {
       toast({ variant: 'destructive', title: 'Logout Failed', description: 'Could not log out. Please try again.' });
     }
   };
-  
+
   const userInitials = getInitials(user?.name);
 
   return (
@@ -127,7 +127,7 @@ export function AppHeader() {
 
       {/* Theme Toggle (Desktop) and User menu - aligned to the right */}
       <div className="flex items-center gap-3">
-        <div className="hidden md:flex"> {/* ThemeToggle visible on md and up */}
+        <div className="hidden lg:flex"> {/* ThemeToggle visible on lg and up (when fixed sidebar is present) */}
           <ThemeToggle />
         </div>
         {user && (
