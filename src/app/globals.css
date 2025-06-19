@@ -37,31 +37,31 @@ body {
   }
 
   .dark {
-    /* TODO: Define a dark theme if necessary, for now, copying light and adjusting slightly */
-    --background: 20 10% 10%;
-    --foreground: 36 45% 90%;
-    --card: 20 10% 15%;
-    --card-foreground: 36 45% 90%;
-    --popover: 20 10% 15%;
-    --popover-foreground: 36 45% 90%;
-    --primary: 29 50% 66%;
-    --primary-foreground: 20 10% 5%;
-    --secondary: 20 10% 25%;
-    --secondary-foreground: 36 45% 90%;
-    --muted: 20 10% 20%;
-    --muted-foreground: 36 45% 70%;
-    --accent: 29 50% 70%;
-    --accent-foreground: 20 10% 90%;
-    --destructive: 0 60% 45%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 20 10% 30%;
-    --input: 20 10% 25%;
-    --ring: 29 50% 66%;
-    --chart-1: 29 50% 66%;
-    --chart-2: 37 60% 70%;
-    --chart-3: 20 30% 50%;
-    --chart-4: 35 55% 60%;
-    --chart-5: 25 45% 50%;
+    --background: 222 47% 11%; /* Dark Slate Blue */
+    --foreground: 210 40% 98%; /* Almost White */
+    --card: 222 47% 15%; /* Slightly Lighter Dark Slate Blue */
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 15%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 29 50% 66%; /* Muted Orange - kept for contrast */
+    --primary-foreground: 20 10% 5%; /* Dark text on primary */
+    --secondary: 222 47% 22%; /* Lighter Dark Slate Blue for secondary elements */
+    --secondary-foreground: 210 40% 90%; /* Slightly off-white for text on secondary */
+    --muted: 222 47% 18%; /* Subtle Dark Slate Blue for muted backgrounds */
+    --muted-foreground: 210 40% 60%; /* Grayish White for muted text */
+    --accent: 29 50% 70%; /* Slightly lighter Muted orange for accents */
+    --accent-foreground: 20 10% 10%; /* Dark text on accent */
+    --destructive: 0 63% 50%; /* A bit brighter red for dark mode emphasis */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --border: 222 47% 25%; /* A visible border on dark backgrounds */
+    --input: 222 47% 20%; /* Dark input background */
+    --ring: 29 50% 66%; /* Muted Orange for ring - kept */
+    /* Chart colors might need adjustment for dark mode, using light theme versions for now */
+    --chart-1: 29 50% 70%;
+    --chart-2: 37 60% 75%;
+    --chart-3: 20 30% 65%;
+    --chart-4: 35 55% 72%;
+    --chart-5: 25 45% 68%;
   }
 }
 

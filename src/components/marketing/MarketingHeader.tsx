@@ -4,9 +4,10 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import { Leaf, Menu, BarChart3, Calculator, Home } from 'lucide-react'; // Added Home icon
+import { Leaf, Menu, BarChart3, Calculator, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
+import { ThemeToggle } from '@/components/shared/ThemeToggle'; // Import ThemeToggle
 
 const navLinks = [
   { href: '#hero', label: 'Home', icon: Home },
@@ -28,21 +29,26 @@ export function MarketingHeader() {
   }, []);
 
   if (loading || isAuthenticating) {
+    // Basic skeleton for loading state to avoid layout shifts
     return (
-      <header className="py-4 px-4 sm:px-6 lg:px-8 bg-background/80 backdrop-blur-md sticky top-0 z-50 border-b">
-        <div className="container mx-auto flex items-center justify-between">
+      <header className="py-3 px-4 sm:px-6 lg:px-8 bg-background/80 backdrop-blur-md sticky top-0 z-50 border-b">
+        <div className="container mx-auto flex items-center justify-between h-12">
           <div className="flex items-center gap-2">
-            <Leaf className="h-8 w-8 text-primary animate-pulse" />
+            <Leaf className="h-8 w-8 text-primary opacity-50 animate-pulse" />
             <span className="text-xl font-semibold font-headline opacity-50">AgriAssist</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button variant="ghost" disabled className="w-20 h-9 opacity-50"></Button>
-            <Button disabled className="w-24 h-9 opacity-50"></Button>
+            {/* Placeholder for theme toggle */}
+            <div className="w-9 h-9 bg-muted rounded-md opacity-50"></div> 
+            {/* Placeholders for auth buttons */}
+            <div className="w-20 h-9 bg-muted rounded-md opacity-50"></div>
+            <div className="w-24 h-9 bg-muted rounded-md opacity-50"></div>
           </div>
         </div>
       </header>
     );
   }
+
 
   return (
     <header 
@@ -57,7 +63,7 @@ export function MarketingHeader() {
         </Link>
         
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-2">
+        <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Button variant="ghost" asChild key={link.label}>
               <Link href={link.href} className="text-foreground/80 hover:text-primary hover:bg-primary/10 px-3 py-2 rounded-md">
@@ -68,6 +74,11 @@ export function MarketingHeader() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
+           {/* Theme Toggle for Desktop */}
+          <div className="hidden md:flex">
+             <ThemeToggle />
+          </div>
+
           {user ? (
             <Button asChild className="shadow-sm hover:shadow-md transition-shadow">
               <Link href="/dashboard">Go to Dashboard</Link>
@@ -117,6 +128,13 @@ export function MarketingHeader() {
                     </SheetClose>
                   ))}
                 </nav>
+                 {/* Theme Toggle for Mobile Sheet */}
+                <div className="p-4 border-t">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Theme</span>
+                    <ThemeToggle align="end"/>
+                  </div>
+                </div>
               </SheetContent>
             </Sheet>
           </div>

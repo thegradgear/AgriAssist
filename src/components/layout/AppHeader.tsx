@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { NAV_ITEMS } from '@/lib/constants';
@@ -46,7 +47,7 @@ export function AppHeader() {
     try {
       await signOut(auth);
       toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
-      router.push('/login');
+      router.push('/'); // Redirect to landing page on logout
     } catch (error) {
       toast({ variant: 'destructive', title: 'Logout Failed', description: 'Could not log out. Please try again.' });
     }
@@ -56,9 +57,8 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-md sm:px-6">
-      {/* Container for items on the left side on mobile/tablet screens */}
+      {/* Mobile Menu Trigger and Logo (Left Side on Mobile) */}
       <div className="flex items-center gap-2 lg:hidden">
-        {/* Mobile Menu Trigger (Hamburger Icon) */}
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="h-9 w-9">
@@ -96,30 +96,40 @@ export function AppHeader() {
                 </SheetClose>
               ))}
             </nav>
-            {user && (
-              <div className="p-4 border-t mt-auto">
-                 <SheetClose asChild>
-                  <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2 text-md py-3 h-auto">
-                    <LogOut className="mr-3 h-5 w-5" />
-                    <span>Logout</span>
-                  </Button>
-                </SheetClose>
+            {/* Theme Toggle and Logout in Mobile Sidebar Footer */}
+            <div className="p-4 border-t mt-auto space-y-2">
+                 <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Theme</span>
+                    <ThemeToggle align="end" />
+                 </div>
+                 {user && (
+                    <SheetClose asChild>
+                        <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2 text-md py-3 h-auto">
+                        <LogOut className="mr-3 h-5 w-5" />
+                        <span>Logout</span>
+                        </Button>
+                    </SheetClose>
+                 )}
               </div>
-            )}
           </SheetContent>
         </Sheet>
-
-        {/* Mobile Logo Link (next to hamburger) */}
         <Button variant="link" asChild className="p-0 h-auto">
           <Link href="/" className="flex items-center gap-2">
             <Leaf className="h-7 w-7 text-primary" />
-            <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
+            <span className="text-xl font-semibold font-headline text-foreground hover:text-primary lg:hidden">AgriAssist</span>
           </Link>
         </Button>
       </div>
 
-      {/* User menu - aligned to the right, always visible */}
-      <div className="ml-auto flex items-center gap-3">
+      {/* Spacer to push user menu to the right, hidden on mobile */}
+      <div className="hidden lg:flex lg:flex-1"></div>
+
+
+      {/* Theme Toggle (Desktop) and User menu - aligned to the right */}
+      <div className="flex items-center gap-3">
+        <div className="hidden md:flex"> {/* ThemeToggle visible on md and up */}
+          <ThemeToggle />
+        </div>
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
