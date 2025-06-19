@@ -9,59 +9,121 @@ body {
 
 @layer base {
   :root {
-    --background: 36 45% 95%; /* Light beige #F8F3EC */
-    --foreground: 20 10% 20%; /* Darker text for contrast */
-    --card: 37 60% 90%; /* Warm beige #F5E7D2 */
-    --card-foreground: 20 10% 20%;
-    --popover: 37 60% 90%;
-    --popover-foreground: 20 10% 20%;
-    --primary: 29 50% 66%; /* Muted orange #D9A87A for primary actions */
-    --primary-foreground: 20 10% 5%; /* Dark text on primary */
-    --secondary: 37 30% 85%; /* Lighter warm beige for secondary elements */
-    --secondary-foreground: 20 10% 10%;
-    --muted: 37 30% 88%;
-    --muted-foreground: 20 10% 40%;
-    --accent: 29 50% 70%; /* Slightly lighter Muted orange for accents */
-    --accent-foreground: 20 10% 10%;
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 37 30% 80%;
-    --input: 37 30% 85%;
-    --ring: 29 50% 66%;
-    --chart-1: 29 50% 66%;
-    --chart-2: 37 60% 80%;
-    --chart-3: 20 30% 60%;
-    --chart-4: 35 55% 70%;
-    --chart-5: 25 45% 60%;
+    /* Primary Colors (Earth & Growth) */
+    /* Primary - Forest Green (Professional, trustworthy, growth) */
+    --primary: 125 60% 35%;           /* #2D7A2D - Deep forest green */
+    --primary-foreground: 0 0% 98%;   /* #FAFAFA - Clean white text */
+
+    /* Secondary - Warm Terracotta (Earth, warmth, stability) */
+    --secondary: 15 45% 75%;          /* #C4A084 - Warm terracotta */
+    --secondary-foreground: 15 25% 15%; /* #2B2520 - Dark brown text */
+    
+    /* Background & Surface Colors */
+    /* Background - Soft Cream (Clean, professional) */
+    --background: 45 25% 97%;         /* #F9F7F4 - Soft cream white */
+    --foreground: 20 15% 15%;         /* #26221F - Rich dark brown */
+
+    /* Card/Surface - Light Sage (Subtle, natural) */
+    --card: 120 15% 94%;              /* #EDF2ED - Light sage green */
+    --card-foreground: 20 15% 15%;    /* #26221F - Rich dark brown */
+
+    /* Muted - Neutral Beige (Subtle backgrounds) */
+    --muted: 45 20% 92%;              /* #EFEBE6 - Neutral beige */
+    --muted-foreground: 20 8% 45%;    /* #6B635E - Medium brown-gray */
+
+    /* Interactive & Status Colors */
+    /* Accent - Golden Wheat (Harvest, prosperity) */
+    --accent: 45 75% 65%;             /* #E6C068 - Golden wheat */
+    --accent-foreground: 45 25% 15%;  /* #2B2720 - Dark brown */
+
+    /* Success - Fresh Green (Growth, health) */
+    --success: 125 50% 45%;           /* #409F40 - Fresh green */
+    --success-foreground: 0 0% 98%;   /* #FAFAFA - White text */
+
+    /* Warning - Amber Alert (Caution, attention) */
+    --warning: 35 85% 55%;            /* #E89B3F - Warm amber */
+    --warning-foreground: 35 25% 15%; /* #2A1F15 - Dark brown */
+
+    /* Destructive - Rust Red (Problems, alerts) */
+    --destructive: 5 70% 50%;         /* #D9472B - Rust red */
+    --destructive-foreground: 0 0% 98%; /* #FAFAFA - White text */
+    
+    /* Utility Colors */
+    /* Border & Input */
+    --border: 45 25% 85%;             /* #DDD6CE - Soft brown border */
+    --input: 45 25% 96%;              /* #F7F4F1 - Input background */
+    --ring: 125 60% 35%;              /* Same as primary - focus rings */
+
+    /* Popover */
+    --popover: 0 0% 100%;             /* #FFFFFF - Pure white */
+    --popover-foreground: 20 15% 15%; /* #26221F - Rich dark brown */
+    
+    /* Chart Colors (Example - can be tailored) */
+    --chart-1: 125 60% 35%; /* Primary */
+    --chart-2: 45 75% 65%; /* Accent */
+    --chart-3: 15 45% 75%; /* Secondary */
+    --chart-4: 125 50% 45%; /* Success */
+    --chart-5: 35 85% 55%; /* Warning */
+
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222 47% 11%; /* Dark Slate Blue */
-    --foreground: 210 40% 98%; /* Almost White */
-    --card: 222 47% 15%; /* Slightly Lighter Dark Slate Blue */
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 15%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 29 50% 66%; /* Muted Orange - kept for contrast */
-    --primary-foreground: 20 10% 5%; /* Dark text on primary */
-    --secondary: 222 47% 22%; /* Lighter Dark Slate Blue for secondary elements */
-    --secondary-foreground: 210 40% 90%; /* Slightly off-white for text on secondary */
-    --muted: 222 47% 18%; /* Subtle Dark Slate Blue for muted backgrounds */
-    --muted-foreground: 210 40% 60%; /* Grayish White for muted text */
-    --accent: 29 50% 70%; /* Slightly lighter Muted orange for accents */
-    --accent-foreground: 20 10% 10%; /* Dark text on accent */
-    --destructive: 0 63% 50%; /* A bit brighter red for dark mode emphasis */
-    --destructive-foreground: 0 0% 100%; /* White text on destructive */
-    --border: 222 47% 25%; /* A visible border on dark backgrounds */
-    --input: 222 47% 20%; /* Dark input background */
-    --ring: 29 50% 66%; /* Muted Orange for ring - kept */
-    /* Chart colors might need adjustment for dark mode, using light theme versions for now */
-    --chart-1: 29 50% 70%;
-    --chart-2: 37 60% 75%;
-    --chart-3: 20 30% 65%;
-    --chart-4: 35 55% 72%;
-    --chart-5: 25 45% 68%;
+    /* Primary Colors */
+    /* Primary - Sage Green (Calming, natural in dark mode) */
+    --primary: 125 35% 55%;           /* #6B9A6B - Sage green */
+    --primary-foreground: 125 15% 10%; /* #161A16 - Very dark green */
+
+    /* Secondary - Warm Stone (Earthy, sophisticated) */
+    --secondary: 25 15% 25%;          /* #423A35 - Warm stone */
+    --secondary-foreground: 25 10% 85%; /* #D4CFC9 - Light stone */
+
+    /* Background & Surface Colors */
+    /* Background - Rich Charcoal (Professional, easy on eyes) */
+    --background: 25 8% 8%;           /* #141210 - Rich charcoal */
+    --foreground: 25 5% 90%;          /* #E8E6E4 - Warm light gray */
+
+    /* Card/Surface - Dark Olive (Natural, elevated) */
+    --card: 25 12% 12%;               /* #1F1C18 - Dark olive */
+    --card-foreground: 25 5% 90%;     /* #E8E6E4 - Warm light gray */
+
+    /* Muted - Dark Brown (Subtle backgrounds) */
+    --muted: 25 10% 15%;              /* #28241F - Dark brown */
+    --muted-foreground: 25 5% 65%;    /* #A39E98 - Medium gray */
+
+    /* Interactive & Status Colors */
+    /* Accent - Warm Gold (Warmth, premium feel) */
+    --accent: 45 60% 50%;             /* #CC9933 - Warm gold */
+    --accent-foreground: 45 20% 10%;  /* #1F1A0D - Very dark brown */
+
+    /* Success - Mint Green (Fresh, positive) */
+    --success: 125 40% 50%;           /* #4D9966 - Mint green */
+    --success-foreground: 125 15% 10%; /* #141A14 - Very dark green */
+
+    /* Warning - Soft Amber (Visible but not harsh) */
+    --warning: 35 65% 55%;            /* #CC8F33 - Soft amber */
+    --warning-foreground: 35 20% 10%; /* #1F1610 - Very dark brown */
+
+    /* Destructive - Coral Red (Visible, professional) */
+    --destructive: 5 55% 55%;         /* #B85C47 - Coral red */
+    --destructive-foreground: 5 10% 95%; /* #F5F3F2 - Very light */
+    
+    /* Utility Colors */
+    /* Border & Input */
+    --border: 25 15% 20%;             /* #342E28 - Dark border */
+    --input: 25 12% 10%;              /* #1C1914 - Input background */
+    --ring: 125 35% 55%;              /* Same as primary - focus rings */
+
+    /* Popover */
+    --popover: 25 12% 12%;            /* #1F1C18 - Same as card */
+    --popover-foreground: 25 5% 90%;  /* #E8E6E4 - Warm light gray */
+    
+    /* Chart Colors (Example - can be tailored for dark mode) */
+    --chart-1: 125 35% 55%; /* Primary */
+    --chart-2: 45 60% 50%; /* Accent */
+    --chart-3: 25 15% 35%; /* Darker Secondary variant */
+    --chart-4: 125 40% 50%; /* Success */
+    --chart-5: 35 65% 55%; /* Warning */
   }
 }
 
