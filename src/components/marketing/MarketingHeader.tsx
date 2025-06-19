@@ -2,12 +2,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button'; // Imported buttonVariants
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Leaf, Menu, BarChart3, Calculator, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/shared/ThemeToggle'; 
+import { cn } from '@/lib/utils'; // Imported cn
 
 const navLinks = [
   { href: '#hero', label: 'Home', icon: Home },
@@ -108,20 +109,17 @@ export function MarketingHeader() {
                 <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
                   {navLinks.map((item) => (
                     <SheetClose asChild key={item.href}>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-left text-base py-3 h-auto font-medium" /* Mobile nav item text style */
-                        asChild
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          buttonVariants({ variant: "ghost" }), // Apply button styles
+                          "w-full justify-start text-left text-base py-3 h-auto font-medium" // Custom/override styles
+                        )}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <Link href={item.href}>
-                          {/* Wrap icon and label in a span to ensure Link has a single child for Slot */}
-                          <span className="flex items-center w-full">
-                            <item.icon className="mr-3 h-5 w-5 text-muted-foreground" />
-                            {item.label}
-                          </span>
-                        </Link>
-                      </Button>
+                        <item.icon className="mr-3 h-5 w-5 text-muted-foreground" />
+                        {item.label}
+                      </Link>
                     </SheetClose>
                   ))}
                 </nav>
