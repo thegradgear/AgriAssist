@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/s
 import { Leaf, Menu, BarChart3, Calculator, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { ThemeToggle } from '@/components/shared/ThemeToggle'; // Import ThemeToggle
+import { ThemeToggle } from '@/components/shared/ThemeToggle'; 
 
 const navLinks = [
   { href: '#hero', label: 'Home', icon: Home },
@@ -132,7 +132,7 @@ export function MarketingHeader() {
                 <div className="p-4 border-t">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Theme</span>
-                    <ThemeToggle align="end"/>
+                    <ThemeToggle />
                   </div>
                 </div>
               </SheetContent>

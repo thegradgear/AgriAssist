@@ -47,7 +47,7 @@ export function AppHeader() {
     try {
       await signOut(auth);
       toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
-      router.push('/'); // Redirect to landing page on logout
+      router.push('/'); 
     } catch (error) {
       toast({ variant: 'destructive', title: 'Logout Failed', description: 'Could not log out. Please try again.' });
     }
@@ -100,7 +100,7 @@ export function AppHeader() {
             <div className="p-4 border-t mt-auto space-y-2">
                  <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Theme</span>
-                    <ThemeToggle align="end" />
+                    <ThemeToggle />
                  </div>
                  {user && (
                     <SheetClose asChild>
