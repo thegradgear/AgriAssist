@@ -15,10 +15,12 @@ export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps
         <div className="p-3 bg-primary/10 rounded-full mb-3 group-hover:bg-primary/20 transition-colors">
           <Icon className="h-7 w-7 text-primary" />
         </div>
-        <CardTitle className="font-headline text-lg text-foreground">{title}</CardTitle>
+        {/* CardTitle styling is now applied globally via ui/card.tsx based on H4 guideline */}
+        <CardTitle className="text-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent className="px-5 pb-6 text-center flex-grow">
-        <CardDescription className="text-sm text-muted-foreground leading-relaxed">
+        {/* CardDescription styling is text-sm text-muted-foreground leading-normal (from ui/card.tsx) */}
+        <CardDescription>
           {description}
         </CardDescription>
       </CardContent>

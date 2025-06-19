@@ -29,7 +29,6 @@ export function MarketingHeader() {
   }, []);
 
   if (loading || isAuthenticating) {
-    // Basic skeleton for loading state to avoid layout shifts
     return (
       <header className="py-3 px-4 sm:px-6 lg:px-8 bg-background/80 backdrop-blur-md sticky top-0 z-50 border-b">
         <div className="container mx-auto flex items-center justify-between h-12">
@@ -38,9 +37,7 @@ export function MarketingHeader() {
             <span className="text-xl font-semibold font-headline opacity-50">AgriAssist</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Placeholder for theme toggle */}
             <div className="w-9 h-9 bg-muted rounded-md opacity-50"></div> 
-            {/* Placeholders for auth buttons */}
             <div className="w-20 h-9 bg-muted rounded-md opacity-50"></div>
             <div className="w-24 h-9 bg-muted rounded-md opacity-50"></div>
           </div>
@@ -59,14 +56,13 @@ export function MarketingHeader() {
       <div className="container mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group" aria-label="Go to AgriAssist homepage">
           <Leaf className="h-8 w-8 text-primary group-hover:text-primary/80 transition-colors" />
-          <span className="text-xl font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span>
+          <span className="text-xl font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span> {/* App name in header */}
         </Link>
         
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Button variant="ghost" asChild key={link.label}>
-              <Link href={link.href} className="text-foreground/80 hover:text-primary hover:bg-primary/10 px-3 py-2 rounded-md">
+              <Link href={link.href} className="text-foreground/80 hover:text-primary hover:bg-primary/10 px-3 py-2 rounded-md text-base font-medium"> {/* Nav link text style */}
                 {link.label}
               </Link>
             </Button>
@@ -74,26 +70,24 @@ export function MarketingHeader() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-           {/* Theme Toggle for Desktop */}
           <div className="hidden md:flex">
              <ThemeToggle />
           </div>
 
           {user ? (
-            <Button asChild className="shadow-sm hover:shadow-md transition-shadow">
+            <Button asChild className="shadow-sm hover:shadow-md transition-shadow text-sm font-medium"> {/* Button text style */}
               <Link href="/dashboard">Go to Dashboard</Link>
             </Button>
           ) : (
             <>
-              <Button variant="ghost" asChild className="hover:text-primary hover:bg-primary/10">
+              <Button variant="ghost" asChild className="hover:text-primary hover:bg-primary/10 text-sm font-medium"> {/* Button text style */}
                 <Link href="/login">Login</Link>
               </Button>
-              <Button asChild className="shadow-sm hover:shadow-md transition-shadow">
+              <Button asChild className="shadow-sm hover:shadow-md transition-shadow text-sm font-medium"> {/* Button text style */}
                 <Link href="/signup">Sign Up</Link>
               </Button>
             </>
           )}
-          {/* Mobile Navigation Trigger */}
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -107,7 +101,7 @@ export function MarketingHeader() {
                   <SheetClose asChild>
                     <Link href="/" className="flex items-center gap-2 group mb-4" onClick={() => setIsMobileMenuOpen(false)}>
                       <Leaf className="h-7 w-7 text-primary group-hover:text-primary/80 transition-colors" />
-                      <span className="text-lg font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span>
+                      <span className="text-lg font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span> {/* App name in mobile menu */}
                     </Link>
                   </SheetClose>
                 </div>
@@ -116,7 +110,7 @@ export function MarketingHeader() {
                     <SheetClose asChild key={item.href}>
                       <Button
                         variant="ghost"
-                        className="w-full justify-start text-left text-md py-3 h-auto"
+                        className="w-full justify-start text-left text-base py-3 h-auto font-medium" /* Mobile nav item text style */
                         asChild
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -128,7 +122,6 @@ export function MarketingHeader() {
                     </SheetClose>
                   ))}
                 </nav>
-                 {/* Theme Toggle for Mobile Sheet */}
                 <div className="p-4 border-t">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Theme</span>

@@ -9,11 +9,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"; // AvatarImage removed
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Loader2, Mail, User } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react'; // User icon removed
 import { db, doc, updateDoc } from '@/lib/firebase';
 
 interface ProfileFormProps {
@@ -53,7 +53,6 @@ export function ProfileForm({ currentUser }: ProfileFormProps) {
       await updateDoc(userDocRef, {
         name: data.name,
         contactNumber: data.contactNumber || '',
-        // 'otherDetails' is no longer updated from this form
       });
       
       await refreshUserProfile(); 
@@ -79,19 +78,20 @@ export function ProfileForm({ currentUser }: ProfileFormProps) {
       <CardHeader>
         <div className="flex items-center space-x-4 mb-6">
           <Avatar className="h-20 w-20">
-            {/* <AvatarImage src={currentUser.photoURL || undefined} alt={currentUser.name || 'User'} /> */}
             <AvatarFallback className="text-3xl">{userInitials}</AvatarFallback>
           </Avatar>
           <div>
-            <CardTitle className="font-headline text-2xl">{currentUser.name || 'Your Profile'}</CardTitle>
+            {/* CardTitle styling from ui/card.tsx: text-lg font-medium leading-snug */}
+            <CardTitle>{currentUser.name || 'Your Profile'}</CardTitle>
             {currentUser.email && (
-              <div className="flex items-center text-sm text-muted-foreground mt-1">
+              <div className="flex items-center text-sm text-muted-foreground mt-1 leading-normal"> {/* Small text, leading-normal */}
                 <Mail className="mr-2 h-4 w-4" />
                 {currentUser.email}
               </div>
             )}
           </div>
         </div>
+        {/* CardDescription styling from ui/card.tsx: text-sm text-muted-foreground leading-normal */}
         <CardDescription>Keep your personal information up to date. Email is not editable here.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -102,6 +102,7 @@ export function ProfileForm({ currentUser }: ProfileFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
+                  {/* Label: text-sm font-medium leading-normal */}
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Your full name" {...field} />
@@ -123,7 +124,6 @@ export function ProfileForm({ currentUser }: ProfileFormProps) {
                 </FormItem>
               )}
             />
-            {/* "Other Details" field removed */}
             <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
               {isLoading ? (
                 <>

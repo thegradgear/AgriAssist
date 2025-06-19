@@ -19,11 +19,23 @@ export default function PrivacyPolicyPage() {
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* PageHeader title will be H1: text-3xl, font-semibold, leading-tight */}
         <PageHeader
           title="Privacy Policy"
           description="Last updated: October 26, 2023"
         />
-        <div className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl max-w-none text-muted-foreground">
+        {/* Prose classes handle typography for markdown-like content */}
+        {/* Adjusting prose to use theme fonts and sizes where possible */}
+        <div className="prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl max-w-none 
+                        text-foreground font-body 
+                        prose-headings:font-headline prose-headings:font-semibold 
+                        prose-h1:text-3xl prose-h1:leading-tight
+                        prose-h2:text-2xl prose-h2:leading-tight
+                        prose-h3:text-xl prose-h3:leading-snug
+                        prose-p:text-base prose-p:leading-normal prose-p:text-muted-foreground
+                        prose-li:text-base prose-li:leading-normal prose-li:text-muted-foreground
+                        prose-strong:font-medium prose-strong:text-foreground
+                        ">
           <p>Welcome to AgriAssist! This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our application.</p>
           
           <h2>1. Information We Collect</h2>

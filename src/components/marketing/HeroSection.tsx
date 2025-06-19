@@ -10,10 +10,10 @@ export function HeroSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="space-y-6 md:space-y-8 text-center md:text-left animate-fade-in-up">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-headline tracking-tight text-foreground">
+            <h1 className="text-5xl font-semibold leading-tight font-headline text-foreground"> {/* Hero Heading: text-5xl, font-semibold, leading-tight */}
               Smart Farming, <span className="text-primary">Simplified.</span>
             </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto md:mx-0">
+            <p className="text-lg font-regular leading-relaxed text-muted-foreground max-w-xl mx-auto md:mx-0"> {/* Large Body: text-lg, font-regular, leading-relaxed */}
               AgriAssist provides AI-powered tools for Indian farmers. Get precise yield predictions, intelligent crop recommendations, real-time price forecasts, disease detection, personalized farming calendars, and more.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-2">

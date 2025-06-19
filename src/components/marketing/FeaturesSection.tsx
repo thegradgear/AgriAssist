@@ -50,10 +50,10 @@ export function FeaturesSection() {
     <section id="features" className="py-16 md:py-24 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold font-headline text-foreground">
+          <h2 className="text-2xl font-semibold leading-tight font-headline text-foreground"> {/* H2: text-2xl, font-semibold, leading-tight */}
             A Suite of Tools for <span className="text-primary">Modern Agriculture</span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto"> {/* Large Body for description */}
             AgriAssist brings cutting-edge technology to your fingertips, simplifying complex farming challenges.
           </p>
         </div>

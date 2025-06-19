@@ -1,24 +1,23 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { AlertTriangle, Info, CalendarClock, BookUser, Tag } from 'lucide-react';
+import { AlertTriangle, Info, CalendarClock, Tag } from 'lucide-react'; // BookUser removed
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 
-// Updated interface to better match potential OpenWeatherMap alert structure or general alerts
 export interface WeatherAlert {
   id: string;
   event: string;
-  severity: 'Low' | 'Moderate' | 'High' | 'Critical'; // Severity might be inferred
-  headline: string; // This might be the main description from OWM
-  description: string; // More detailed text if available
+  severity: 'Low' | 'Moderate' | 'High' | 'Critical'; 
+  headline: string; 
+  description: string; 
   instruction?: string;
   sent: string; // ISO string
   effective: string; // ISO string
   expires?: string; // ISO string
-  areaDesc: string; // Could be less specific depending on API
+  areaDesc: string; 
   senderName: string;
-  tags?: string[]; // OpenWeatherMap might provide tags
+  tags?: string[]; 
 }
 
 interface WeatherAlertCardProps {
@@ -37,14 +36,12 @@ const formatDate = (dateString?: string): string => {
   try {
     return format(parseISO(dateString), "MMM d, yyyy 'at' h:mm a");
   } catch (e) {
-    // If parseISO fails, it might be an already formatted string or an invalid one.
-    // Try to return it as is, or handle specific known formats if necessary.
     return dateString; 
   }
 };
 
 export function WeatherAlertCard({ alert }: WeatherAlertCardProps) {
-  const config = severityConfig[alert.severity] || severityConfig.Moderate; // Fallback to Moderate
+  const config = severityConfig[alert.severity] || severityConfig.Moderate; 
   const cardClasses = cn(
     "shadow-md hover:shadow-lg transition-shadow rounded-lg flex flex-col h-full",
     config.colorClasses
@@ -57,21 +54,23 @@ export function WeatherAlertCard({ alert }: WeatherAlertCardProps) {
         <div className="flex items-start justify-between gap-2">
           <div className={cn("flex items-center", textColorClass)}>
             {React.cloneElement(config.icon, { className: cn(config.icon.props.className, "mr-2 shrink-0") })}
-            <CardTitle className={cn("text-lg font-headline leading-tight", textColorClass)}>{alert.event}</CardTitle>
+            {/* CardTitle is text-lg font-medium by default from ui/card.tsx */}
+            <CardTitle className={cn("leading-tight", textColorClass)}>{alert.event}</CardTitle>
           </div>
           <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap", config.colorClasses.replace(/text-\S+/, '').replace(/border-\S+/, ''), `border ${textColorClass.replace('text-', 'border-')}`)}>
             {alert.severity}
           </span>
         </div>
-         <CardDescription className="text-xs pt-1 text-muted-foreground">
+        {/* CardDescription is text-sm leading-normal by default from ui/card.tsx */}
+         <CardDescription className="text-xs pt-1 text-muted-foreground"> {/* Explicitly text-xs for this specific usage */}
           Reported by: {alert.senderName} <br />
           Sent: {formatDate(alert.sent)}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col space-y-3 pt-0 pb-4">
-        <p className="text-sm font-medium leading-snug">{alert.headline}</p>
+        <p className="text-sm font-medium leading-snug">{alert.headline}</p> {/* Small text, but font-medium and leading-snug for emphasis */}
         
-        <div className="text-xs text-muted-foreground space-y-1">
+        <div className="text-xs text-muted-foreground space-y-1 leading-normal"> {/* Captions */}
             <div className="flex items-center">
                 <CalendarClock className="h-3.5 w-3.5 mr-1.5 shrink-0"/> 
                 Effective: {formatDate(alert.effective)}
@@ -84,27 +83,27 @@ export function WeatherAlertCard({ alert }: WeatherAlertCardProps) {
             )}
         </div>
 
-        <p className="text-sm text-muted-foreground"><strong className="font-medium text-current">Areas Affected:</strong> {alert.areaDesc}</p>
+        <p className="text-sm text-muted-foreground leading-normal"><strong className="font-medium text-current">Areas Affected:</strong> {alert.areaDesc}</p> {/* Small text */}
         
         {alert.tags && alert.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 items-center">
             <Tag className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
             {alert.tags.map((tag, index) => (
-              <span key={index} className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm">
+              <span key={index} className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm leading-normal"> {/* Caption */}
                 {tag}
               </span>
             ))}
           </div>
         )}
 
-        <Accordion type="single" collapsible className="w-full text-sm">
-          {alert.description && alert.description !== alert.headline && ( // Only show if different from headline
+        <Accordion type="single" collapsible className="w-full">
+          {alert.description && alert.description !== alert.headline && (
             <AccordionItem value="item-desc" className="border-b-0">
-                <AccordionTrigger className="py-2 text-xs hover:no-underline [&[data-state=open]>svg]:text-primary">
+                <AccordionTrigger className="py-2 text-xs hover:no-underline [&[data-state=open]>svg]:text-primary"> {/* Caption */}
                     Show Full Description
                 </AccordionTrigger>
                 <AccordionContent className="pt-1 pb-0">
-                  <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line overflow-y-auto max-h-60 p-2 border rounded-md bg-background/50">
+                  <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line overflow-y-auto max-h-60 p-2 border rounded-md bg-background/50 text-sm leading-normal"> {/* Small text */}
                     {alert.description}
                   </div>
                 </AccordionContent>
@@ -112,11 +111,11 @@ export function WeatherAlertCard({ alert }: WeatherAlertCardProps) {
           )}
           {alert.instruction && (
             <AccordionItem value="item-instr" className="border-b-0">
-                 <AccordionTrigger className="py-2 text-xs hover:no-underline [&[data-state=open]>svg]:text-primary">
+                 <AccordionTrigger className="py-2 text-xs hover:no-underline [&[data-state=open]>svg]:text-primary"> {/* Caption */}
                     Show Instructions
                 </AccordionTrigger>
                 <AccordionContent className="pt-1 pb-0">
-                  <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line overflow-y-auto max-h-60 p-2 border rounded-md bg-background/50">
+                  <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line overflow-y-auto max-h-60 p-2 border rounded-md bg-background/50 text-sm leading-normal"> {/* Small text */}
                     {alert.instruction}
                   </div>
                 </AccordionContent>
@@ -127,5 +126,3 @@ export function WeatherAlertCard({ alert }: WeatherAlertCardProps) {
     </Card>
   );
 }
-
-    

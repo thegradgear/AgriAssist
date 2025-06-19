@@ -56,7 +56,9 @@ export function LoginForm() {
         <div className="flex justify-center items-center mb-4">
           <Leaf className="h-12 w-12 text-primary" />
         </div>
-        <CardTitle className="text-3xl font-headline">Welcome to AgriAssist</CardTitle>
+        {/* CardTitle is text-lg font-medium by default from ui/card.tsx */}
+        <CardTitle>Welcome to AgriAssist</CardTitle> 
+        {/* CardDescription is text-sm leading-normal */}
         <CardDescription>Sign in to access your farming tools.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -67,6 +69,7 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
+                  {/* Label is text-sm font-medium */}
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="you@example.com" {...field} suppressHydrationWarning />
@@ -119,7 +122,7 @@ export function LoginForm() {
             </Button>
           </form>
         </Form>
-        <p className="mt-6 text-center text-sm">
+        <p className="mt-6 text-center text-sm"> {/* Small text */}
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="font-medium text-primary hover:underline">
             Sign up

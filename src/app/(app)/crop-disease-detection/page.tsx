@@ -45,7 +45,7 @@ export default function CropDiseaseDetectionPage() {
         });
         return;
       }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) { 
          toast({
           variant: 'destructive',
           title: 'File Too Large',
@@ -55,7 +55,7 @@ export default function CropDiseaseDetectionPage() {
       }
       setImageFile(file);
       setImagePreviewUrl(URL.createObjectURL(file));
-      setResult(null); // Clear previous results
+      setResult(null); 
       setError(null);
     }
   };
@@ -106,12 +106,13 @@ export default function CropDiseaseDetectionPage() {
     setResult(null);
     setError(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear the file input
+      fileInputRef.current.value = ""; 
     }
   };
 
   return (
     <div className="container mx-auto">
+      {/* PageHeader title is H1: text-3xl */}
       <PageHeader
         title="Crop Disease Detection"
         description="Upload an image of your crop to get an AI-powered disease diagnosis and suggestions."
@@ -120,10 +121,12 @@ export default function CropDiseaseDetectionPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="font-headline flex items-center">
-              <UploadCloud className="mr-2 h-6 w-6 text-primary" />
+            {/* CardTitle is text-lg font-medium */}
+            <CardTitle className="flex items-center">
+              <UploadCloud className="mr-2 h-5 w-5 text-primary" /> {/* Icon size adjusted */}
               Upload Crop Image
             </CardTitle>
+            {/* CardDescription is text-sm */}
             <CardDescription>
               Select an image file (JPG, PNG, WEBP, max 5MB). For best results, use a clear image focusing on the affected area.
             </CardDescription>
@@ -131,6 +134,7 @@ export default function CropDiseaseDetectionPage() {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               <div>
+                {/* Label is text-sm font-medium */}
                 <Label htmlFor="crop-image" className="sr-only">Crop Image</Label>
                 <Input
                   id="crop-image"
@@ -175,10 +179,11 @@ export default function CropDiseaseDetectionPage() {
                   onChange={(e) => setCropType(e.target.value)}
                   className="mt-1"
                 />
-                <p className="text-xs text-muted-foreground mt-1">Providing the crop type can improve diagnosis accuracy.</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-normal">Providing the crop type can improve diagnosis accuracy.</p> {/* Caption style */}
               </div>
             </CardContent>
             <CardFooter>
+              {/* Button text is text-sm font-medium */}
               <Button type="submit" className="w-full" disabled={isLoading || !imageFile}>
                 {isLoading ? (
                   <>
@@ -199,8 +204,8 @@ export default function CropDiseaseDetectionPage() {
         {isLoading && (
           <Card className="shadow-lg animate-pulse">
             <CardHeader>
-              <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
-              <div className="h-4 bg-muted rounded w-1/2"></div>
+              <div className="h-5 bg-muted rounded w-3/4 mb-1"></div> {/* CardTitle skeleton */}
+              <div className="h-4 bg-muted rounded w-1/2"></div> {/* CardDescription skeleton */}
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="h-40 bg-muted rounded-md"></div>
@@ -222,8 +227,8 @@ export default function CropDiseaseDetectionPage() {
         {result && !isLoading && (
           <Card className={`shadow-lg border-2 ${result.isDiseased && result.diseaseName !== "Unable to Diagnose" ? 'border-destructive/70' : (result.diseaseName === "Unable to Diagnose" ? 'border-amber-500/70' : 'border-green-500/70')}`}>
             <CardHeader className={`${result.isDiseased && result.diseaseName !== "Unable to Diagnose" ? 'bg-destructive/10' : (result.diseaseName === "Unable to Diagnose" ? 'bg-amber-500/10' : 'bg-green-500/10')}`}>
-              <CardTitle className="font-headline flex items-center">
-                {result.isDiseased && result.diseaseName !== "Unable to Diagnose" ? <AlertTriangle className="mr-2 h-6 w-6 text-destructive" /> : (result.diseaseName === "Unable to Diagnose" ? <HelpCircle className="mr-2 h-6 w-6 text-amber-600" /> : <CheckCircle className="mr-2 h-6 w-6 text-green-600" />)}
+              <CardTitle className="flex items-center">
+                {result.isDiseased && result.diseaseName !== "Unable to Diagnose" ? <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> : (result.diseaseName === "Unable to Diagnose" ? <HelpCircle className="mr-2 h-5 w-5 text-amber-600" /> : <CheckCircle className="mr-2 h-5 w-5 text-green-600" />)}
                 AI Diagnosis Result
               </CardTitle>
               <CardDescription>
@@ -232,40 +237,40 @@ export default function CropDiseaseDetectionPage() {
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">Status</Label>
-                <p className={`text-xl font-bold ${result.isDiseased && result.diseaseName !== "Unable to Diagnose" ? 'text-destructive' : (result.diseaseName === "Unable to Diagnose" ? 'text-amber-600' : 'text-green-600')}`}>
+                <Label className="text-xs font-semibold text-muted-foreground leading-normal">Status</Label> {/* Caption Label */}
+                <p className={`text-xl font-bold leading-snug ${result.isDiseased && result.diseaseName !== "Unable to Diagnose" ? 'text-destructive' : (result.diseaseName === "Unable to Diagnose" ? 'text-amber-600' : 'text-green-600')}`}> {/* Data display: H3 style */}
                   {result.diseaseName}
                 </p>
               </div>
 
               {result.diseaseName !== "Appears Healthy" && result.diseaseName !== "Unable to Diagnose" && (
                 <div>
-                  <Label className="text-xs font-semibold text-muted-foreground">Confidence</Label>
+                  <Label className="text-xs font-semibold text-muted-foreground leading-normal">Confidence</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <Progress value={result.confidence * 100} className="w-full h-2.5" aria-label={`Confidence: ${(result.confidence * 100).toFixed(0)}%`} />
-                    <span className="text-sm font-semibold text-primary">{(result.confidence * 100).toFixed(0)}%</span>
+                    <span className="text-sm font-semibold text-primary">{/* Data display: font-code if it were just a number, but % makes it more label like - text-sm font-semibold is good here */ (result.confidence * 100).toFixed(0)}%</span>
                   </div>
                 </div>
               )}
 
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">Observations</Label>
-                <p className="text-sm text-foreground mt-1 whitespace-pre-line bg-muted/50 p-3 rounded-md">{result.description}</p>
+                <Label className="text-xs font-semibold text-muted-foreground leading-normal">Observations</Label>
+                <p className="text-sm text-foreground mt-1 whitespace-pre-line bg-muted/50 p-3 rounded-md leading-normal">{result.description}</p> {/* Small text */}
               </div>
 
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">
+                <Label className="text-xs font-semibold text-muted-foreground leading-normal">
                     {result.isDiseased && result.diseaseName !== "Unable to Diagnose" ? 'Suggested Remedy / Action' : (result.diseaseName === "Unable to Diagnose" ? 'Next Steps' : 'General Care Tip')}
                 </Label>
-                <p className="text-sm text-foreground mt-1 whitespace-pre-line bg-primary/10 p-3 rounded-md flex items-start">
+                <p className="text-sm text-foreground mt-1 whitespace-pre-line bg-primary/10 p-3 rounded-md flex items-start leading-normal"> {/* Small text */}
                   <Lightbulb className="mr-2 h-4 w-4 text-primary shrink-0 mt-1" />
                   <span>{result.remedySuggestion}</span>
                 </p>
               </div>
                <Alert variant="default" className="mt-4 bg-accent/50 border-accent">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <AlertTitle className="font-semibold text-primary">Disclaimer</AlertTitle>
-                <AlertDescription className="text-xs">
+                <AlertTitle className="font-semibold text-primary text-base leading-snug">Disclaimer</AlertTitle> {/* AlertTitle style */}
+                <AlertDescription className="text-xs leading-normal"> {/* Caption style */}
                   This AI diagnosis is for informational purposes only and should not replace consultation with a qualified agricultural expert. Always verify with local specialists before making treatment decisions.
                 </AlertDescription>
               </Alert>

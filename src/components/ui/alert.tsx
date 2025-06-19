@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -33,12 +34,13 @@ const Alert = React.forwardRef<
 Alert.displayName = "Alert"
 
 const AlertTitle = React.forwardRef<
-  HTMLParagraphElement,
+  HTMLParagraphElement, // ShadCN uses h5, but HTMLParagraphElement is more flexible for ref
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <h5
+  <h5 // Using h5 as per ShadCN, styles applied via className
     ref={ref}
-    className={cn("mb-1 font-medium leading-none tracking-tight", className)}
+    // Defaulting to text-base, font-semibold, leading-snug as a smaller heading
+    className={cn("mb-1 font-semibold leading-snug text-base font-headline", className)} 
     {...props}
   />
 ))
@@ -48,9 +50,10 @@ const AlertDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <div
+  <div // Using div for flexibility, styles applied via className
     ref={ref}
-    className={cn("text-sm [&_p]:leading-relaxed", className)}
+    // Defaulting to text-sm, leading-normal for descriptions
+    className={cn("text-sm leading-normal [&_p]:leading-normal", className)}
     {...props}
   />
 ))

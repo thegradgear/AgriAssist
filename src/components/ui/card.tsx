@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -30,13 +31,13 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement, // Changed from HTMLParagraphElement to HTMLDivElement for semantic correctness as it acts as a heading
+  React.HTMLAttributes<HTMLHeadingElement> // Changed from HTMLParagraphElement
 >(({ className, ...props }, ref) => (
-  <div
+  <h4 // Changed from p to h4 to match H4 guideline, though CardTitle is often used for main card heading
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      "text-lg font-medium leading-snug tracking-tight font-headline", // As per H4: text-lg, font-medium, leading-snug
       className
     )}
     {...props}
@@ -45,12 +46,12 @@ const CardTitle = React.forwardRef<
 CardTitle.displayName = "CardTitle"
 
 const CardDescription = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement, // Changed from HTMLParagraphElement to HTMLDivElement
+  React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <div
+  <div // Changed from p to div to allow more flexible content, text styles applied via class
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm text-muted-foreground leading-normal", className)} // Small text, leading-normal
     {...props}
   />
 ))

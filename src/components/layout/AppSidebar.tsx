@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Leaf } from 'lucide-react';
 import { NAV_ITEMS } from '@/lib/constants';
-import { Button } from '@/components/ui/button';
+// Button component removed as it's not directly used for styling nav items here
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
@@ -17,6 +17,7 @@ export function AppSidebar() {
         <div className="flex h-16 shrink-0 items-center">
           <Link href="/" className="flex items-center gap-2">
             <Leaf className="h-8 w-8 text-primary" />
+            {/* App name in sidebar, text-xl font-semibold */}
             <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
           </Link>
         </div>
@@ -32,7 +33,8 @@ export function AppSidebar() {
                         (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
                           ? 'bg-accent text-accent-foreground'
                           : 'hover:bg-accent/50 hover:text-accent-foreground',
-                        'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold items-center',
+                        // Applying base styling for nav items: text-base (1rem) font-semibold
+                        'group flex gap-x-3 rounded-md p-2 text-base font-semibold leading-normal items-center', 
                         item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
                       )}
                       aria-disabled={item.disabled}
@@ -54,7 +56,6 @@ export function AppSidebar() {
                 ))}
               </ul>
             </li>
-            {/* Optional: Add user profile or settings link at the bottom of the sidebar here if needed */}
           </ul>
         </nav>
       </div>

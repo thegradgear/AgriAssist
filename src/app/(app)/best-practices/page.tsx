@@ -43,12 +43,12 @@ const SkeletonPracticeCard = () => (
   <div className="bg-card shadow-md rounded-lg overflow-hidden">
     <Skeleton className="w-full h-48" />
     <div className="p-4">
-      <Skeleton className="h-6 w-3/4 mb-2" />
-      <Skeleton className="h-4 w-1/2 mb-3" />
-      <Skeleton className="h-4 w-full mb-1" />
+      <Skeleton className="h-5 w-3/4 mb-2" /> {/* CardTitle skeleton (text-lg) */}
+      <Skeleton className="h-3 w-1/2 mb-3" /> {/* Category skeleton (text-xs) */}
+      <Skeleton className="h-4 w-full mb-1" /> {/* Summary skeleton (text-sm) */}
       <Skeleton className="h-4 w-full mb-1" />
       <Skeleton className="h-4 w-5/6 mb-3" />
-      <Skeleton className="h-5 w-1/3" />
+      <Skeleton className="h-4 w-1/3" /> {/* Link/Date skeleton (text-sm/xs) */}
     </div>
   </div>
 );
@@ -137,18 +137,21 @@ export default function BestPracticesPage() {
 
   return (
     <div className="container mx-auto">
+      {/* PageHeader title is H1: text-3xl, font-semibold, leading-tight */}
       <PageHeader
         title="Agricultural Articles & News"
         description="Explore recent articles and news related to farming techniques, soil health, and agricultural innovations."
       />
       
       <form onSubmit={handleSearch} className="mb-8 flex flex-col sm:flex-row gap-2 items-center">
+        {/* Input is text-base by default */}
         <Input 
           placeholder="Search articles (e.g., 'organic pest control')" 
           className="flex-grow" 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        {/* Button text is text-sm font-medium */}
         <Button type="submit" disabled={isLoading || !searchTerm.trim()}>
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
@@ -170,10 +173,12 @@ export default function BestPracticesPage() {
       {!isLoading && error && (
         <Alert variant="destructive" className="mb-8">
           <AlertTriangle className="h-4 w-4" />
+          {/* AlertTitle is text-base font-semibold by default */}
           <AlertTitle>Error</AlertTitle>
+          {/* AlertDescription is text-sm by default */}
           <AlertDescription>{error}</AlertDescription>
            {(error.toLowerCase().includes("newsapi key") || error.toLowerCase().includes("newsapi configuration error")) && (
-                <p className="text-xs mt-2">
+                <p className="text-xs mt-2 leading-normal"> {/* Caption style */}
                     There might be an issue with the NewsAPI configuration on the server. Please contact support or check server logs.
                 </p>
             )}
@@ -183,8 +188,8 @@ export default function BestPracticesPage() {
       {!isLoading && !error && articles.length === 0 && (
         <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
             <BookOpen className="mx-auto h-16 w-16 text-primary mb-4" />
-            <p className="text-xl font-semibold">No Articles Found</p>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-xl font-medium leading-snug">No Articles Found</p> {/* H3 style */}
+            <p className="text-muted-foreground mt-1 text-base leading-normal"> {/* Body text style */}
               {currentQuery === DEFAULT_ARTICLE_QUERY ? "No default articles found. Try searching for specific topics." : `No articles found for your query: "${currentQuery}". Try a different search term.`}
             </p>
         </div>

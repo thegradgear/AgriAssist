@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
@@ -60,8 +61,8 @@ const TimelineConnector = React.forwardRef<
     >
       <div
         className={cn(
-          "w-0.5 h-full min-h-[1.5rem]", // min-h ensures visibility for short content
-          isLastItem ? "bg-transparent" : "bg-border" // Connector line
+          "w-0.5 h-full min-h-[1.5rem]", 
+          isLastItem ? "bg-transparent" : "bg-border" 
         )}
       />
     </div>
@@ -80,7 +81,6 @@ const TimelineHeader = React.forwardRef<HTMLDivElement, TimelineHeaderProps>(
         className={cn("flex flex-col items-start pb-2", className)}
         {...props}
       >
-        {/* Actual Header content (Icon, Title) will be children */}
         {children}
       </div>
     );
@@ -96,11 +96,11 @@ const TimelineIcon = React.forwardRef<HTMLDivElement, TimelineIconProps>(
       <div
         ref={ref}
         className={cn(
-          "absolute -left-[calc(1rem+2px)] -translate-x-1/2 mt-0.5", // Adjust left offset to center icon on connector line
+          "absolute -left-[calc(1rem+2px)] -translate-x-1/2 mt-0.5", 
           "flex items-center justify-center w-7 h-7 p-1.5 rounded-full bg-primary text-primary-foreground shadow-md",
           className
         )}
-        style={{ marginLeft: '-1.5px' }} // Fine-tune position based on connector width
+        style={{ marginLeft: '-1.5px' }} 
         {...props}
       >
         {children}
@@ -119,9 +119,9 @@ const TimelineTitle = React.forwardRef<
   TimelineTitleProps
 >(({ className, children, ...props }, ref) => {
   return (
-    <h3
+    <h3 // This is an H3 equivalent
       ref={ref}
-      className={cn("text-md font-semibold font-headline text-foreground ml-8", className)}
+      className={cn("text-xl font-medium leading-snug text-foreground ml-8 font-headline", className)} // H3: text-xl, font-medium, leading-snug
       {...props}
     >
       {children}
@@ -141,7 +141,7 @@ const TimelineDescription = React.forwardRef<
   return (
     <p
       ref={ref}
-      className={cn("text-sm text-muted-foreground ml-8", className)}
+      className={cn("text-sm text-muted-foreground ml-8 leading-normal", className)} // Small text, leading-normal
       {...props}
     >
       {children}
@@ -160,7 +160,7 @@ const TimelineBody = React.forwardRef<HTMLDivElement, TimelineBodyProps>(
         ref={ref}
         className={cn(
           "flex-1 py-1",
-          isLastItem ? "pb-0" : "pb-6", // Remove bottom padding for the last item
+          isLastItem ? "pb-0" : "pb-6", 
           className
         )}
         {...props}
@@ -183,4 +183,3 @@ export {
   TimelineDescription,
   TimelineBody,
 };
-
