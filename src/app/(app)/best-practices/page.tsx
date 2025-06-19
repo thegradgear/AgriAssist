@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useEffect, useCallback } from 'react';
-import { AlertTriangle, BookOpen, Loader2, Search } from 'lucide-react';
+import { AlertTriangle, BookOpen, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface NewsApiArticle {
   source: { id: string | null; name: string };
@@ -37,6 +38,21 @@ const mapArticleToPractice = (article: NewsApiArticle, index: number): Practice 
 };
 
 const DEFAULT_ARTICLE_QUERY = 'sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture';
+
+const SkeletonPracticeCard = () => (
+  <div className="bg-card shadow-md rounded-lg overflow-hidden">
+    <Skeleton className="w-full h-48" />
+    <div className="p-4">
+      <Skeleton className="h-6 w-3/4 mb-2" />
+      <Skeleton className="h-4 w-1/2 mb-3" />
+      <Skeleton className="h-4 w-full mb-1" />
+      <Skeleton className="h-4 w-full mb-1" />
+      <Skeleton className="h-4 w-5/6 mb-3" />
+      <Skeleton className="h-5 w-1/3" />
+    </div>
+  </div>
+);
+
 
 export default function BestPracticesPage() {
   const [articles, setArticles] = useState<Practice[]>([]);
@@ -73,7 +89,6 @@ export default function BestPracticesPage() {
         setArticles(data.articles.map(mapArticleToPractice));
       } else if (data.articles && data.articles.length === 0) {
         setArticles([]);
-        // Avoid toasting for empty default query results, only for user-initiated searches
         if (query !== DEFAULT_ARTICLE_QUERY) {
             toast({
                 title: "No Articles Found",
@@ -102,9 +117,8 @@ export default function BestPracticesPage() {
     if (currentQuery.trim()) {
       fetchArticles(currentQuery);
     } else {
-        // If currentQuery is empty (e.g., after clearing search and submitting)
-        setArticles([]); // Clear articles
-        setIsLoading(false); // Stop loading
+        setArticles([]); 
+        setIsLoading(false); 
     }
   }, [fetchArticles, currentQuery]);
 
@@ -113,15 +127,12 @@ export default function BestPracticesPage() {
     if (searchTerm.trim()) {
       setCurrentQuery(searchTerm.trim());
     } else {
-      // Handle empty search submission - clear results
       setCurrentQuery(''); 
     }
   };
   
   const handleClearSearch = () => {
     setSearchTerm('');
-    // Optionally, you could reset currentQuery to default or empty here and re-fetch.
-    // For now, it just clears the input. A subsequent empty search will clear results.
   };
 
   return (
@@ -149,9 +160,10 @@ export default function BestPracticesPage() {
       </form>
 
       {isLoading && (
-        <div className="flex justify-center items-center py-10">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="ml-3 text-lg text-muted-foreground">Loading articles...</p>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, index) => (
+            <SkeletonPracticeCard key={index} />
+          ))}
         </div>
       )}
 
