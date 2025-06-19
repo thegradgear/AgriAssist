@@ -32,9 +32,9 @@ body {
     --muted-foreground: 20 8% 45%;    /* #6B635E - Medium brown-gray */
 
     /* Interactive & Status Colors */
-    /* Accent - Golden Wheat (Harvest, prosperity) */
-    --accent: 45 75% 65%;             /* #E6C068 - Golden wheat */
-    --accent-foreground: 45 25% 15%;  /* #2B2720 - Dark brown */
+    /* Accent - Green for hovers/active states (was Golden Wheat) */
+    --accent: 125 50% 50%;            /* #59A659 - Clear Green (derived from success/primary) */
+    --accent-foreground: 0 0% 98%;    /* #FAFAFA - White text */
 
     /* Success - Fresh Green (Growth, health) */
     --success: 125 50% 45%;           /* #409F40 - Fresh green */
@@ -60,7 +60,7 @@ body {
     
     /* Chart Colors (Example - can be tailored) */
     --chart-1: 125 60% 35%; /* Primary */
-    --chart-2: 45 75% 65%; /* Accent */
+    --chart-2: 125 50% 50%; /* Accent (New Green) */
     --chart-3: 15 45% 75%; /* Secondary */
     --chart-4: 125 50% 45%; /* Success */
     --chart-5: 35 85% 55%; /* Warning */
@@ -92,9 +92,9 @@ body {
     --muted-foreground: 25 5% 65%;    /* #A39E98 - Medium gray */
 
     /* Interactive & Status Colors */
-    /* Accent - Warm Gold (Warmth, premium feel) */
-    --accent: 45 60% 50%;             /* #CC9933 - Warm gold */
-    --accent-foreground: 45 20% 10%;  /* #1F1A0D - Very dark brown */
+    /* Accent - Green for hovers/active states (was Warm Gold) */
+    --accent: 125 40% 55%;            /* #66AA88 - Clear Mint Green (derived from success/primary) */
+    --accent-foreground: 125 15% 10%; /* #161A16 - Very dark green */
 
     /* Success - Mint Green (Fresh, positive) */
     --success: 125 40% 50%;           /* #4D9966 - Mint green */
@@ -120,7 +120,7 @@ body {
     
     /* Chart Colors (Example - can be tailored for dark mode) */
     --chart-1: 125 35% 55%; /* Primary */
-    --chart-2: 45 60% 50%; /* Accent */
+    --chart-2: 125 40% 55%; /* Accent (New Green) */
     --chart-3: 25 15% 35%; /* Darker Secondary variant */
     --chart-4: 125 40% 50%; /* Success */
     --chart-5: 35 65% 55%; /* Warning */
