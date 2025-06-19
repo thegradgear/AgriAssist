@@ -115,8 +115,11 @@ export function MarketingHeader() {
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <Link href={item.href}>
-                          <item.icon className="mr-3 h-5 w-5 text-muted-foreground" />
-                          {item.label}
+                          {/* Wrap icon and label in a span to ensure Link has a single child for Slot */}
+                          <span className="flex items-center w-full">
+                            <item.icon className="mr-3 h-5 w-5 text-muted-foreground" />
+                            {item.label}
+                          </span>
                         </Link>
                       </Button>
                     </SheetClose>
