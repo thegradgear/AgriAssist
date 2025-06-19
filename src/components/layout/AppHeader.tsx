@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Leaf, LogOut, Menu, UserSquare } from 'lucide-react';
 import { signOut } from 'firebase/auth';
+import { useState, useEffect } from 'react'; // Added useState, useEffect
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"; // AvatarImage removed as it's not used
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
@@ -42,6 +43,11 @@ export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
+  const [mounted, setMounted] = useState(false); // New state
+
+  useEffect(() => {
+    setMounted(true); // Set to true after component mounts on client
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -102,7 +108,7 @@ export function AppHeader() {
                     <span className="text-sm font-medium">Theme</span>
                     <ThemeToggle />
                  </div>
-                 {user && (
+                 {mounted && user && (
                     <SheetClose asChild>
                         <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2 text-md py-3 h-auto">
                         <LogOut className="mr-3 h-5 w-5" />
@@ -130,7 +136,7 @@ export function AppHeader() {
         <div className="hidden lg:flex"> {/* ThemeToggle visible on lg and up (when fixed sidebar is present) */}
           <ThemeToggle />
         </div>
-        {user && (
+        {mounted && user && ( // Conditionally render user-specific UI only on client after mount
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -144,9 +150,11 @@ export function AppHeader() {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{user.name || 'My Account'}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
-                  </p>
+                  {user.email && (
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  )}
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
