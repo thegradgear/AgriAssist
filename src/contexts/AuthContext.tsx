@@ -77,6 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentAuthUser) => {
       setFirebaseUserInternal(currentAuthUser);
+      // Set isAuthenticating true when auth state changes, fetchUserProfile will set it false.
+      setIsAuthenticating(true); 
+      setLoading(true);
       fetchUserProfile(currentAuthUser);
     });
     return () => unsubscribe();
@@ -104,25 +107,27 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isAuthenticating && !loading && !user && pathname !== '/login' && pathname !== '/signup' && pathname !== '/forgot-password' && pathname !== '/') {
+    const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
+    const isPublicMarketingPage = pathname === '/' || pathname === '/privacy-policy' || pathname === '/terms-of-service';
+
+    if (!loading && !isAuthenticating && !user && !isAuthPage && !isPublicMarketingPage) {
       router.push('/login');
     }
   }, [user, loading, isAuthenticating, router, pathname]);
   
-  if (isAuthenticating || loading) {
-     return (
-        <div className="flex h-screen w-screen items-center justify-center">
-          <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </div>
-      );
-  }
+  // If still authenticating or loading, the children components (e.g., DashboardPage)
+  // will use the 'loading' and 'isAuthenticating' states from useAuth() to render their own skeletons.
+  // We don't render a global spinner here anymore.
 
-  if (!user && pathname !== '/login' && pathname !== '/signup' && pathname !== '/forgot-password' && pathname !== '/') {
+  const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
+  const isPublicMarketingPage = pathname === '/' || pathname === '/privacy-policy' || pathname === '/terms-of-service';
+
+  // If loading is finished, and there's no user, and it's a protected page,
+  // return null to prevent rendering children while redirection is in progress (handled by useEffect).
+  if (!loading && !isAuthenticating && !user && !isAuthPage && !isPublicMarketingPage) {
     return null; 
   }
 
+  // Otherwise, render children. Children are responsible for their own loading UI.
   return <>{children}</>;
 };
