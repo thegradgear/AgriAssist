@@ -4,7 +4,7 @@
 import type { CalculatedCosts } from './CostCalculatorForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown, DollarSign, PieChart, Info, Scale } from 'lucide-react';
+import { TrendingUp, TrendingDown, IndianRupee, PieChart, Info, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CostCalculatorResultsProps {
@@ -45,7 +45,7 @@ export function CostCalculatorResults({ results, loading }: CostCalculatorResult
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center">
-            <DollarSign className="mr-2 h-5 w-5 text-primary" /> {/* Icon size adjusted */}
+            <IndianRupee className="mr-2 h-5 w-5 text-primary" /> {/* Icon size adjusted */}
             Cost & Profit Analysis
           </CardTitle>
           <CardDescription>Your farming cost and profit estimation will appear here.</CardDescription>
@@ -66,7 +66,7 @@ export function CostCalculatorResults({ results, loading }: CostCalculatorResult
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center">
-          <DollarSign className="mr-2 h-5 w-5 text-primary" />
+          <IndianRupee className="mr-2 h-5 w-5 text-primary" />
           Cost & Profit Analysis for {results.cropName}
         </CardTitle>
         <CardDescription>

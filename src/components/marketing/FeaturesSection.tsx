@@ -1,5 +1,5 @@
 
-import { BarChart3, Leaf, CloudSun, BookOpen, Microscope, DollarSign, CalendarDays, Calculator } from 'lucide-react';
+import { BarChart3, Leaf, CloudSun, BookOpen, Microscope, IndianRupee, CalendarDays, Calculator } from 'lucide-react';
 import { FeatureCard } from './FeatureCard';
 
 const appFeatures = [
@@ -14,7 +14,7 @@ const appFeatures = [
     description: 'Receive tailored crop recommendations based on your soil data, local climate, and market demands.',
   },
   {
-    icon: DollarSign,
+    icon: IndianRupee,
     title: 'Price Forecasting',
     description: 'Estimate future market prices for your crops, empowering you to make informed selling decisions.',
   },

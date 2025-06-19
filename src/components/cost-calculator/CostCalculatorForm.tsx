@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
-import { Loader2, Trash2, PlusCircle, Calculator, Leaf, DollarSign, Scaling } from 'lucide-react';
+import { Loader2, Trash2, PlusCircle, Calculator, Leaf, IndianRupee, Scaling } from 'lucide-react';
 
 interface CostCalculatorFormProps {
   onCalculated: (results: CalculatedCosts | null) => void;
@@ -207,7 +207,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                     name={`costItems.${index}.costPerUnit`}
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
-                        <FormLabel>Cost/Unit (INR)</FormLabel>
+                        <FormLabel>Cost/Unit (₹)</FormLabel>
                         <FormControl><Input type="number" placeholder="e.g., 150" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -251,7 +251,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
             {/* Expected Yield and Price Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md">
                 <div className="space-y-1">
-                    <h4 className="font-medium flex items-center"><DollarSign className="mr-1 h-4 w-4 text-muted-foreground"/>Expected Yield</h4>
+                    <h4 className="font-medium flex items-center"><IndianRupee className="mr-1 h-4 w-4 text-muted-foreground"/>Expected Yield</h4>
                     <div className="grid grid-cols-2 gap-3">
                         <FormField
                             control={form.control}
@@ -300,7 +300,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                     />
                 </div>
                  <div className="space-y-1">
-                     <h4 className="font-medium flex items-center"><DollarSign className="mr-1 h-4 w-4 text-muted-foreground"/>Expected Market Price</h4>
+                     <h4 className="font-medium flex items-center"><IndianRupee className="mr-1 h-4 w-4 text-muted-foreground"/>Expected Market Price</h4>
                     <div className="grid grid-cols-2 gap-3">
                         <FormField
                             control={form.control}

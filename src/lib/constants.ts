@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, BarChart3, Leaf, CloudSun, BookOpen, Microscope, DollarSign, CalendarDays, Calculator } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Leaf, CloudSun, BookOpen, Microscope, IndianRupee, CalendarDays, Calculator } from 'lucide-react';
 
 export interface NavItem {
   href: string;
@@ -13,7 +13,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/yield-prediction', label: 'Yield Prediction', icon: BarChart3 },
   { href: '/crop-recommendation', label: 'Crop Recommendation', icon: Leaf },
-  { href: '/crop-price-prediction', label: 'Price Prediction', icon: DollarSign },
+  { href: '/crop-price-prediction', label: 'Price Prediction', icon: IndianRupee },
   { href: '/crop-disease-detection', label: 'Disease Detection', icon: Microscope },
   { href: '/farming-calendar', label: 'Farming Calendar', icon: CalendarDays },
   { href: '/cost-calculator', label: 'Cost Calculator', icon: Calculator },

@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Loader2, DollarSign } from 'lucide-react';
+import { Loader2, IndianRupee } from 'lucide-react';
 
 interface CropPricePredictionFormProps {
   onPredictionResult: (result: PredictCropPriceOutput | null) => void;
@@ -77,7 +77,7 @@ export function CropPricePredictionForm({ onPredictionResult, onPredictionLoadin
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="font-headline flex items-center">
-          <DollarSign className="mr-2 h-6 w-6 text-primary" />
+          <IndianRupee className="mr-2 h-6 w-6 text-primary" />
           Prediction Inputs
         </CardTitle>
         <CardDescription>Enter details about your crop and market conditions.</CardDescription>
