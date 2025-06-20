@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useEffect, useCallback } from 'react';
-import { AlertTriangle, BookOpen, Search, X } from 'lucide-react'; // Added X icon
+import { AlertTriangle, BookOpen, Search, X } from 'lucide-react'; 
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -66,10 +66,8 @@ export default function BestPracticesPage() {
     setIsLoading(true);
     setError(null);
     try {
-      // If the query is effectively empty after trimming, use the default query.
-      // Otherwise, an empty query to NewsAPI might return irrelevant results or errors.
       const effectiveQuery = query.trim() ? query : DEFAULT_ARTICLE_QUERY;
-      if (query.trim() === '' && currentQuery === '') { // Only toast if user intentionally searched for empty and it wasn't an auto-load
+      if (query.trim() === '' && currentQuery === '') { 
           // No toast here, the empty results message will suffice.
       }
 
@@ -97,7 +95,6 @@ export default function BestPracticesPage() {
         setArticles(data.articles.map(mapArticleToPractice));
       } else if (data.articles && data.articles.length === 0) {
         setArticles([]);
-        // Avoid toasting if it's the default query that returned no articles (e.g., initial load scenario)
         if (query !== DEFAULT_ARTICLE_QUERY && query.trim() !== '') {
             toast({
                 title: "No Articles Found",
@@ -120,25 +117,19 @@ export default function BestPracticesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, currentQuery]); // Added currentQuery to dep array
+  }, [toast, currentQuery]); 
 
   useEffect(() => {
-    // Fetch articles if currentQuery has a value (even if it's the default)
-    // If currentQuery is an empty string, it implies an intentional empty search, 
-    // leading to the "No articles found" message being displayed without an API call.
     if (currentQuery.trim()) {
       fetchArticles(currentQuery);
-    } else if (currentQuery === '') { // Handle intentional empty search
+    } else if (currentQuery === '') { 
       setArticles([]);
       setIsLoading(false);
     }
-    // Initial load: currentQuery is DEFAULT_ARTICLE_QUERY, so it fetches.
   }, [fetchArticles, currentQuery]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Set currentQuery to whatever is in searchTerm. If searchTerm is empty,
-    // currentQuery becomes empty, and useEffect will handle it by clearing articles.
     setCurrentQuery(searchTerm.trim());
   };
   
@@ -153,9 +144,10 @@ export default function BestPracticesPage() {
         <div className="relative flex-grow">
           <Input 
             placeholder="Search articles (e.g., 'organic pest control')" 
-            className="w-full pr-10" // Ensure padding for the 'X' button
+            className="w-full pr-10" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            suppressHydrationWarning
           />
           {searchTerm && (
             <Button
@@ -164,13 +156,14 @@ export default function BestPracticesPage() {
               size="icon"
               className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
               onClick={() => setSearchTerm('')}
+              suppressHydrationWarning
             >
               <X className="h-4 w-4" />
               <span className="sr-only">Clear search</span>
             </Button>
           )}
         </div>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading} suppressHydrationWarning>
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
       </form>
@@ -201,7 +194,6 @@ export default function BestPracticesPage() {
             <BookOpen className="mx-auto h-16 w-16 text-primary mb-4" />
             <p className="text-xl font-medium leading-snug">No Articles Found</p>
             <p className="text-muted-foreground mt-1 text-base leading-normal">
-              {/* Message depends on whether an active search query (non-default) led to no results, or if it's the initial state / default query with no results */}
               {currentQuery !== DEFAULT_ARTICLE_QUERY && currentQuery.trim() !== '' 
                 ? `No articles found for your query: "${currentQuery}". Try a different search term.`
                 : "No articles found. Try searching for specific topics or broaden your terms."
