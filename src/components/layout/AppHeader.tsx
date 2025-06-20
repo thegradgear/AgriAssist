@@ -65,7 +65,7 @@ export function AppHeader() {
       <div className="flex items-center gap-2 lg:hidden">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9">
+            <Button variant="outline" size="icon" className="h-9 w-9" suppressHydrationWarning>
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open navigation menu</span>
             </Button>
@@ -87,7 +87,7 @@ export function AppHeader() {
                 <SheetClose asChild key={item.href}>
                    <Button
                     variant={(pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) ? "secondary" : "ghost"}
-                    className="w-full justify-start text-left text-base py-3 h-auto" /* Text size for nav items */
+                    className="w-full justify-start text-left text-base py-3 h-auto" 
                     disabled={item.disabled}
                     aria-label={item.label}
                     asChild
@@ -102,12 +102,12 @@ export function AppHeader() {
             </nav>
             <div className="p-4 border-t mt-auto space-y-2">
                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Theme</span> {/* Label for theme toggle */}
+                    <span className="text-sm font-medium">Theme</span> 
                     <ThemeToggle />
                  </div>
                  {mounted && user && (
                     <SheetClose asChild>
-                        <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2 text-base py-3 h-auto"> {/* Text size for logout */}
+                        <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2 text-base py-3 h-auto"> 
                         <LogOut className="mr-3 h-5 w-5" />
                         <span>Logout</span>
                         </Button>
@@ -119,7 +119,7 @@ export function AppHeader() {
         <Button variant="link" asChild className="p-0 h-auto">
           <Link href="/" className="flex items-center gap-2">
             <Leaf className="h-7 w-7 text-primary" />
-            <span className="text-xl font-semibold font-headline text-foreground hover:text-primary lg:hidden">AgriAssist</span> {/* App name in header */}
+            <span className="text-xl font-semibold font-headline text-foreground hover:text-primary lg:hidden">AgriAssist</span> 
           </Link>
         </Button>
       </div>
@@ -133,7 +133,7 @@ export function AppHeader() {
         {mounted && user && ( 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full" suppressHydrationWarning>
                  <Avatar className="h-9 w-9">
                   <AvatarFallback>{userInitials}</AvatarFallback>
                 </Avatar>
@@ -142,9 +142,9 @@ export function AppHeader() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.name || 'My Account'}</p> {/* User name in dropdown */}
+                  <p className="text-sm font-medium leading-none">{user.name || 'My Account'}</p> 
                   {user.email && (
-                    <p className="text-xs leading-none text-muted-foreground"> {/* User email in dropdown */}
+                    <p className="text-xs leading-none text-muted-foreground"> 
                       {user.email}
                     </p>
                   )}
@@ -152,12 +152,12 @@ export function AppHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/profile" className="text-sm"> {/* Dropdown item text size */}
+                <Link href="/profile" className="text-sm"> 
                   <UserSquare className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-sm"> {/* Dropdown item text size */}
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-sm"> 
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

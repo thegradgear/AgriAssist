@@ -3,7 +3,7 @@
 
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { costCalculatorSchema, type CostCalculatorFormData, type CostItemFormData, defaultCostItems } from '@/schemas/costCalculatorSchema';
+import { costCalculatorSchema, type CostCalculatorFormData, type CostItemFormData, defaultCostItems as staticDefaultCostItems } from '@/schemas/costCalculatorSchema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,7 +32,6 @@ export interface CalculatedCosts {
 const areaUnits = ['acre', 'hectare'] as const;
 const yieldUnits = ['kg', 'quintal', 'tonne'] as const;
 
-// Conversion factors to a base unit (e.g., kg and acre)
 const yieldConversionToKg: Record<typeof yieldUnits[number], number> = {
   kg: 1,
   quintal: 100,
@@ -40,13 +39,14 @@ const yieldConversionToKg: Record<typeof yieldUnits[number], number> = {
 };
 const areaConversionToAcre: Record<typeof areaUnits[number], number> = {
   acre: 1,
-  hectare: 2.47105, // 1 hectare is approx 2.47105 acres
+  hectare: 2.47105, 
 };
 
 
 export function CostCalculatorForm({ onCalculated, initialData }: CostCalculatorFormProps) {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false); // For future async operations if any
+  const [isLoading, setIsLoading] = useState(false); 
+  const [isClient, setIsClient] = useState(false);
 
   const form = useForm<CostCalculatorFormData>({
     resolver: zodResolver(costCalculatorSchema),
@@ -54,7 +54,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
       cropName: '',
       area: 1,
       areaUnit: 'acre',
-      costItems: defaultCostItems.map(item => ({...item, id: crypto.randomUUID()})), // Add unique IDs for field array
+      costItems: [], // Initialize empty for SSR, populate in useEffect
       expectedYield: 1000,
       yieldUnit: 'kg',
       yieldPerAreaUnit: 'acre',
@@ -63,13 +63,26 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "costItems",
   });
 
+  useEffect(() => {
+    setIsClient(true);
+    // Populate default cost items on client mount if not already populated (e.g. by initialData)
+    if (!initialData && form.getValues('costItems').length === 0) {
+      const clientDefaultCostItems = staticDefaultCostItems.map(item => ({
+        ...item,
+        id: crypto.randomUUID(),
+      }));
+      replace(clientDefaultCostItems);
+    }
+  }, [form, initialData, replace]);
+
+
   function onSubmit(data: CostCalculatorFormData) {
-    setIsLoading(true); // Simulate loading if needed, though calculations are client-side
+    setIsLoading(true); 
     
     try {
       const totalCultivationAreaInAcres = data.area * areaConversionToAcre[data.areaUnit];
@@ -121,10 +134,42 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
     }
   }
 
-  // Add unique ID when appending a new cost item
   const handleAddCostItem = () => {
     append({ name: '', costPerUnit: 0, quantity: 0, unit: '', id: crypto.randomUUID() });
   };
+  
+  if (!isClient && !initialData) {
+     return (
+        <Card className="shadow-lg w-full">
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center">
+                    <Calculator className="mr-2 h-6 w-6 text-primary" />
+                    Farming Cost Inputs
+                </CardTitle>
+                <CardDescription>Enter details about your crop, area, costs, and expected returns.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                {/* Skeletons for Crop/Area, Cost Items, Yield/Price */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-md">
+                    <div className="h-10 bg-muted rounded"></div>
+                    <div className="h-10 bg-muted rounded"></div>
+                    <div className="h-10 bg-muted rounded"></div>
+                </div>
+                <div className="space-y-4 p-4 border rounded-md">
+                    <div className="h-8 bg-muted rounded w-1/3"></div>
+                    <div className="h-16 bg-muted rounded"></div>
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md">
+                    <div className="h-20 bg-muted rounded"></div>
+                    <div className="h-20 bg-muted rounded"></div>
+                 </div>
+            </CardContent>
+            <CardFooter>
+                 <Button type="submit" className="w-full" disabled={true}>Calculate Costs & Profit</Button>
+            </CardFooter>
+        </Card>
+     );
+  }
 
 
   return (
@@ -139,7 +184,6 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
-            {/* Crop and Area Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-md">
               <FormField
                 control={form.control}
@@ -147,7 +191,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                 render={({ field }) => (
                   <FormItem className="md:col-span-1">
                     <FormLabel className="flex items-center"><Leaf className="mr-1 h-4 w-4 text-muted-foreground"/>Crop Name</FormLabel>
-                    <FormControl><Input placeholder="e.g., Wheat" {...field} /></FormControl>
+                    <FormControl><Input placeholder="e.g., Wheat" {...field} suppressHydrationWarning/></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -158,7 +202,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center"><Scaling className="mr-1 h-4 w-4 text-muted-foreground"/>Area</FormLabel>
-                    <FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl>
+                    <FormControl><Input type="number" placeholder="e.g., 5" {...field} suppressHydrationWarning/></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -169,8 +213,8 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Area Unit</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Select unit" /></SelectTrigger></FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger suppressHydrationWarning><SelectValue placeholder="Select unit" /></SelectTrigger></FormControl>
                       <SelectContent>
                         {areaUnits.map(unit => <SelectItem key={unit} value={unit}>{unit.charAt(0).toUpperCase() + unit.slice(1)}</SelectItem>)}
                       </SelectContent>
@@ -181,11 +225,10 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
               />
             </div>
 
-            {/* Cost Items Section */}
             <div className="space-y-4 p-4 border rounded-md">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold font-headline">Cost Items</h3>
-                <Button type="button" variant="outline" size="sm" onClick={handleAddCostItem} className="flex items-center">
+                <Button type="button" variant="outline" size="sm" onClick={handleAddCostItem} className="flex items-center" suppressHydrationWarning>
                   <PlusCircle className="mr-2 h-4 w-4" /> Add Item
                 </Button>
               </div>
@@ -197,7 +240,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
                         <FormLabel>Item Name</FormLabel>
-                        <FormControl><Input placeholder="e.g., Seeds" {...field} /></FormControl>
+                        <FormControl><Input placeholder="e.g., Seeds" {...field} suppressHydrationWarning/></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -208,7 +251,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
                         <FormLabel>Cost/Unit (₹)</FormLabel>
-                        <FormControl><Input type="number" placeholder="e.g., 150" {...field} /></FormControl>
+                        <FormControl><Input type="number" placeholder="e.g., 150" {...field} suppressHydrationWarning/></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -219,7 +262,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
                         <FormLabel>Quantity</FormLabel>
-                        <FormControl><Input type="number" placeholder="e.g., 10" {...field} /></FormControl>
+                        <FormControl><Input type="number" placeholder="e.g., 10" {...field} suppressHydrationWarning/></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -230,13 +273,13 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                     render={({ field }) => (
                       <FormItem className="sm:col-span-1">
                         <FormLabel>Unit</FormLabel>
-                        <FormControl><Input placeholder="kg" {...field} /></FormControl>
+                        <FormControl><Input placeholder="kg" {...field} suppressHydrationWarning/></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <div className="sm:col-span-1 flex items-end">
-                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="mt-auto sm:mt-0 self-end sm:self-center h-9 w-9">
+                    <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="mt-auto sm:mt-0 self-end sm:self-center h-9 w-9" suppressHydrationWarning>
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Remove item</span>
                     </Button>
@@ -248,7 +291,6 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
               )}
             </div>
 
-            {/* Expected Yield and Price Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md">
                 <div className="space-y-1">
                     <h4 className="font-medium flex items-center"><IndianRupee className="mr-1 h-4 w-4 text-muted-foreground"/>Expected Yield</h4>
@@ -259,7 +301,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel className="sr-only">Yield Amount</FormLabel>
-                                <FormControl><Input type="number" placeholder="e.g., 2000" {...field} /></FormControl>
+                                <FormControl><Input type="number" placeholder="e.g., 2000" {...field} suppressHydrationWarning/></FormControl>
                                 <FormMessage />
                             </FormItem>
                             )}
@@ -270,8 +312,8 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel className="sr-only">Yield Unit</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Unit" /></SelectTrigger></FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger suppressHydrationWarning><SelectValue placeholder="Unit" /></SelectTrigger></FormControl>
                                 <SelectContent>
                                     {yieldUnits.map(unit => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
                                 </SelectContent>
@@ -287,8 +329,8 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel className="sr-only">Per Area Unit</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger className="mt-2"><SelectValue placeholder="Per Area Unit" /></SelectTrigger></FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl><SelectTrigger className="mt-2" suppressHydrationWarning><SelectValue placeholder="Per Area Unit" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 <SelectItem value="acre">per Acre</SelectItem>
                                 <SelectItem value="hectare">per Hectare</SelectItem>
@@ -308,7 +350,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel className="sr-only">Market Price</FormLabel>
-                                <FormControl><Input type="number" placeholder="e.g., 25" {...field} /></FormControl>
+                                <FormControl><Input type="number" placeholder="e.g., 25" {...field} suppressHydrationWarning/></FormControl>
                                 <FormMessage />
                             </FormItem>
                             )}
@@ -319,8 +361,8 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                             render={({ field }) => (
                             <FormItem>
                                 <FormLabel className="sr-only">Price Per Unit</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Per Unit" /></SelectTrigger></FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger suppressHydrationWarning><SelectValue placeholder="Per Unit" /></SelectTrigger></FormControl>
                                 <SelectContent>
                                      {yieldUnits.map(unit => <SelectItem key={unit} value={unit}>per {unit}</SelectItem>)}
                                 </SelectContent>
@@ -335,7 +377,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
 
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} suppressHydrationWarning>
               {isLoading ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Calculating...</>
               ) : (

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -13,10 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, CalendarIcon, MapPin, Trees, Leaf, CheckSquare } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { format } from 'date-fns';
+import { format as formatDateFns } from 'date-fns'; // Renamed to avoid conflict
 
 interface FarmingCalendarFormProps {
   onCalendarResult: (result: FarmingCalendarOutput | null) => void;
@@ -30,26 +31,44 @@ const farmingPractices = ["Conventional", "Organic", "Integrated Pest Management
 export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: FarmingCalendarFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const form = useForm<FarmingCalendarFormData>({
     resolver: zodResolver(farmingCalendarSchema),
     defaultValues: {
       cropName: '',
       location: '',
-      plantingDate: new Date(),
+      plantingDate: undefined, // Initialize as undefined for SSR
       soilType: undefined,
       farmingPractice: undefined,
     },
   });
 
+  useEffect(() => {
+    setIsClient(true);
+    // Set client-side default after mount
+     if (form.getValues('plantingDate') === undefined) {
+      form.setValue('plantingDate', new Date());
+    }
+  }, [form]);
+
+
   async function onSubmit(data: FarmingCalendarFormData) {
+    if (!data.plantingDate) {
+        toast({
+            variant: "destructive",
+            title: "Validation Error",
+            description: "Planting date is required."
+        });
+        return;
+    }
     setIsLoading(true);
     onLoading(true);
     onError(null);
     onCalendarResult(null);
 
     try {
-      const aiInput = formatDataForAI(data);
+      const aiInput = formatDataForAI(data as FarmingCalendarFormData & { plantingDate: Date }); // Cast because we ensured it
       const result = await generateFarmingCalendar(aiInput);
       onCalendarResult(result);
       toast({
@@ -71,6 +90,30 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
       onLoading(false);
     }
   }
+  
+  if (!isClient) {
+     return (
+        <Card className="shadow-lg">
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center">
+                <CalendarIcon className="mr-2 h-6 w-6 text-primary" />
+                Calendar Inputs
+                </CardTitle>
+                <CardDescription>Enter details to generate a personalized farming schedule.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+                <div className="h-10 bg-muted rounded w-full"></div>
+                <div className="h-10 bg-muted rounded w-full"></div>
+                <div className="h-10 bg-muted rounded w-full"></div>
+                <div className="h-10 bg-muted rounded w-full"></div>
+                <div className="h-10 bg-muted rounded w-full"></div>
+            </CardContent>
+            <CardFooter>
+                <Button className="w-full" disabled={true}>Generate Farming Calendar</Button>
+            </CardFooter>
+        </Card>
+     );
+  }
 
   return (
     <Card className="shadow-lg">
@@ -91,7 +134,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
                 <FormItem>
                   <FormLabel className="flex items-center"><Trees className="mr-2 h-4 w-4 text-muted-foreground" />Crop Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Tomato, Wheat" {...field} />
+                    <Input placeholder="e.g., Tomato, Wheat" {...field} suppressHydrationWarning />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -104,7 +147,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
                 <FormItem>
                   <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-muted-foreground" />Location</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Pune, Maharashtra" {...field} />
+                    <Input placeholder="e.g., Pune, Maharashtra" {...field} suppressHydrationWarning />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,9 +168,10 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
                             "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
+                          suppressHydrationWarning
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            formatDateFns(field.value, "PPP")
                           ) : (
                             <span>Pick a date</span>
                           )}
@@ -156,7 +200,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
                   <FormLabel className="flex items-center"><Leaf className="mr-2 h-4 w-4 text-muted-foreground" />Soil Type (Optional)</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger suppressHydrationWarning>
                         <SelectValue placeholder="Select soil type" />
                       </SelectTrigger>
                     </FormControl>
@@ -178,7 +222,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
                   <FormLabel className="flex items-center"><CheckSquare className="mr-2 h-4 w-4 text-muted-foreground" />Farming Practice (Optional)</FormLabel>
                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger suppressHydrationWarning>
                         <SelectValue placeholder="Select farming practice" />
                       </SelectTrigger>
                     </FormControl>
@@ -194,7 +238,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
             />
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading} suppressHydrationWarning>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
