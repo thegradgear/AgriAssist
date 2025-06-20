@@ -7,7 +7,7 @@ import { Leaf, LogOut, Menu, UserSquare } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useState, useEffect } from 'react'; 
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { NAV_ITEMS } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const getInitials = (name?: string | null): string => {
   if (!name) return '?';
@@ -86,7 +87,7 @@ export function AppHeader() {
               {NAV_ITEMS.map((item) => (
                 <SheetClose asChild key={item.href}>
                    <Button
-                    variant={(pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) ? "secondary" : "ghost"}
+                    variant={(pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) ? "default" : "ghost"}
                     className="w-full justify-start text-left text-base py-3 h-auto" 
                     disabled={item.disabled}
                     aria-label={item.label}
