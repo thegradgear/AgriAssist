@@ -1,30 +1,14 @@
 
-import { BrainCircuit, AppWindow, Layers3, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BrainCircuit, AppWindow, Layers3, TrendingUp, CheckCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-interface BenefitPointProps {
-  icon: React.ElementType;
+interface BenefitPoint {
+  icon: LucideIcon;
   title: string;
   description: string;
 }
 
-const BenefitPointCard = ({ icon: Icon, title, description }: BenefitPointProps) => {
-  return (
-    <Card className="bg-card shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full group hover:-translate-y-1 transform">
-      <CardHeader className="items-center text-center pt-6 pb-4">
-        <div className="p-3 bg-primary/10 rounded-full mb-3 group-hover:bg-primary/20 transition-colors">
-          <Icon className="h-7 w-7 text-primary" />
-        </div>
-        <CardTitle className="text-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="px-5 pb-6 text-center flex-grow">
-        <p className="text-sm text-muted-foreground leading-normal">{description}</p>
-      </CardContent>
-    </Card>
-  );
-};
-
-const whyPoints = [
+const whyPoints: BenefitPoint[] = [
   {
     icon: BrainCircuit,
     title: 'AI-Powered Precision',
@@ -59,16 +43,29 @@ export function WhyAgriAssistSection() {
             Unlock the full potential of your farm with intelligent tools designed for modern Indian agriculture, helping you save time, reduce costs, and improve yields.
           </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-          {whyPoints.map((point, index) => (
-            <div key={point.title} className="animate-fade-in-up" style={{ animationDelay: `${index * 100 + 50}ms` }}>
-              <BenefitPointCard
-                icon={point.icon}
-                title={point.title}
-                description={point.description}
-              />
-            </div>
-          ))}
+        
+        <div className="max-w-3xl mx-auto">
+          <ul className="space-y-8">
+            {whyPoints.map((point, index) => (
+              <li key={point.title} className="flex items-start animate-fade-in-up" style={{ animationDelay: `${index * 100 + 50}ms` }}>
+                <div className="flex-shrink-0">
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
+                    <point.icon className="h-5 w-5" />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  {/* H3 for Subsection Title */}
+                  <h3 className="text-xl font-medium leading-snug text-foreground font-headline">
+                    {point.title}
+                  </h3>
+                  {/* Small text for description */}
+                  <p className="mt-1 text-sm text-muted-foreground leading-normal">
+                    {point.description}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
