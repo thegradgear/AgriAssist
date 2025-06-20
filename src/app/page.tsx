@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MarketingHeader } from '@/components/marketing/MarketingHeader';
 import { HeroSection } from '@/components/marketing/HeroSection';
 import { FeaturesSection } from '@/components/marketing/FeaturesSection';
+import { WhyAgriAssistSection } from '@/components/marketing/WhyAgriAssistSection';
 import { CallToActionSection } from '@/components/marketing/CallToActionSection';
 import { MarketingFooter } from '@/components/marketing/MarketingFooter';
 import { Skeleton } from '@/components/ui/skeleton'; // For initial loading state
@@ -72,6 +73,7 @@ export default function LandingPage() {
       <main className="flex-grow">
         <HeroSection />
         <FeaturesSection />
+        <WhyAgriAssistSection />
         <CallToActionSection />
       </main>
       <MarketingFooter />
