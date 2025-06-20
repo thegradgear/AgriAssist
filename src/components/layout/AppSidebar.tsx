@@ -18,7 +18,7 @@ export function AppSidebar() {
           <Link href="/" className="flex items-center gap-2">
             <Leaf className="h-8 w-8 text-primary" />
             {/* App name in sidebar, text-xl font-semibold */}
-            <span className="text-xl font-semibold font-headline text-foreground hover:text-primary">AgriAssist</span>
+            <span className="text-xl font-semibold font-headline text-card-foreground hover:text-primary">AgriAssist</span>
           </Link>
         </div>
         <nav className="flex flex-1 flex-col">
@@ -31,8 +31,8 @@ export function AppSidebar() {
                       href={item.href}
                       className={cn(
                         (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
-                          ? 'bg-accent text-accent-foreground'
-                          : 'hover:bg-accent/50 hover:text-accent-foreground',
+                          ? 'bg-accent text-accent-foreground' // Active state
+                          : 'text-card-foreground hover:bg-accent/50 hover:text-accent-foreground', // Non-active base and hover state
                         // Applying base styling for nav items: text-base (1rem) font-semibold
                         'group flex gap-x-3 rounded-md p-2 text-base font-semibold leading-normal items-center', 
                         item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
@@ -44,8 +44,8 @@ export function AppSidebar() {
                       <item.icon
                         className={cn(
                           (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
-                            ? 'text-accent-foreground'
-                            : 'text-muted-foreground group-hover:text-accent-foreground',
+                            ? 'text-accent-foreground' // Icon color for active link
+                            : 'text-muted-foreground group-hover:text-accent-foreground', // Icon color for non-active link (muted by default, accent on hover)
                           'h-5 w-5 shrink-0'
                         )}
                         aria-hidden="true"
