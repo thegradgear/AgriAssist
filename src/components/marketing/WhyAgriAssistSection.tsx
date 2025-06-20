@@ -1,6 +1,7 @@
 
-import { BrainCircuit, AppWindow, Layers3, TrendingUp, CheckCircle } from 'lucide-react';
+import { BrainCircuit, AppWindow, Layers3, TrendingUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import Image from 'next/image';
 
 interface BenefitPoint {
   icon: LucideIcon;
@@ -44,28 +45,40 @@ export function WhyAgriAssistSection() {
           </p>
         </div>
         
-        <div className="max-w-3xl mx-auto">
-          <ul className="space-y-8">
-            {whyPoints.map((point, index) => (
-              <li key={point.title} className="flex items-start animate-fade-in-up" style={{ animationDelay: `${index * 100 + 50}ms` }}>
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
-                    <point.icon className="h-5 w-5" />
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="relative h-64 md:h-96 rounded-xl overflow-hidden shadow-xl order-last md:order-first animate-fade-in-right">
+            <Image 
+              src="https://placehold.co/600x400.png" 
+              alt="Farmer benefiting from AgriAssist insights" 
+              layout="fill" 
+              objectFit="cover"
+              data-ai-hint="modern agriculture technology"
+              className="rounded-xl"
+            />
+             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+          </div>
+
+          <div className="max-w-xl mx-auto md:mx-0">
+            <ul className="space-y-8">
+              {whyPoints.map((point, index) => (
+                <li key={point.title} className="flex items-start animate-fade-in-up" style={{ animationDelay: `${index * 150 + 50}ms` }}>
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary">
+                      <point.icon className="h-5 w-5" />
+                    </div>
                   </div>
-                </div>
-                <div className="ml-4">
-                  {/* H3 for Subsection Title */}
-                  <h3 className="text-xl font-medium leading-snug text-foreground font-headline">
-                    {point.title}
-                  </h3>
-                  {/* Small text for description */}
-                  <p className="mt-1 text-sm text-muted-foreground leading-normal">
-                    {point.description}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
+                  <div className="ml-4">
+                    <h3 className="text-xl font-medium leading-snug text-foreground font-headline">
+                      {point.title}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground leading-normal">
+                      {point.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </section>
