@@ -125,7 +125,7 @@ export function MarketingHeader() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[280px] p-0 flex flex-col bg-background">
                 <SheetHeader className="p-4 border-b">
-                  <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                   <SheetTitle className="sr-only">Main Menu</SheetTitle>
                   <SheetClose asChild>
                     <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
                       <Leaf className="h-7 w-7 text-primary group-hover:text-primary/80 transition-colors" />
@@ -140,11 +140,11 @@ export function MarketingHeader() {
                           href={item.href}
                           className={cn(
                             buttonVariants({ variant: "ghost" }),
-                            "w-full justify-start text-left text-base py-3 h-auto font-medium"
+                            "w-full justify-start text-left text-base py-3 h-auto font-medium group" 
                           )}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <item.icon className="mr-3 h-5 w-5 text-muted-foreground" />
+                          <item.icon className={cn("mr-3 h-5 w-5 text-muted-foreground group-hover:text-accent-foreground")} />
                           {item.label}
                         </Link>
                       </SheetClose>
