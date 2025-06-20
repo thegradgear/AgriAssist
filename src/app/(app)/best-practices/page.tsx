@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useEffect, useCallback } from 'react';
-import { AlertTriangle, BookOpen, Search } from 'lucide-react';
+import { AlertTriangle, BookOpen, Search, X } from 'lucide-react'; // Added X icon
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -66,7 +66,15 @@ export default function BestPracticesPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/news?query=${encodeURIComponent(query)}&pageSize=12`);
+      // If the query is effectively empty after trimming, use the default query.
+      // Otherwise, an empty query to NewsAPI might return irrelevant results or errors.
+      const effectiveQuery = query.trim() ? query : DEFAULT_ARTICLE_QUERY;
+      if (query.trim() === '' && currentQuery === '') { // Only toast if user intentionally searched for empty and it wasn't an auto-load
+          // No toast here, the empty results message will suffice.
+      }
+
+
+      const response = await fetch(`/api/news?query=${encodeURIComponent(effectiveQuery)}&pageSize=12`);
       
       if (!response.ok) {
         let errorMsg = `Error: ${response.statusText} (${response.status})`;
@@ -89,7 +97,8 @@ export default function BestPracticesPage() {
         setArticles(data.articles.map(mapArticleToPractice));
       } else if (data.articles && data.articles.length === 0) {
         setArticles([]);
-        if (query !== DEFAULT_ARTICLE_QUERY) {
+        // Avoid toasting if it's the default query that returned no articles (e.g., initial load scenario)
+        if (query !== DEFAULT_ARTICLE_QUERY && query.trim() !== '') {
             toast({
                 title: "No Articles Found",
                 description: `No articles found for your query: "${query}". Try a different search term.`,
@@ -111,55 +120,59 @@ export default function BestPracticesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, currentQuery]); // Added currentQuery to dep array
 
   useEffect(() => {
+    // Fetch articles if currentQuery has a value (even if it's the default)
+    // If currentQuery is an empty string, it implies an intentional empty search, 
+    // leading to the "No articles found" message being displayed without an API call.
     if (currentQuery.trim()) {
       fetchArticles(currentQuery);
-    } else {
-        setArticles([]); 
-        setIsLoading(false); 
+    } else if (currentQuery === '') { // Handle intentional empty search
+      setArticles([]);
+      setIsLoading(false);
     }
+    // Initial load: currentQuery is DEFAULT_ARTICLE_QUERY, so it fetches.
   }, [fetchArticles, currentQuery]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (searchTerm.trim()) {
-      setCurrentQuery(searchTerm.trim());
-    } else {
-      setCurrentQuery(''); 
-    }
+    // Set currentQuery to whatever is in searchTerm. If searchTerm is empty,
+    // currentQuery becomes empty, and useEffect will handle it by clearing articles.
+    setCurrentQuery(searchTerm.trim());
   };
   
-  const handleClearSearch = () => {
-    setSearchTerm('');
-  };
-
   return (
     <div className="container mx-auto">
-      {/* PageHeader title is H1: text-3xl, font-semibold, leading-tight */}
       <PageHeader
         title="Agricultural Articles & News"
         description="Explore recent articles and news related to farming techniques, soil health, and agricultural innovations."
       />
       
-      <form onSubmit={handleSearch} className="mb-8 flex flex-col sm:flex-row gap-2 items-center">
-        {/* Input is text-base by default */}
-        <Input 
-          placeholder="Search articles (e.g., 'organic pest control')" 
-          className="flex-grow" 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        {/* Button text is text-sm font-medium */}
-        <Button type="submit" disabled={isLoading || !searchTerm.trim()}>
+      <form onSubmit={handleSearch} className="mb-8 flex flex-row gap-2 items-center">
+        <div className="relative flex-grow">
+          <Input 
+            placeholder="Search articles (e.g., 'organic pest control')" 
+            className="w-full pr-10" // Ensure padding for the 'X' button
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+              onClick={() => setSearchTerm('')}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Clear search</span>
+            </Button>
+          )}
+        </div>
+        <Button type="submit" disabled={isLoading}>
           <Search className="mr-2 h-4 w-4" /> Search
         </Button>
-         {searchTerm && (
-          <Button type="button" variant="outline" onClick={handleClearSearch} disabled={isLoading}>
-            Clear
-          </Button>
-        )}
       </form>
 
       {isLoading && (
@@ -173,12 +186,10 @@ export default function BestPracticesPage() {
       {!isLoading && error && (
         <Alert variant="destructive" className="mb-8">
           <AlertTriangle className="h-4 w-4" />
-          {/* AlertTitle is text-base font-semibold by default */}
           <AlertTitle>Error</AlertTitle>
-          {/* AlertDescription is text-sm by default */}
           <AlertDescription>{error}</AlertDescription>
            {(error.toLowerCase().includes("newsapi key") || error.toLowerCase().includes("newsapi configuration error")) && (
-                <p className="text-xs mt-2 leading-normal"> {/* Caption style */}
+                <p className="text-xs mt-2 leading-normal">
                     There might be an issue with the NewsAPI configuration on the server. Please contact support or check server logs.
                 </p>
             )}
@@ -188,9 +199,13 @@ export default function BestPracticesPage() {
       {!isLoading && !error && articles.length === 0 && (
         <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
             <BookOpen className="mx-auto h-16 w-16 text-primary mb-4" />
-            <p className="text-xl font-medium leading-snug">No Articles Found</p> {/* H3 style */}
-            <p className="text-muted-foreground mt-1 text-base leading-normal"> {/* Body text style */}
-              {currentQuery === DEFAULT_ARTICLE_QUERY ? "No default articles found. Try searching for specific topics." : `No articles found for your query: "${currentQuery}". Try a different search term.`}
+            <p className="text-xl font-medium leading-snug">No Articles Found</p>
+            <p className="text-muted-foreground mt-1 text-base leading-normal">
+              {/* Message depends on whether an active search query (non-default) led to no results, or if it's the initial state / default query with no results */}
+              {currentQuery !== DEFAULT_ARTICLE_QUERY && currentQuery.trim() !== '' 
+                ? `No articles found for your query: "${currentQuery}". Try a different search term.`
+                : "No articles found. Try searching for specific topics or broaden your terms."
+              }
             </p>
         </div>
       )}
