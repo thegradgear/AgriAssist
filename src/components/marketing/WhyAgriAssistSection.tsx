@@ -46,9 +46,9 @@ export function WhyAgriAssistSection() {
         </div>
         
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div className="relative h-64 md:h-96 rounded-xl overflow-hidden shadow-xl order-last md:order-first animate-fade-in-right">
+          <div className="relative h-96 md:h-[500px] rounded-xl overflow-hidden shadow-xl order-last md:order-first animate-fade-in-right">
             <Image 
-              src="https://placehold.co/600x400.png" 
+              src="https://placehold.co/400x600.png" 
               alt="Farmer benefiting from AgriAssist insights" 
               layout="fill" 
               objectFit="cover"
