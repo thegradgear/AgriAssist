@@ -29,9 +29,9 @@ export function AppSidebar() {
                       href={item.href}
                       className={cn(
                         (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
-                          ? 'bg-accent text-accent-foreground' // Active state
-                          : 'text-card-foreground hover:bg-accent hover:text-accent-foreground', // Non-active base and hover state
-                        'group flex gap-x-3 rounded-md p-2 text-base font-semibold leading-normal items-center', 
+                          ? 'bg-accent text-accent-foreground' 
+                          : 'text-card-foreground hover:bg-accent hover:text-accent-foreground', 
+                        'group flex gap-x-3 rounded-md p-2 text-base font-medium leading-normal items-center', // Font style updated here
                         item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
                       )}
                       aria-disabled={item.disabled}
@@ -41,8 +41,8 @@ export function AppSidebar() {
                       <item.icon
                         className={cn(
                           (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
-                            ? 'text-accent-foreground' // Icon color for active link
-                            : 'text-muted-foreground group-hover:text-accent-foreground', // Icon color for non-active link
+                            ? 'text-accent-foreground' 
+                            : 'text-muted-foreground group-hover:text-accent-foreground', 
                           'h-5 w-5 shrink-0'
                         )}
                         aria-hidden="true"
