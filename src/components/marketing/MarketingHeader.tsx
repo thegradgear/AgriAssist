@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Leaf, Menu, BarChart3, Calculator, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
@@ -68,9 +68,9 @@ export function MarketingHeader() {
               className={cn(
                 buttonVariants({ variant: "ghost", size: "default" }),
                 "text-foreground/80 hover:text-primary hover:bg-primary/10",
-                "px-3 py-2", // Custom padding
+                "px-3 py-2", 
                 "text-base font-medium",
-                "h-auto" // Reset height from buttonVariants if needed
+                "h-auto" 
               )}
             >
               {link.label}
@@ -124,14 +124,15 @@ export function MarketingHeader() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[280px] p-0 flex flex-col bg-background">
-                <div className="p-4 border-b">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle className="sr-only">Main Menu</SheetTitle>
                   <SheetClose asChild>
-                    <Link href="/" className="flex items-center gap-2 group mb-4" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/" className="flex items-center gap-2 group" onClick={() => setIsMobileMenuOpen(false)}>
                       <Leaf className="h-7 w-7 text-primary group-hover:text-primary/80 transition-colors" />
                       <span className="text-lg font-semibold font-headline group-hover:text-primary transition-colors">AgriAssist</span>
                     </Link>
                   </SheetClose>
-                </div>
+                </SheetHeader>
                 <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
                   {navLinks.map((item) => (
                      <SheetClose asChild key={item.href}>
