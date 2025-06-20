@@ -29,7 +29,7 @@ export function HeroSection() {
           </div>
           <div className="relative h-72 md:h-[450px] rounded-xl overflow-hidden shadow-2xl animate-fade-in-right order-first md:order-last">
             <Image 
-              src="https://placehold.co/700x500.png" 
+              src="/farmer.jpg" 
               alt="Farmer using AgriAssist technology in a field" 
               layout="fill" 
               objectFit="cover"
