@@ -86,18 +86,31 @@ export function AppHeader() {
             <nav className="flex-grow p-4 space-y-1 overflow-y-auto">
               {NAV_ITEMS.map((item) => (
                 <SheetClose asChild key={item.href}>
-                   <Button
-                    variant={(pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))) ? "default" : "ghost"}
-                    className="w-full justify-start text-left text-base py-3 h-auto" 
-                    disabled={item.disabled}
-                    aria-label={item.label}
-                    asChild
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="mr-3 h-5 w-5" />
+                   <Link
+                      href={item.href}
+                      className={cn(
+                        (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
+                          ? 'bg-accent text-accent-foreground' // Active state
+                          : 'text-foreground hover:bg-accent hover:text-accent-foreground', // Non-active base and hover state
+                        'group flex w-full items-center gap-x-3 rounded-md p-2 text-base font-semibold leading-normal justify-start text-left h-auto',
+                        item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                      )}
+                      aria-disabled={item.disabled}
+                      tabIndex={item.disabled ? -1 : undefined}
+                      onClick={item.disabled ? (e) => e.preventDefault() : undefined}
+                      aria-label={item.label}
+                    >
+                      <item.icon
+                         className={cn(
+                          (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
+                            ? 'text-accent-foreground' // Icon color for active link
+                            : 'text-muted-foreground group-hover:text-accent-foreground', // Icon color for non-active link
+                          'mr-3 h-5 w-5 shrink-0' // Ensure consistent icon margin as well
+                        )}
+                        aria-hidden="true"
+                      />
                       {item.label}
                     </Link>
-                  </Button>
                 </SheetClose>
               ))}
             </nav>

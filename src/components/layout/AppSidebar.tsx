@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Leaf } from 'lucide-react';
 import { NAV_ITEMS } from '@/lib/constants';
-// Button component removed as it's not directly used for styling nav items here
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
@@ -17,7 +16,6 @@ export function AppSidebar() {
         <div className="flex h-16 shrink-0 items-center">
           <Link href="/" className="flex items-center gap-2">
             <Leaf className="h-8 w-8 text-primary" />
-            {/* App name in sidebar, text-xl font-semibold */}
             <span className="text-xl font-semibold font-headline text-card-foreground hover:text-primary">AgriAssist</span>
           </Link>
         </div>
@@ -32,8 +30,7 @@ export function AppSidebar() {
                       className={cn(
                         (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
                           ? 'bg-accent text-accent-foreground' // Active state
-                          : 'text-card-foreground hover:bg-accent/50 hover:text-accent-foreground', // Non-active base and hover state
-                        // Applying base styling for nav items: text-base (1rem) font-semibold
+                          : 'text-card-foreground hover:bg-accent hover:text-accent-foreground', // Non-active base and hover state
                         'group flex gap-x-3 rounded-md p-2 text-base font-semibold leading-normal items-center', 
                         item.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
                       )}
@@ -45,7 +42,7 @@ export function AppSidebar() {
                         className={cn(
                           (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
                             ? 'text-accent-foreground' // Icon color for active link
-                            : 'text-muted-foreground group-hover:text-accent-foreground', // Icon color for non-active link (muted by default, accent on hover)
+                            : 'text-muted-foreground group-hover:text-accent-foreground', // Icon color for non-active link
                           'h-5 w-5 shrink-0'
                         )}
                         aria-hidden="true"
