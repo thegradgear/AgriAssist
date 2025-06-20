@@ -5,7 +5,7 @@ import type { PredictCropPriceOutput } from '@/ai/flows/predict-crop-price-flow'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TrendingUp, Info, AlertTriangle, Sparkles, Receipt } from 'lucide-react'; // Percent icon removed
+import { TrendingUp, Info, AlertTriangle, Sparkles, IndianRupee } from 'lucide-react'; 
 
 interface CropPricePredictionResultProps {
   result: PredictCropPriceOutput | null;
@@ -52,7 +52,7 @@ export function CropPricePredictionResult({ result, loading }: CropPricePredicti
         <Card className="shadow-lg">
             <CardHeader>
                  <CardTitle className="flex items-center">
-                    <Receipt className="mr-2 h-5 w-5 text-primary" />
+                    <IndianRupee className="mr-2 h-5 w-5 text-primary" />
                     Price Prediction
                 </CardTitle>
                 <CardDescription>Enter the details in the form to get a price prediction.</CardDescription>
