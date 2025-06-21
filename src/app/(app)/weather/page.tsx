@@ -3,16 +3,15 @@
 
 import { PageHeader } from '@/components/shared/PageHeader';
 import { CurrentWeatherDisplay, type CurrentWeatherData } from '@/components/weather/CurrentWeatherDisplay';
-import { WeatherAlertCard, type WeatherAlert } from '@/components/weather/WeatherAlertCard';
 import { ForecastDisplay, type DailyForecastData, type HourlyForecastData } from '@/components/weather/ForecastDisplay';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Loader2, RefreshCw, AlertTriangle, CloudSun, MapPin, Search, Navigation, Star, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface Coordinates {
@@ -38,7 +37,6 @@ export default function WeatherPage() {
   const [currentWeather, setCurrentWeather] = useState<CurrentWeatherData | null>(null);
   const [hourlyForecast, setHourlyForecast] = useState<HourlyForecastData[]>([]);
   const [dailyForecast, setDailyForecast] = useState<DailyForecastData[]>([]);
-  const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
   
   const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
   
@@ -70,64 +68,78 @@ export default function WeatherPage() {
 
     try {
       const { latitude, longitude, name } = location;
-      const response = await fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely&appid=${OPENWEATHERMAP_API_KEY}&units=metric`);
+
+      const [currentWeatherResponse, forecastResponse] = await Promise.all([
+        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`),
+        fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`),
+      ]);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to fetch weather data.`);
+      if (!currentWeatherResponse.ok) {
+        const errorData = await currentWeatherResponse.json();
+        throw new Error(`Current Weather: ${errorData.message || 'Failed to fetch'}`);
+      }
+       if (!forecastResponse.ok) {
+        const errorData = await forecastResponse.json();
+        throw new Error(`Forecast: ${errorData.message || 'Failed to fetch'}`);
       }
       
-      const data = await response.json();
+      const currentData = await currentWeatherResponse.json();
+      const forecastData = await forecastResponse.json();
 
       const mappedCurrentWeather: CurrentWeatherData = {
         cityName: name,
-        temperature: data.current.temp,
-        description: data.current.weather[0].description,
-        icon: data.current.weather[0].icon,
-        humidity: data.current.humidity,
-        windSpeed: data.current.wind_speed,
-        feelsLike: data.current.feels_like,
-        sunrise: data.current.sunrise,
-        sunset: data.current.sunset,
-        cloudiness: data.current.clouds,
-        pressure: data.current.pressure,
-        rain1h: data.current.rain ? data.current.rain['1h'] : 0,
+        temperature: currentData.main.temp,
+        description: currentData.weather[0].description,
+        icon: currentData.weather[0].icon,
+        humidity: currentData.main.humidity,
+        windSpeed: currentData.wind.speed,
+        feelsLike: currentData.main.feels_like,
+        sunrise: currentData.sys.sunrise,
+        sunset: currentData.sys.sunset,
+        cloudiness: currentData.clouds.all,
+        pressure: currentData.main.pressure,
+        rain1h: currentData.rain ? currentData.rain['1h'] : undefined,
       };
 
-      const mappedHourlyForecast: HourlyForecastData[] = (data.hourly || []).slice(0, 24).map((h: any) => ({
+      const mappedHourlyForecast: HourlyForecastData[] = (forecastData.list || []).slice(0, 8).map((h: any) => ({
         time: format(new Date(h.dt * 1000), 'ha'),
-        temp: Math.round(h.temp),
+        temp: Math.round(h.main.temp),
         precipitation: Math.round((h.pop || 0) * 100),
       }));
 
-      const mappedDailyForecast: DailyForecastData[] = (data.daily || []).slice(0, 7).map((d: any) => ({
-        date: format(new Date(d.dt * 1000), 'E, MMM d'),
-        day: format(new Date(d.dt * 1000), 'EEEE'),
-        icon: d.weather[0].icon,
-        temp_max: Math.round(d.temp.max),
-        temp_min: Math.round(d.temp.min),
-        description: capitalizeWords(d.weather[0].description),
-      }));
-      
-      const mappedAlerts: WeatherAlert[] = (data.alerts || []).map((a: any, index: number) => ({
-        id: `${a.event}-${index}`,
-        event: a.event,
-        severity: 'Moderate', // Default severity, can be improved
-        headline: a.description || 'Weather Alert',
-        description: a.description,
-        instruction: 'Take necessary precautions.',
-        sent: new Date(a.start * 1000).toISOString(),
-        effective: new Date(a.start * 1000).toISOString(),
-        expires: new Date(a.end * 1000).toISOString(),
-        areaDesc: name,
-        senderName: a.sender_name,
-        tags: a.tags,
-      }));
+      const dailyForecasts: { [key: string]: { temps: number[], icons: { [key: string]: number }, descriptions: { [key: string]: number } } } = {};
+      forecastData.list.forEach((entry: any) => {
+          const date = format(new Date(entry.dt * 1000), 'yyyy-MM-dd');
+          if (!dailyForecasts[date]) {
+              dailyForecasts[date] = { temps: [], icons: {}, descriptions: {} };
+          }
+          dailyForecasts[date].temps.push(entry.main.temp);
+          const icon = entry.weather[0].icon.replace('n', 'd'); // Use day icon for consistency
+          dailyForecasts[date].icons[icon] = (dailyForecasts[date].icons[icon] || 0) + 1;
+          const desc = entry.weather[0].description;
+          dailyForecasts[date].descriptions[desc] = (dailyForecasts[date].descriptions[desc] || 0) + 1;
+      });
+
+      const mappedDailyForecast: DailyForecastData[] = Object.keys(dailyForecasts).slice(0, 5).map(date => {
+          const dayData = dailyForecasts[date];
+          const temp_min = Math.round(Math.min(...dayData.temps));
+          const temp_max = Math.round(Math.max(...dayData.temps));
+          const icon = Object.keys(dayData.icons).reduce((a, b) => dayData.icons[a] > dayData.icons[b] ? a : b);
+          const description = Object.keys(dayData.descriptions).reduce((a, b) => dayData.descriptions[a] > dayData.descriptions[b] ? a : b);
+          
+          return {
+              date: format(parseISO(date), 'E, MMM d'),
+              day: format(parseISO(date), 'EEEE'),
+              icon,
+              temp_max,
+              temp_min,
+              description: capitalizeWords(description)
+          };
+      });
 
       setCurrentWeather(mappedCurrentWeather);
       setHourlyForecast(mappedHourlyForecast);
       setDailyForecast(mappedDailyForecast);
-      setAlerts(mappedAlerts);
 
       localStorage.setItem('lastSelectedLocation', JSON.stringify(location));
       toast({ title: 'Weather Updated', description: `Fetched weather for ${name}.` });
@@ -138,7 +150,7 @@ export default function WeatherPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, geocodeCity]);
 
   const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -155,6 +167,10 @@ export default function WeatherPage() {
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by your browser.");
+      return;
+    }
+     if (!OPENWEATHERMAP_API_KEY) {
+      setError("API key is not configured.");
       return;
     }
     setIsLoading(true);
@@ -213,8 +229,8 @@ export default function WeatherPage() {
   return (
     <div className="container mx-auto">
       <PageHeader
-        title="Weather Forecasts & Alerts"
-        description="Get detailed current, hourly, and 7-day weather forecasts for any location."
+        title="Weather Forecasts"
+        description="Get detailed current, hourly, and 5-day weather forecasts for any location."
       />
       
       <Card className="mb-8">
@@ -297,23 +313,11 @@ export default function WeatherPage() {
               <ForecastDisplay hourly={hourlyForecast} daily={dailyForecast} />
             )}
 
-            {alerts.length > 0 ? (
-                <div>
-                  <h2 className="text-2xl font-semibold font-headline mb-4 mt-8 flex items-center">
-                    <AlertTriangle className="mr-3 h-6 w-6 text-orange-500" />
-                    Active Weather Alerts
-                  </h2>
-                  <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-                    {alerts.map((alert) => <WeatherAlertCard key={alert.id} alert={alert} />)}
-                  </div>
-                </div>
-              ) : (
-                 <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
-                  <CloudSun className="mx-auto h-16 w-16 text-primary mb-4" />
-                  <p className="text-xl font-semibold">All Clear!</p>
-                  <p className="text-muted-foreground mt-1">No active weather alerts for {selectedLocation.name}.</p>
-                </div>
-              )}
+            <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
+              <CloudSun className="mx-auto h-16 w-16 text-primary mb-4" />
+              <p className="text-xl font-semibold">All Clear!</p>
+              <p className="text-muted-foreground mt-1">No severe weather alerts for {selectedLocation.name}.</p>
+            </div>
         </div>
       )}
 

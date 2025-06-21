@@ -106,7 +106,7 @@ export function CurrentWeatherDisplay({ weather }: CurrentWeatherDisplayProps) {
             <span className="font-medium text-foreground">Pressure:</span>
             <span className="ml-auto text-muted-foreground font-mono">{weather.pressure} hPa</span>
           </div>
-           {weather.rain1h !== undefined && (
+           {weather.rain1h !== undefined && weather.rain1h > 0 && (
              <div className="flex items-center text-sm leading-normal">
               <CloudDrizzle className="h-5 w-5 mr-2 text-primary/80" />
               <span className="font-medium text-foreground">Rain (last 1h):</span>

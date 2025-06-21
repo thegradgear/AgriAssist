@@ -100,10 +100,10 @@ export function ForecastDisplay({ hourly, daily }: ForecastDisplayProps) {
         </CardContent>
       </Card>
 
-      {/* 7-Day Forecast List */}
+      {/* 5-Day Forecast List */}
       <Card>
         <CardHeader>
-          <CardTitle>7-Day Forecast</CardTitle>
+          <CardTitle>5-Day Forecast</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
