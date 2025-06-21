@@ -144,7 +144,7 @@ export default function BestPracticesPage() {
         <div className="relative flex-grow">
           <Input 
             placeholder="Search articles (e.g., 'organic pest control')" 
-            className="w-full pr-10" 
+            className="w-full pr-10 border-foreground/30 dark:border-muted-foreground" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             suppressHydrationWarning
