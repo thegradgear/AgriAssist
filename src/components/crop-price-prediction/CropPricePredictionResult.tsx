@@ -12,6 +12,13 @@ interface CropPricePredictionResultProps {
   loading: boolean;
 }
 
+const formatNumber = (num: number): string => {
+  return new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+};
+
 export function CropPricePredictionResult({ result, loading }: CropPricePredictionResultProps) {
   if (loading) {
     return (
@@ -68,10 +75,6 @@ export function CropPricePredictionResult({ result, loading }: CropPricePredicti
   }
   
   const confidencePercentage = result.confidenceLevel * 100;
-  const formattedPredictedPrice = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits:0 }).format(result.predictedPrice);
-  const formattedPriceRangeMin = result.priceRangeMin !== undefined ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits:0 }).format(result.priceRangeMin) : '';
-  const formattedPriceRangeMax = result.priceRangeMax !== undefined ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits:0 }).format(result.priceRangeMax) : '';
-
 
   return (
     <Card className="shadow-lg">
@@ -87,8 +90,10 @@ export function CropPricePredictionResult({ result, loading }: CropPricePredicti
       <CardContent className="space-y-6">
         <div>
           <p className="text-sm font-medium text-muted-foreground leading-normal">Predicted Price</p>
-          <p className="text-3xl font-bold text-primary leading-tight">
-             {formattedPredictedPrice} {result.priceUnit}
+          <p className="text-3xl font-bold text-primary leading-tight flex items-baseline">
+             <IndianRupee className="h-7 w-7 mr-1 self-center" />
+             <span>{formatNumber(result.predictedPrice)}</span>
+             <span className="text-xl font-medium text-muted-foreground ml-2">{result.priceUnit}</span>
           </p>
         </div>
 
@@ -96,7 +101,7 @@ export function CropPricePredictionResult({ result, loading }: CropPricePredicti
           <div>
             <p className="text-sm font-medium text-muted-foreground leading-normal">Estimated Price Range</p>
             <p className="text-lg font-medium text-foreground leading-snug">
-              {formattedPriceRangeMin} - {formattedPriceRangeMax} {result.priceUnit}
+              <IndianRupee className="inline-block h-4 w-4 mr-0.5 relative -top-px" />{formatNumber(result.priceRangeMin)} - <IndianRupee className="inline-block h-4 w-4 mr-0.5 relative -top-px" />{formatNumber(result.priceRangeMax)} {result.priceUnit}
             </p>
           </div>
         )}
@@ -137,7 +142,6 @@ export function CropPricePredictionResult({ result, loading }: CropPricePredicti
 
         <Alert variant="default" className="bg-accent/50 border-accent">
           <AlertTriangle className="h-4 w-4 text-primary" />
-          {/* AlertTitle is text-lg by default in Shadcn, overriding to text-base to fit better with new hierarchy */}
           <AlertTitle className="font-semibold text-primary text-base leading-snug">Disclaimer</AlertTitle>
           <AlertDescription className="text-xs leading-normal">
             Crop prices are volatile and subject to numerous unpredictable factors. This AI prediction is for informational purposes only and should not be considered financial advice or a guarantee of future prices. Always consult with market experts and local advisors.
