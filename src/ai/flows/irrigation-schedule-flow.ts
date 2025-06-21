@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates an optimal irrigation schedule.
@@ -10,7 +11,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const IrrigationScheduleInputSchema = z.object({
+const IrrigationScheduleInputSchema = z.object({
   cropType: z.string().describe('The type of crop being cultivated (e.g., "Tomato", "Wheat").'),
   soilType: z.enum(["Loamy", "Sandy", "Clay", "Silt", "Peaty", "Chalky"]).describe('The primary soil type of the field.'),
   stageOfGrowth: z.enum(['Seedling', 'Vegetative', 'Flowering', 'Fruiting', 'Maturation']).describe('The current growth stage of the crop.'),
@@ -31,7 +32,7 @@ const DailyRecommendationSchema = z.object({
   reasoning: z.string().describe('A brief explanation for the recommendation, considering the weather, soil, and crop stage.'),
 });
 
-export const IrrigationScheduleOutputSchema = z.object({
+const IrrigationScheduleOutputSchema = z.object({
   weeklySchedule: z.array(DailyRecommendationSchema).describe('A list of daily irrigation recommendations for the week.'),
   generalAdvice: z.string().describe('Overall advice for the week, such as tips on checking soil moisture or adjusting for unexpected weather.'),
 });
