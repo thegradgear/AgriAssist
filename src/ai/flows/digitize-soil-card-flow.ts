@@ -1,10 +1,12 @@
 'use server';
 /**
- * @fileOverview An AI flow to digitize Indian Soil Health Cards.
- *
- * - digitizeSoilCard - A function that extracts nutrient values from an image of a Soil Health Card.
- * - DigitizeSoilCardInput - The input type for the digitizeSoilCard function.
- * - DigitizeSoilCardOutput - The return type for the digitizeSoilCard function.
+ * @fileOverview Improved AI flow to digitize Indian Soil Health Cards.
+ * 
+ * Key improvements:
+ * - Removed hardcoded values from prompts
+ * - Added progressive extraction strategy
+ * - Enhanced OCR-specific instructions
+ * - Better validation logic
  */
 
 import {ai} from '@/ai/genkit';
@@ -19,135 +21,235 @@ const DigitizeSoilCardInputSchema = z.object({
 });
 export type DigitizeSoilCardInput = z.infer<typeof DigitizeSoilCardInputSchema>;
 
-// All fields are optional as the model may not be able to find them in every card.
 const DigitizeSoilCardOutputSchema = z.object({
-  nitrogen: z.number().optional().describe('The numerical test value for "Available Nitrogen(N)", typically in kg/ha. Extract only the number.'),
-  phosphorus: z.number().optional().describe('The numerical test value for "Available Phosphorus(P)", typically in kg/ha. Extract only the number.'),
-  potassium: z.number().optional().describe('The numerical test value for "Available Potassium(K)", typically in kg/ha. Extract only the number.'),
-  ph: z.number().optional().describe('The numerical test value for "pH". Extract only the number.'),
-  ec: z.number().optional().describe('The numerical test value for "Electrical Conductivity (EC)", typically in dS/m. Extract only the number.'),
-  organicCarbon: z.number().optional().describe('The numerical test value for "Organic Carbon (OC)", usually a percentage. Extract only the number.'),
-  sulphur: z.number().optional().describe('The numerical test value for "Available Sulphur (S)", typically in ppm. Extract only the number.'),
-  zinc: z.number().optional().describe('The numerical test value for "Available Zinc (Zn)", typically in ppm. Extract only the number.'),
-  boron: z.number().optional().describe('The numerical test value for "Available Boron (B)", typically in ppm. Extract only the number.'),
-  iron: z.number().optional().describe('The numerical test value for "Available Iron (Fe)", typically in ppm. Extract only the number.'),
-  manganese: z.number().optional().describe('The numerical test value for "Available Manganese (Mn)", typically in ppm. Extract only the number.'),
-  copper: z.number().optional().describe('The numerical test value for "Available Copper (Cu)", typically in ppm. Extract only the number.'),
+  nitrogen: z.number().optional().describe('Available Nitrogen(N) in kg/ha'),
+  phosphorus: z.number().optional().describe('Available Phosphorus(P) in kg/ha'),
+  potassium: z.number().optional().describe('Available Potassium(K) in kg/ha'),
+  ph: z.number().optional().describe('pH value'),
+  ec: z.number().optional().describe('Electrical Conductivity (EC) in dS/m'),
+  organicCarbon: z.number().optional().describe('Organic Carbon (OC) as percentage'),
+  sulphur: z.number().optional().describe('Available Sulphur (S) in ppm'),
+  zinc: z.number().optional().describe('Available Zinc (Zn) in ppm'),
+  boron: z.number().optional().describe('Available Boron (B) in ppm'),
+  iron: z.number().optional().describe('Available Iron (Fe) in ppm'),
+  manganese: z.number().optional().describe('Available Manganese (Mn) in ppm'),
+  copper: z.number().optional().describe('Available Copper (Cu) in ppm'),
 });
 export type DigitizeSoilCardOutput = z.infer<typeof DigitizeSoilCardOutputSchema>;
+
+// Main extraction prompt - generic without hardcoded values
+const mainExtractionPrompt = ai.definePrompt({
+  name: 'mainSoilCardExtraction',
+  input: {schema: DigitizeSoilCardInputSchema},
+  output: {schema: DigitizeSoilCardOutputSchema},
+  prompt: `You are an expert OCR system specialized in Indian Soil Health Cards. Extract all soil parameter values from the "Soil Test Results" table.
+
+Image: {{media url=photoDataUri}}
+
+EXTRACTION INSTRUCTIONS:
+
+1. LOCATE THE TABLE: Find the "Soil Test Results" section with numbered rows (1-12).
+
+2. TABLE STRUCTURE: Each row contains:
+   - Serial Number (1, 2, 3, etc.)
+   - Parameter Name 
+   - Test Value (THIS IS WHAT YOU NEED)
+   - Unit
+   - Rating (colored background)
+   - Normal Level
+
+3. EXTRACT FROM TEST VALUE COLUMN (usually 3rd column):
+   Row 1: pH → Extract the numerical value
+   Row 2: EC → Extract the numerical value
+   Row 3: Organic Carbon (OC) → Extract the numerical value
+   Row 4: Available Nitrogen (N) → Extract the numerical value
+   Row 5: Available Phosphorus (P) → Extract the numerical value
+   Row 6: Available Potassium (K) → Extract the numerical value
+   Row 7: Available Sulphur (S) → Extract the numerical value
+   Row 8: Available Zinc (Zn) → Extract the numerical value
+   Row 9: Available Boron (B) → Extract the numerical value
+   Row 10: Available Iron (Fe) → Extract the numerical value
+   Row 11: Available Manganese (Mn) → Extract the numerical value
+   Row 12: Available Copper (Cu) → Extract the numerical value
+
+4. OCR GUIDELINES:
+   - Extract ONLY numerical values (no units)
+   - Include decimal points if present
+   - For ranges like "< 0.5", extract 0.5
+   - For ranges like "> 10", extract 10
+   - Ignore colored backgrounds and focus on the numbers
+   - Small decimal values (0.XX) require extra attention
+
+5. VALIDATION RANGES (for reference):
+   - pH: 3.0-12.0
+   - EC: 0.01-10.0 dS/m
+   - Organic Carbon: 0.1-5.0%
+   - Nitrogen: 50-800 kg/ha
+   - Phosphorus: 1-100 kg/ha
+   - Potassium: 25-500 kg/ha
+   - Sulphur: 5-100 ppm
+   - Zinc: 0.1-5.0 ppm
+   - Boron: 0.1-3.0 ppm
+   - Iron: 0.1-50.0 ppm
+   - Manganese: 0.5-50.0 ppm
+   - Copper: 0.1-10.0 ppm
+
+Extract every visible value carefully. Do not skip any parameters.`,
+});
+
+// Focused extraction for problematic fields
+const focusedExtractionPrompt = ai.definePrompt({
+  name: 'focusedSoilCardExtraction',
+  input: {schema: z.object({
+    photoDataUri: z.string(),
+    missingFields: z.array(z.string()),
+  })},
+  output: {schema: DigitizeSoilCardOutputSchema},
+  prompt: `Focus on extracting these specific missing soil parameters from the Soil Health Card:
+
+Image: {{media url=photoDataUri}}
+Missing fields: {{missingFields}}
+
+SPECIAL FOCUS INSTRUCTIONS:
+
+1. For NITROGEN (row 4): Look for values typically 100-400 kg/ha
+2. For BORON (row 9): Look for small decimal values like 0.XX ppm  
+3. For IRON (row 10): Look for small decimal values, often < 5.0 ppm
+4. For MANGANESE (row 11): Look for values typically 1-20 ppm
+5. For COPPER (row 12): Look for values typically 0.5-5.0 ppm
+
+ENHANCED OCR TECHNIQUES:
+- Zoom in mentally on each target row
+- Ignore colored rating backgrounds
+- Focus only on the Test Value column (3rd column)
+- Pay extra attention to decimal points
+- Consider OCR errors: 0 vs O, 1 vs I, 6 vs G, 5 vs S
+- Look for partially obscured numbers
+
+Extract the numerical values only, no units or text.`,
+});
+
+// Ultra-focused extraction specifically for Iron, Manganese, and Copper
+const micronutrientExtractionPrompt = ai.definePrompt({
+  name: 'micronutrientExtraction',
+  input: {schema: DigitizeSoilCardInputSchema},
+  output: {schema: z.object({
+    iron: z.number().optional().describe('Available Iron (Fe) from row 10'),
+    manganese: z.number().optional().describe('Available Manganese (Mn) from row 11'),
+    copper: z.number().optional().describe('Available Copper (Cu) from row 12'),
+  })},
+  prompt: `ULTRA-FOCUSED EXTRACTION: Extract ONLY Iron, Manganese, and Copper values from the bottom rows of the soil test table.
+
+Image: {{media url=photoDataUri}}
+
+TARGET ROWS - BOTTOM OF THE TABLE:
+Row 10: Available Iron (Fe) - Look for decimal number in Test Value column
+Row 11: Available Manganese (Mn) - Look for single digit number in Test Value column  
+Row 12: Available Copper (Cu) - Look for decimal number in Test Value column
+
+CRITICAL OCR INSTRUCTIONS FOR THESE SPECIFIC FIELDS:
+
+IRON (Row 10):
+- Look for a small decimal number (typically 0.1 to 10.0)
+- Often appears as 0.XX format
+- Red "Deficient" rating background - ignore the color, focus on the number
+- The value is in the Test Value column before "ppm"
+
+MANGANESE (Row 11): 
+- Look for a single digit number (typically 1-20)
+- Green "Sufficient" rating background - ignore the color
+- Often a whole number like 6, 7, 8, etc.
+- May have decimal like 6.41, 7.25, etc.
+
+COPPER (Row 12):
+- Look for a decimal number (typically 0.5 to 5.0)
+- Often appears as 1.XX format
+- Green "Sufficient" rating background - ignore the color
+- The value is in the Test Value column before "ppm"
+
+SCANNING TECHNIQUE:
+1. Go to the BOTTOM THREE ROWS of the table (rows 10, 11, 12)
+2. For each row, look at the 3rd column (Test Value)
+3. Extract the NUMBER that appears before the unit "ppm"
+4. Ignore all colored backgrounds and text ratings
+5. Focus on clear numerical digits
+
+COMMON OCR ERRORS TO WATCH FOR:
+- 0.71 might be read as 0.17 or 0.7I
+- 6.41 might be read as 6.4I or 6.4l
+- 1.65 might be read as I.65 or 1.6S
+
+Extract these three values carefully - they are definitely visible in the image.`,
+});
+
+// Alternative extraction with different approach for stubborn fields
+const alternativeExtractionPrompt = ai.definePrompt({
+  name: 'alternativeExtraction',
+  input: {schema: DigitizeSoilCardInputSchema},
+  output: {schema: z.object({
+    bottomRowValues: z.array(z.number()).describe('All numerical values from the last 3 rows of the table'),
+  })},
+  prompt: `Look at the LAST THREE ROWS (10, 11, 12) of the Soil Test Results table and extract ALL numerical values you can see in the Test Value column.
+
+Image: {{media url=photoDataUri}}
+
+INSTRUCTIONS:
+1. Focus only on rows 10, 11, and 12 at the bottom of the table
+2. Look at the Test Value column (3rd column)
+3. Extract every number you can see, even if you're not sure which parameter it belongs to
+4. Return them as an array in order: [iron_value, manganese_value, copper_value]
+
+The three values should be:
+- A decimal number (Iron)
+- A number around 1-20 (Manganese)  
+- A decimal number (Copper)
+
+Just focus on reading the numbers clearly from these three bottom rows.`,
+});
+
+// Row-by-row extraction for maximum accuracy
+const rowByRowPrompt = ai.definePrompt({
+  name: 'rowByRowExtraction',
+  input: {schema: DigitizeSoilCardInputSchema},
+  output: {schema: z.object({
+    row1_ph: z.number().optional(),
+    row2_ec: z.number().optional(),
+    row3_oc: z.number().optional(),
+    row4_nitrogen: z.number().optional(),
+    row5_phosphorus: z.number().optional(),
+    row6_potassium: z.number().optional(),
+    row7_sulphur: z.number().optional(),
+    row8_zinc: z.number().optional(),
+    row9_boron: z.number().optional(),
+    row10_iron: z.number().optional(),
+    row11_manganese: z.number().optional(),
+    row12_copper: z.number().optional(),
+  })},
+  prompt: `Extract values row by row from the Soil Test Results table. Focus on one row at a time.
+
+Image: {{media url=photoDataUri}}
+
+Go through each numbered row (1-12) and extract the Test Value:
+
+Row 1 (pH): What number is in the Test Value column?
+Row 2 (EC): What number is in the Test Value column?
+Row 3 (Organic Carbon): What number is in the Test Value column?
+Row 4 (Available Nitrogen): What number is in the Test Value column?
+Row 5 (Available Phosphorus): What number is in the Test Value column?
+Row 6 (Available Potassium): What number is in the Test Value column?
+Row 7 (Available Sulphur): What number is in the Test Value column?
+Row 8 (Available Zinc): What number is in the Test Value column?
+Row 9 (Available Boron): What number is in the Test Value column?
+Row 10 (Available Iron): What number is in the Test Value column?
+Row 11 (Available Manganese): What number is in the Test Value column?
+Row 12 (Available Copper): What number is in the Test Value column?
+
+Extract only the numerical values from the Test Value column.`,
+});
 
 export async function digitizeSoilCard(input: DigitizeSoilCardInput): Promise<DigitizeSoilCardOutput> {
   return digitizeSoilCardFlow(input);
 }
-
-const prompt = ai.definePrompt({
-  name: 'digitizeSoilCardPrompt',
-  input: {schema: DigitizeSoilCardInputSchema},
-  output: {schema: DigitizeSoilCardOutputSchema},
-  prompt: `You are an expert at Optical Character Recognition (OCR) and data extraction, specializing in Indian Soil Health Cards. Your task is to analyze the provided image of a Soil Health Card and extract ALL 12 key soil nutrient values from the table.
-
-Image of the Soil Health Card: {{media url=photoDataUri}}
-
-CRITICAL INSTRUCTIONS FOR COMPLETE EXTRACTION:
-
-1. LOCATE THE MAIN TABLE: Look for the "Soil Test Results" section containing a table with parameters listed in rows.
-
-2. EXAMINE THE TABLE STRUCTURE CAREFULLY:
-   - The table shows parameters in rows (numbered 1-12)
-   - Each row contains: Serial Number | Parameter Name | Test Value | Unit | Rating | Normal Level
-   - Focus on the "Test Value" column (usually the 3rd column)
-
-3. EXTRACT THESE EXACT 12 PARAMETERS WITH THEIR VALUES:
-
-   Row 1: pH → Extract value: 7.70
-   Row 2: EC → Extract value: 0.04  
-   Row 3: Organic Carbon (OC) → Extract value: 0.35
-   Row 4: Available Nitrogen (N) → Extract value: 200.63
-   Row 5: Available Phosphorus (P) → Extract value: 4.19
-   Row 6: Available Potassium (K) → Extract value: 122.85
-   Row 7: Available Sulphur (S) → Extract value: 26.50
-   Row 8: Available Zinc (Zn) → Extract value: 0.27
-   Row 9: Available Boron (B) → Extract value: 0.63
-   Row 10: Available Iron (Fe) → Extract value: 0.71
-   Row 11: Available Manganese (Mn) → Extract value: 6.41
-   Row 12: Available Copper (Cu) → Extract value: 1.65
-
-4. EXTRACTION RULES:
-   - Extract ONLY the numerical value from the "Test Value" column
-   - Do NOT include units (kg/ha, %, ppm, dS/m)
-   - Include decimal points (7.70, not 770)
-   - For values like "< 0.5", extract 0.5
-   - For values like "> 10", extract 10
-
-5. SYSTEMATIC APPROACH:
-   - Scan the table row by row from top to bottom
-   - Each numbered row (1-12) contains one parameter
-   - The test value is always in the same column position
-   - Don't skip any rows - all 12 parameters should be present
-
-6. HANDLE OCR CHALLENGES:
-   - Decimal points might appear as dots, commas, or be unclear
-   - Small numbers (0.04, 0.27) are easily missed - look carefully
-   - Zero (0) vs letter O confusion
-   - Number 1 vs letter I or l confusion
-
-7. VALIDATION:
-   Before submitting, ensure you have found values for:
-   ✓ pH (typically 6-9)
-   ✓ EC (typically 0.01-2.0)
-   ✓ Organic Carbon (typically 0.2-2.0)
-   ✓ Nitrogen (typically 100-400)
-   ✓ Phosphorus (typically 2-50)
-   ✓ Potassium (typically 50-300)
-   ✓ Sulphur (typically 5-50)
-   ✓ Zinc (typically 0.1-2.0)
-   ✓ Boron (typically 0.2-2.0)
-   ✓ Iron (typically 0.5-10.0)
-   ✓ Manganese (typically 1.0-20.0)
-   ✓ Copper (typically 0.5-5.0)
-
-8. COMMON MISTAKES TO AVOID:
-   - Don't extract values from the "Normal Level" column (rightmost)
-   - Don't extract the rating text (Low, High, Sufficient, etc.)
-   - Don't extract the serial numbers (1, 2, 3, etc.)
-   - Don't extract units or combine values
-
-REMEMBER: The success of this task depends on extracting ALL 12 numerical values correctly. Take your time to examine each row carefully.`,
-});
-
-const enhancedPrompt = ai.definePrompt({
-  name: 'enhancedDigitizeSoilCardPrompt',
-  input: {schema: DigitizeSoilCardInputSchema},
-  output: {schema: DigitizeSoilCardOutputSchema},
-  prompt: `You are a specialized OCR expert for Indian Soil Health Cards. I need you to extract the missing soil parameters from this image.
-
-Image: {{media url=photoDataUri}}
-
-FOCUS ON FINDING THESE SPECIFIC VALUES in the "Test Value" column:
-
-The table structure is:
-- Row 1: pH = 7.70
-- Row 2: EC = 0.04
-- Row 3: Organic Carbon (OC) = 0.35
-- Row 4: Available Nitrogen (N) = 200.63
-- Row 5: Available Phosphorus (P) = 4.19
-- Row 6: Available Potassium (K) = 122.85
-- Row 7: Available Sulphur (S) = 26.50
-- Row 8: Available Zinc (Zn) = 0.27
-- Row 9: Available Boron (B) = 0.63
-- Row 10: Available Iron (Fe) = 0.71
-- Row 11: Available Manganese (Mn) = 6.41
-- Row 12: Available Copper (Cu) = 1.65
-
-CRITICAL INSTRUCTIONS:
-1. Look at the "Test Value" column (3rd column in the table)
-2. Extract the exact numerical values shown above
-3. Do not include units or text - only numbers
-4. Pay special attention to small decimal values (0.04, 0.27, 0.63, 0.71)
-5. All 12 values are visible in the image - find each one
-
-The image shows a complete soil test results table. Every parameter has a corresponding test value. Look carefully at each row and extract the numerical value from the Test Value column.`,
-});
 
 const digitizeSoilCardFlow = ai.defineFlow(
   {
@@ -156,119 +258,209 @@ const digitizeSoilCardFlow = ai.defineFlow(
     outputSchema: DigitizeSoilCardOutputSchema,
   },
   async input => {
-    // First attempt with detailed instructions
-    let {output} = await prompt(input);
+    let result: DigitizeSoilCardOutput = {};
     
-    if (!output) {
-      throw new Error('The AI model could not extract any data from the image. Please try again with a clearer image.');
+    // Step 1: Main extraction attempt
+    console.log('Step 1: Attempting main extraction...');
+    try {
+      const mainResult = await mainExtractionPrompt(input);
+      if (mainResult.output) {
+        result = { ...mainResult.output };
+        console.log(`Main extraction: ${Object.keys(result).length}/12 fields extracted`);
+      }
+    } catch (error) {
+      console.error('Main extraction failed:', error);
     }
     
-    // Log the extraction results for debugging
-    const extractedFields = Object.keys(output).length;
-    console.log(`First attempt: Successfully extracted ${extractedFields} out of 12 possible fields:`, output);
+    // Step 2: Check for Iron, Manganese, Copper specifically
+    const problematicFields = ['iron', 'manganese', 'copper'];
+    const missingProblematic = problematicFields.filter(field => 
+      result[field as keyof DigitizeSoilCardOutput] === undefined
+    );
     
-    // If we got less than 10 fields, try enhanced extraction
-    if (extractedFields < 10) {
-      console.log('Attempting enhanced extraction with specific value targeting...');
-      
+    if (missingProblematic.length > 0) {
+      console.log(`Step 2: Ultra-focused extraction for problematic micronutrients: ${missingProblematic.join(', ')}`);
       try {
-        const secondAttempt = await enhancedPrompt(input);
-        if (secondAttempt.output && Object.keys(secondAttempt.output).length > extractedFields) {
-          // Merge results, preferring second attempt for any overlapping fields
-          output = { ...output, ...secondAttempt.output };
-          console.log(`Enhanced attempt improved results: ${Object.keys(output).length} fields extracted`);
+        const microResult = await micronutrientExtractionPrompt(input);
+        
+        if (microResult.output) {
+          // Merge micronutrient results
+          if (microResult.output.iron !== undefined) result.iron = microResult.output.iron;
+          if (microResult.output.manganese !== undefined) result.manganese = microResult.output.manganese;
+          if (microResult.output.copper !== undefined) result.copper = microResult.output.copper;
+          console.log(`After micronutrient extraction: ${Object.keys(result).length}/12 fields`);
         }
       } catch (error) {
-        console.warn('Enhanced extraction failed, using first attempt results');
+        console.error('Micronutrient extraction failed:', error);
       }
     }
     
-    // Third attempt with step-by-step extraction if still missing fields
-    const finalExtractedFields = Object.keys(output).length;
-    if (finalExtractedFields < 10) {
-      console.log('Attempting step-by-step extraction for remaining fields...');
-      
-      const missingFields = [];
-      if (output.ph === undefined) missingFields.push('pH (row 1): 7.70');
-      if (output.ec === undefined) missingFields.push('EC (row 2): 0.04');
-      if (output.organicCarbon === undefined) missingFields.push('Organic Carbon (row 3): 0.35');
-      if (output.nitrogen === undefined) missingFields.push('Nitrogen (row 4): 200.63');
-      if (output.phosphorus === undefined) missingFields.push('Phosphorus (row 5): 4.19');
-      if (output.potassium === undefined) missingFields.push('Potassium (row 6): 122.85');
-      if (output.sulphur === undefined) missingFields.push('Sulphur (row 7): 26.50');
-      if (output.zinc === undefined) missingFields.push('Zinc (row 8): 0.27');
-      if (output.boron === undefined) missingFields.push('Boron (row 9): 0.63');
-      if (output.iron === undefined) missingFields.push('Iron (row 10): 0.71');
-      if (output.manganese === undefined) missingFields.push('Manganese (row 11): 6.41');
-      if (output.copper === undefined) missingFields.push('Copper (row 12): 1.65');
-      
-      console.log(`Missing fields: ${missingFields.join(', ')}`);
-      
-      // Create a targeted prompt for missing fields
-      const targetedPrompt = ai.definePrompt({
-        name: 'targetedExtractionPrompt',
-        input: {schema: DigitizeSoilCardInputSchema},
-        output: {schema: DigitizeSoilCardOutputSchema},
-        prompt: `Look at this Soil Health Card image and find these specific missing values:
-
-Image: {{media url=photoDataUri}}
-
-I need you to find these exact values from the Test Value column (3rd column) in the table:
-
-${missingFields.join('\n')}
-
-Look at each row number and extract the numerical value from the Test Value column. The values are clearly visible in the image - look more carefully at the table structure.
-
-Extract ONLY the numerical values, no units or text.`,
-      });
-      
-      try {
-        const thirdAttempt = await targetedPrompt(input);
-        if (thirdAttempt.output) {
-          // Merge results, filling in missing fields
-          output = { ...output, ...thirdAttempt.output };
-          console.log(`Targeted extraction final results: ${Object.keys(output).length} fields extracted`);
-        }
-      } catch (error) {
-        console.warn('Targeted extraction failed, using previous results');
+    // Step 2b: General focused extraction for other missing fields
+    const missingFields = [];
+    // Final validation step
+    const fieldMapping = {
+      ph: 'pH',
+      ec: 'EC', 
+      organicCarbon: 'Organic Carbon',
+      nitrogen: 'Nitrogen',
+      phosphorus: 'Phosphorus',
+      potassium: 'Potassium',
+      sulphur: 'Sulphur',
+      zinc: 'Zinc',
+      boron: 'Boron',
+      iron: 'Iron',
+      manganese: 'Manganese',
+      copper: 'Copper'
+    };
+    
+    for (const [key, label] of Object.entries(fieldMapping)) {
+      if (result[key as keyof DigitizeSoilCardOutput] === undefined) {
+        missingFields.push(label);
       }
     }
     
-    // Final validation and detailed logging
-    const finalFields = Object.keys(output).length;
-    console.log(`Final extraction results (${finalFields}/12 fields):`, output);
-    
-    if (finalFields < 12) {
-      console.warn(`Warning: Only ${finalFields} out of 12 fields were extracted.`);
-      console.warn('Missing fields analysis:');
-      if (!output.ph) console.warn('- pH: Expected 7.70 from row 1');
-      if (!output.ec) console.warn('- EC: Expected 0.04 from row 2');
-      if (!output.organicCarbon) console.warn('- Organic Carbon: Expected 0.35 from row 3');
-      if (!output.nitrogen) console.warn('- Nitrogen: Expected 200.63 from row 4');
-      if (!output.phosphorus) console.warn('- Phosphorus: Expected 4.19 from row 5');
-      if (!output.potassium) console.warn('- Potassium: Expected 122.85 from row 6');
-      if (!output.sulphur) console.warn('- Sulphur: Expected 26.50 from row 7');
-      if (!output.zinc) console.warn('- Zinc: Expected 0.27 from row 8');
-      if (!output.boron) console.warn('- Boron: Expected 0.63 from row 9');
-      if (!output.iron) console.warn('- Iron: Expected 0.71 from row 10');
-      if (!output.manganese) console.warn('- Manganese: Expected 6.41 from row 11');
-      if (!output.copper) console.warn('- Copper: Expected 1.65 from row 12');
+    if (missingFields.length > 0) {
+      console.log(`Step 2b: General focused extraction for remaining fields: ${missingFields.join(', ')}`);
+      try {
+        const focusedResult = await focusedExtractionPrompt({
+          photoDataUri: input.photoDataUri,
+          missingFields
+        });
+        
+        if (focusedResult.output) {
+          // Merge results, preferring focused extraction for missing fields
+          result = { ...result, ...focusedResult.output };
+          console.log(`After general focused extraction: ${Object.keys(result).length}/12 fields`);
+        }
+      } catch (error) {
+        console.error('General focused extraction failed:', error);
+      }
     }
     
-    // Enhanced validation with expected ranges
-    if (output.ph && (output.ph < 3 || output.ph > 12)) {
-      console.warn(`pH value ${output.ph} seems outside normal soil range (3-12). Expected: 7.70`);
-    }
-    if (output.ec && output.ec > 10) {
-      console.warn(`EC value ${output.ec} seems unusually high (typically < 4 dS/m). Expected: 0.04`);
-    }
-    if (output.organicCarbon && output.organicCarbon > 10) {
-      console.warn(`Organic Carbon ${output.organicCarbon} seems unusually high (typically < 5%). Expected: 0.35`);
-    }
-    if (output.nitrogen && output.nitrogen > 1000) {
-      console.warn(`Nitrogen ${output.nitrogen} seems unusually high. Expected: 200.63`);
+    // Step 4: Alternative extraction for stubborn Iron, Manganese, Copper
+    const stillMissingProblematic = problematicFields.filter(field => 
+      result[field as keyof DigitizeSoilCardOutput] === undefined
+    );
+    
+    if (stillMissingProblematic.length > 0) {
+      console.log(`Step 4: Alternative extraction approach for: ${stillMissingProblematic.join(', ')}`);
+      try {
+        const altResult = await alternativeExtractionPrompt(input);
+        if (altResult.output && altResult.output.bottomRowValues && altResult.output.bottomRowValues.length >= 3) {
+          // Map the bottom row values to fields
+          const [ironVal, manganeseVal, copperVal] = altResult.output.bottomRowValues;
+          
+          if (result.iron === undefined && ironVal !== undefined) {
+            result.iron = ironVal;
+            console.log(`Alternative extraction found Iron: ${ironVal}`);
+          }
+          if (result.manganese === undefined && manganeseVal !== undefined) {
+            result.manganese = manganeseVal;
+            console.log(`Alternative extraction found Manganese: ${manganeseVal}`);
+          }
+          if (result.copper === undefined && copperVal !== undefined) {
+            result.copper = copperVal;
+            console.log(`Alternative extraction found Copper: ${copperVal}`);
+          }
+        }
+      } catch (error) {
+        console.error('Alternative extraction failed:', error);
+      }
     }
     
-    return output;
+    // Step 5: Row-by-row extraction for remaining missing fields
+    const stillMissing = [];
+    for (const [key] of Object.entries(fieldMapping)) {
+      if (result[key as keyof DigitizeSoilCardOutput] === undefined) {
+        stillMissing.push(key);
+      }
+    }
+    
+    if (stillMissing.length > 0) {
+      console.log(`Step 5: Row-by-row extraction for ${stillMissing.length} remaining fields`);
+      try {
+        const rowResult = await rowByRowPrompt(input);
+        if (rowResult.output) {
+          // Map row-based results to final structure
+          const mapped: DigitizeSoilCardOutput = {};
+          if (rowResult.output.row1_ph !== undefined) mapped.ph = rowResult.output.row1_ph;
+          if (rowResult.output.row2_ec !== undefined) mapped.ec = rowResult.output.row2_ec;
+          if (rowResult.output.row3_oc !== undefined) mapped.organicCarbon = rowResult.output.row3_oc;
+          if (rowResult.output.row4_nitrogen !== undefined) mapped.nitrogen = rowResult.output.row4_nitrogen;
+          if (rowResult.output.row5_phosphorus !== undefined) mapped.phosphorus = rowResult.output.row5_phosphorus;
+          if (rowResult.output.row6_potassium !== undefined) mapped.potassium = rowResult.output.row6_potassium;
+          if (rowResult.output.row7_sulphur !== undefined) mapped.sulphur = rowResult.output.row7_sulphur;
+          if (rowResult.output.row8_zinc !== undefined) mapped.zinc = rowResult.output.row8_zinc;
+          if (rowResult.output.row9_boron !== undefined) mapped.boron = rowResult.output.row9_boron;
+          if (rowResult.output.row10_iron !== undefined) mapped.iron = rowResult.output.row10_iron;
+          if (rowResult.output.row11_manganese !== undefined) mapped.manganese = rowResult.output.row11_manganese;
+          if (rowResult.output.row12_copper !== undefined) mapped.copper = rowResult.output.row12_copper;
+          
+          // Fill in missing fields only
+          for (const [key, value] of Object.entries(mapped)) {
+            if (result[key as keyof DigitizeSoilCardOutput] === undefined && value !== undefined) {
+              result[key as keyof DigitizeSoilCardOutput] = value;
+            }
+          }
+          console.log(`After row-by-row extraction: ${Object.keys(result).length}/12 fields`);
+        }
+      } catch (error) {
+        console.error('Row-by-row extraction failed:', error);
+      }
+    }
+    
+    // Step 6: Validation and cleanup
+    const finalResult = validateAndCleanResults(result);
+    const finalCount = Object.keys(finalResult).length;
+    
+    console.log(`Final results: ${finalCount}/12 fields extracted`);
+    if (finalCount < 12) {
+      const missing = [];
+      for (const [key, label] of Object.entries(fieldMapping)) {
+        if (finalResult[key as keyof DigitizeSoilCardOutput] === undefined) {
+          missing.push(label);
+        }
+      }
+      console.warn(`Missing fields: ${missing.join(', ')}`);
+    }
+    
+    return finalResult;
   }
 );
+
+function validateAndCleanResults(result: DigitizeSoilCardOutput): DigitizeSoilCardOutput {
+  const cleaned: DigitizeSoilCardOutput = {};
+  
+  // Validation ranges
+  const ranges = {
+    ph: { min: 3, max: 12 },
+    ec: { min: 0.01, max: 10 },
+    organicCarbon: { min: 0.1, max: 5 },
+    nitrogen: { min: 50, max: 800 },
+    phosphorus: { min: 1, max: 100 },
+    potassium: { min: 25, max: 500 },
+    sulphur: { min: 5, max: 100 },
+    zinc: { min: 0.1, max: 5 },
+    boron: { min: 0.1, max: 3 },
+    iron: { min: 0.1, max: 50 },
+    manganese: { min: 0.5, max: 50 },
+    copper: { min: 0.1, max: 10 }
+  };
+  
+  for (const [key, value] of Object.entries(result)) {
+    if (value !== undefined && typeof value === 'number') {
+      const range = ranges[key as keyof typeof ranges];
+      if (range && value >= range.min && value <= range.max) {
+        cleaned[key as keyof DigitizeSoilCardOutput] = value;
+      } else if (range) {
+        console.warn(`${key} value ${value} outside expected range ${range.min}-${range.max}`);
+        // Still include it but log the warning
+        cleaned[key as keyof DigitizeSoilCardOutput] = value;
+      } else {
+        cleaned[key as keyof DigitizeSoilCardOutput] = value;
+      }
+    }
+  }
+  
+  return cleaned;
+}

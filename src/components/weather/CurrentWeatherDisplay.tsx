@@ -3,7 +3,7 @@
 
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Thermometer, Droplet, Wind, Sunrise, Sunset, Cloud, Gauge } from 'lucide-react'; // CloudSun removed as icon is dynamic
+import { Thermometer, Droplet, Wind, Sunrise, Sunset, Cloud, Gauge, CloudDrizzle } from 'lucide-react';
 import { format } from 'date-fns';
 
 export interface CurrentWeatherData {
@@ -18,6 +18,7 @@ export interface CurrentWeatherData {
   sunset: number;  // Unix timestamp UTC
   cloudiness: number; // Percentage cloud cover
   pressure: number; // hPa
+  rain1h?: number; // Rain volume for last 1h in mm
 }
 
 interface CurrentWeatherDisplayProps {
@@ -107,6 +108,13 @@ export function CurrentWeatherDisplay({ weather }: CurrentWeatherDisplayProps) {
             <span className="font-medium text-foreground">Pressure:</span>
             <span className="ml-auto text-muted-foreground font-code">{weather.pressure} hPa</span>
           </div>
+          {weather.rain1h !== undefined && (
+            <div className="flex items-center text-sm leading-normal">
+              <CloudDrizzle className="h-5 w-5 mr-2 text-primary/80" />
+              <span className="font-medium text-foreground">Rain (last 1h):</span>
+              <span className="ml-auto text-muted-foreground font-code">{weather.rain1h} mm</span>
+            </div>
+          )}
         </div>
         
         <div className="sm:col-span-2 grid grid-cols-2 gap-4 p-4 bg-background/50 rounded-md shadow">
@@ -126,3 +134,5 @@ export function CurrentWeatherDisplay({ weather }: CurrentWeatherDisplayProps) {
     </Card>
   );
 }
+
+    

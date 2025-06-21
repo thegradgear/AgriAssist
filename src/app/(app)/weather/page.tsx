@@ -32,6 +32,7 @@ interface ExtendedCurrentWeatherData extends CurrentWeatherData {
   sunset: number; // Unix timestamp
   cloudiness: number; // Percentage
   pressure: number; // hPa
+  rain1h?: number; // Rain volume for last 1h in mm
 }
 
 
@@ -141,6 +142,10 @@ export default function WeatherPage() {
           cloudiness: data.clouds?.all || 0, // Percentage
           pressure: data.main.pressure, // hPa
         };
+
+        if (data.rain && data.rain['1h']) {
+          mappedCurrentWeather.rain1h = data.rain['1h'];
+        }
       }
       setCurrentWeather(mappedCurrentWeather);
 
@@ -553,6 +558,8 @@ export default function WeatherPage() {
     </div>
   );
 }
+    
+
     
 
     
