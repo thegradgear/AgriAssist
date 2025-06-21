@@ -12,8 +12,8 @@ interface CostCalculatorResultsProps {
   loading?: boolean; 
 }
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(amount);
+const formatAmount = (amount: number) => {
+  return new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 };
 
 export function CostCalculatorResults({ results, loading }: CostCalculatorResultsProps) {
@@ -78,13 +78,19 @@ export function CostCalculatorResults({ results, loading }: CostCalculatorResult
           <Card className="bg-muted/30">
             <CardHeader className="pb-2 pt-4">
               <CardDescription className="flex items-center text-sm"><Scale className="mr-1.5 h-4 w-4"/>Total Cost</CardDescription>
-              <CardTitle className="text-xl font-bold">{formatCurrency(results.totalCost)}</CardTitle> {/* Data display: text-xl, font-bold */}
+              <CardTitle className="text-xl font-bold flex items-center">
+                 <IndianRupee className="mr-1 h-5 w-5" />
+                <span>{formatAmount(results.totalCost)}</span>
+              </CardTitle>
             </CardHeader>
           </Card>
            <Card className="bg-muted/30">
             <CardHeader className="pb-2 pt-4">
               <CardDescription className="flex items-center text-sm"><TrendingUp className="mr-1.5 h-4 w-4"/>Total Revenue</CardDescription>
-              <CardTitle className="text-xl font-bold">{formatCurrency(results.totalRevenue)}</CardTitle>
+              <CardTitle className="text-xl font-bold flex items-center">
+                <IndianRupee className="mr-1 h-5 w-5" />
+                <span>{formatAmount(results.totalRevenue)}</span>
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card className={cn("bg-muted/30", isProfit ? "border-green-500/50" : "border-red-500/50")}>
@@ -93,8 +99,9 @@ export function CostCalculatorResults({ results, loading }: CostCalculatorResult
                 {isProfit ? <TrendingUp className="mr-1.5 h-4 w-4 text-green-600"/> : <TrendingDown className="mr-1.5 h-4 w-4 text-red-600"/>}
                 Net Profit / Loss
               </CardDescription>
-              <CardTitle className={cn("text-xl font-bold", isProfit ? "text-green-600" : "text-red-600")}>
-                {formatCurrency(results.profitOrLoss)}
+              <CardTitle className={cn("text-xl font-bold flex items-center", isProfit ? "text-green-600" : "text-red-600")}>
+                 <IndianRupee className="mr-1 h-5 w-5" />
+                <span>{formatAmount(results.profitOrLoss)}</span>
               </CardTitle>
               <p className={cn("text-xs leading-normal", isProfit ? "text-green-500" : "text-red-500")}> {/* Caption: text-xs */}
                 Profit Margin: {results.profitMargin.toFixed(2)}%
@@ -116,7 +123,7 @@ export function CostCalculatorResults({ results, loading }: CostCalculatorResult
                         <TableRow>
                         {/* TableHead is text-sm text-muted-foreground by default from ShadCN, fits "Labels" */}
                         <TableHead>Item Name</TableHead>
-                        <TableHead className="text-right">Amount (₹)</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
                         <TableHead className="text-right">Percentage of Total Cost</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -125,7 +132,10 @@ export function CostCalculatorResults({ results, loading }: CostCalculatorResult
                         <TableRow key={index}>
                             {/* TableCell is text-sm by default */}
                             <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell className="text-right font-code">{formatCurrency(item.amount)}</TableCell> {/* Data: font-code for numbers */}
+                            <TableCell className="text-right font-code flex items-center justify-end gap-0.5">
+                               <IndianRupee className="h-3.5 w-3.5" />
+                               <span>{formatAmount(item.amount)}</span>
+                            </TableCell>
                             <TableCell className="text-right font-code">{item.percentage.toFixed(2)}%</TableCell>
                         </TableRow>
                         ))}
