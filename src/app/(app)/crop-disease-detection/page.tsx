@@ -123,7 +123,7 @@ export default function CropHealthAnalysisPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <UploadCloud className="mr-2 h-5 w-5 text-primary" />
-              1. Upload Image
+              Upload Image
             </CardTitle>
             <CardDescription>
               Select an image file (JPG, PNG, WEBP, max 5MB). For best results, use a clear, focused image.
@@ -183,7 +183,7 @@ export default function CropHealthAnalysisPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Microscope className="mr-2 h-5 w-5 text-primary" />
-                      2. Analyze for Diseases
+                      Analyze for Diseases
                     </CardTitle>
                     <CardDescription>
                       Provide the crop type to improve diagnosis accuracy.
@@ -217,7 +217,7 @@ export default function CropHealthAnalysisPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Bug className="mr-2 h-5 w-5 text-primary" />
-                      2. Analyze for Pests & Weeds
+                      Analyze for Pests & Weeds
                     </CardTitle>
                     <CardDescription>
                       Add optional notes about where you found it.
