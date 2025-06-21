@@ -238,7 +238,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                     <FormField control={form.control} name="ec" render={({ field }) => (
                       <FormItem>
                         <FormLabel>EC (dS/m)</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
+                        <FormControl><Input type="number" step="0.01" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
