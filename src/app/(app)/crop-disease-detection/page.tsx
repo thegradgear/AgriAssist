@@ -143,6 +143,7 @@ export default function CropDiseaseDetectionPage() {
                   onChange={handleImageChange}
                   ref={fileInputRef}
                   className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  suppressHydrationWarning
                 />
               </div>
 
@@ -163,6 +164,7 @@ export default function CropDiseaseDetectionPage() {
                     className="absolute top-2 right-2 opacity-70 group-hover:opacity-100 transition-opacity"
                     onClick={handleRemoveImage}
                     aria-label="Remove image"
+                    suppressHydrationWarning
                   >
                     <XCircle className="h-5 w-5" />
                   </Button>
@@ -178,13 +180,14 @@ export default function CropDiseaseDetectionPage() {
                   value={cropType}
                   onChange={(e) => setCropType(e.target.value)}
                   className="mt-1"
+                  suppressHydrationWarning
                 />
                 <p className="text-xs text-muted-foreground mt-1 leading-normal">Providing the crop type can improve diagnosis accuracy.</p> {/* Caption style */}
               </div>
             </CardContent>
             <CardFooter>
               {/* Button text is text-sm font-medium */}
-              <Button type="submit" className="w-full" disabled={isLoading || !imageFile}>
+              <Button type="submit" className="w-full" disabled={isLoading || !imageFile} suppressHydrationWarning>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
