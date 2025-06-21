@@ -1,4 +1,4 @@
-
+// src/components/crop-recommendation/CropRecommendationForm.tsx
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -227,92 +227,102 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
             <CardContent className="space-y-8">
               <div>
                 <h3 className="text-lg font-semibold mb-4 border-b pb-2">Soil Parameters</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    <FormField control={form.control} name="ph" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>pH</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="ec" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>EC (dS/m)</FormLabel>
-                        <FormControl><Input type="number" step="0.01" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                     <FormField control={form.control} name="organicCarbon" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Organic Carbon (%)</FormLabel>
-                        <FormControl><Input type="number" step="0.01" placeholder="e.g., 0.75" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="nitrogen" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nitrogen (kg/ha)</FormLabel>
-                        <FormControl><Input type="number" step="1" placeholder="e.g., 120" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="phosphorus" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phosphorus (kg/ha)</FormLabel>
-                        <FormControl><Input type="number" step="1" placeholder="e.g., 50" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="potassium" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Potassium (kg/ha)</FormLabel>
-                        <FormControl><Input type="number" step="1" placeholder="e.g., 50" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                     <FormField control={form.control} name="sulphur" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sulphur (mg/kg)</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 15" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                     <FormField control={form.control} name="zinc" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Zinc (mg/kg)</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.6" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                     <FormField control={form.control} name="boron" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Boron (mg/kg)</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                     <FormField control={form.control} name="iron" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Iron (mg/kg)</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 4.5" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                     <FormField control={form.control} name="manganese" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Manganese (mg/kg)</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.0" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                     <FormField control={form.control} name="copper" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Copper (mg/kg)</FormLabel>
-                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.2" {...field} suppressHydrationWarning /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                </div>
+                 <div className="space-y-6">
+                    <div>
+                        <h4 className="text-base font-semibold mb-3">Primary Parameters</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <FormField control={form.control} name="ph" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>pH</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="ec" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>EC (dS/m)</FormLabel>
+                                    <FormControl><Input type="number" step="0.01" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="organicCarbon" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Organic Carbon (%)</FormLabel>
+                                    <FormControl><Input type="number" step="0.01" placeholder="e.g., 0.75" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="nitrogen" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Nitrogen (kg/ha)</FormLabel>
+                                    <FormControl><Input type="number" step="1" placeholder="e.g., 120" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="phosphorus" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Phosphorus (kg/ha)</FormLabel>
+                                    <FormControl><Input type="number" step="1" placeholder="e.g., 50" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="potassium" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Potassium (kg/ha)</FormLabel>
+                                    <FormControl><Input type="number" step="1" placeholder="e.g., 50" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </div>
+                    </div>
+                     <div>
+                        <h4 className="text-base font-semibold mb-3">Secondary &amp; Micro Nutrients</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            <FormField control={form.control} name="sulphur" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Sulphur (mg/kg)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 15" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="zinc" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Zinc (mg/kg)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.6" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="boron" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Boron (mg/kg)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="iron" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Iron (mg/kg)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 4.5" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="manganese" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Manganese (mg/kg)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.0" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                            <FormField control={form.control} name="copper" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Copper (mg/kg)</FormLabel>
+                                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.2" {...field} suppressHydrationWarning /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+                        </div>
+                    </div>
+                 </div>
               </div>
 
               <div>
