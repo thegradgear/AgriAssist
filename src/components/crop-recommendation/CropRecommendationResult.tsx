@@ -56,7 +56,7 @@ export function CropRecommendationResult({ result, loading }: CropRecommendation
           {crops.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {crops.map((crop, index) => (
-                <Badge key={index} variant="secondary" className="text-base px-3 py-1 bg-primary/20 text-primary-foreground hover:bg-primary/30">
+                <Badge key={index} variant="default" className="text-base px-3 py-1">
                   {crop}
                 </Badge>
               ))}
