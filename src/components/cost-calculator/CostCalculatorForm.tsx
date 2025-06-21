@@ -250,7 +250,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                     name={`costItems.${index}.costPerUnit`}
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
-                        <FormLabel>Cost/Unit (₹)</FormLabel>
+                        <FormLabel className="flex items-center">Cost/Unit <IndianRupee className="ml-1 h-3.5 w-3.5"/></FormLabel>
                         <FormControl><Input type="number" placeholder="e.g., 150" {...field} suppressHydrationWarning/></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -293,7 +293,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md">
                 <div className="space-y-1">
-                    <h4 className="font-medium flex items-center"><IndianRupee className="mr-1 h-4 w-4 text-muted-foreground"/>Expected Yield</h4>
+                    <h4 className="font-medium flex items-center"><Scaling className="mr-1 h-4 w-4 text-muted-foreground"/>Expected Yield</h4>
                     <div className="grid grid-cols-2 gap-3">
                         <FormField
                             control={form.control}
