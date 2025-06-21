@@ -1,10 +1,29 @@
+
 // src/app/api/news/route.ts
 import { NextResponse } from 'next/server';
-import { validateSearchTopic } from '@/ai/flows/validate-search-topic-flow';
 
 const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
 
-const CORE_AGRICULTURE_KEYWORDS = 'farming OR agriculture OR horticulture OR crops OR soil OR agronomy';
+// A curated list of reputable domains for agricultural and related business news.
+const RELEVANT_DOMAINS = [
+    // India-specific
+    'krishijagran.com',
+    'icar.org.in',
+    'thehindubusinessline.com',
+    'economictimes.indiatimes.com',
+    'livemint.com',
+    'business-standard.com',
+    'pib.gov.in', // Press Information Bureau for government news
+    
+    // International / Agri-focused
+    'agriculture.com',
+    'agweb.com',
+    'croplife.com',
+    'successfulfarming.com',
+    'fwi.co.uk', // Farmers Weekly
+    'agriland.ie',
+].join(',');
+
 
 export async function GET(request: Request) {
   if (!NEWSAPI_KEY) {
@@ -20,26 +39,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Step 1: Validate the topic using the Genkit flow
-    const validationResult = await validateSearchTopic({ searchQuery: query });
-
-    if (!validationResult.isRelevant) {
-      return NextResponse.json(
-        { 
-          error: `Search topic is not relevant. Please search for topics related to farming.`,
-          reasoning: validationResult.reasoning 
-        },
-        { status: 400 }
-      );
-    }
-
-    // Step 2: If relevant, construct the final query for NewsAPI
-    // This ensures that the search results from NewsAPI are still filtered by core keywords.
-    const enhancedQuery = `(${query}) AND (${CORE_AGRICULTURE_KEYWORDS})`;
-    
+    // New approach: Search the user's query only within the specified domains.
+    // This is more reliable than AI validation for ensuring topic relevance.
     const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(
-      enhancedQuery
-    )}&language=en&sortBy=relevancy&pageSize=${pageSize}&apiKey=${NEWSAPI_KEY}`;
+      query
+    )}&domains=${RELEVANT_DOMAINS}&language=en&sortBy=relevancy&pageSize=${pageSize}&apiKey=${NEWSAPI_KEY}`;
     
     const apiResponse = await fetch(newsApiUrl, {
       headers: {
@@ -65,10 +69,6 @@ export async function GET(request: Request) {
 
   } catch (error: any) {
     console.error('Error in /api/news route:', error);
-    // Check if the error is from our validation logic
-    if (error.message.includes("Search topic is not relevant")) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
     return NextResponse.json({ error: 'Failed to fetch news articles from the server.', details: error.message }, { status: 500 });
   }
 }
