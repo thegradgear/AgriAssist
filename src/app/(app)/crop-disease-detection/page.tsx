@@ -131,7 +131,7 @@ export default function CropDiseaseDetectionPage() {
               Select an image file (JPG, PNG, WEBP, max 5MB). For best results, use a clear image focusing on the affected area.
             </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} suppressHydrationWarning>
             <CardContent className="space-y-6">
               <div>
                 {/* Label is text-sm font-medium */}
@@ -142,7 +142,7 @@ export default function CropDiseaseDetectionPage() {
                   accept="image/jpeg,image/png,image/webp"
                   onChange={handleImageChange}
                   ref={fileInputRef}
-                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  className="block w-full h-auto py-0 text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                   suppressHydrationWarning
                 />
               </div>
