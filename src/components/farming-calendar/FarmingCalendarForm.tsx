@@ -126,94 +126,97 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-5">
-            <FormField
-              control={form.control}
-              name="cropName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><Trees className="mr-2 h-4 w-4 text-muted-foreground" />Crop Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Tomato, Wheat" {...field} suppressHydrationWarning />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-muted-foreground" />Location</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Pune, Maharashtra" {...field} suppressHydrationWarning />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="plantingDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />Approx. Planting Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                          suppressHydrationWarning
-                        >
-                          {field.value ? (
-                            formatDateFns(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="soilType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><Leaf className="mr-2 h-4 w-4 text-muted-foreground" />Soil Type (Optional)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <FormField
+                control={form.control}
+                name="cropName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><Trees className="mr-2 h-4 w-4 text-muted-foreground" />Crop Name</FormLabel>
                     <FormControl>
-                      <SelectTrigger suppressHydrationWarning>
-                        <SelectValue placeholder="Select soil type" />
-                      </SelectTrigger>
+                        <Input placeholder="e.g., Tomato, Wheat" {...field} suppressHydrationWarning />
                     </FormControl>
-                    <SelectContent>
-                      {soilTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-muted-foreground" />Location</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Pune, Maharashtra" {...field} suppressHydrationWarning />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="plantingDate"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />Approx. Planting Date</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                            )}
+                            suppressHydrationWarning
+                            >
+                            {field.value ? (
+                                formatDateFns(field.value, "PPP")
+                            ) : (
+                                <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="soilType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><Leaf className="mr-2 h-4 w-4 text-muted-foreground" />Soil Type (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger suppressHydrationWarning>
+                            <SelectValue placeholder="Select soil type" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {soilTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+            
             <FormField
               control={form.control}
               name="farmingPractice"
