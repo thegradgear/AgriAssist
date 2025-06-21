@@ -171,13 +171,23 @@ export default function CropHealthAnalysisPage() {
         </Card>
 
         <Tabs defaultValue="disease" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="disease">Disease Detection</TabsTrigger>
-            <TabsTrigger value="pest">Pest & Weed ID</TabsTrigger>
+          <TabsList className="h-auto justify-start bg-transparent p-0 gap-3">
+            <TabsTrigger
+              value="disease"
+              className="rounded-full border bg-card px-4 py-2 text-base font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Disease Detection
+            </TabsTrigger>
+            <TabsTrigger
+              value="pest"
+              className="rounded-full border bg-card px-4 py-2 text-base font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Pest & Weed ID
+            </TabsTrigger>
           </TabsList>
           
           {/* Disease Detection Tab */}
-          <TabsContent value="disease">
+          <TabsContent value="disease" className="mt-4">
             <Card className="shadow-lg mt-0">
                <form onSubmit={(e: FormEvent<HTMLFormElement>) => { e.preventDefault(); handleAnalysis('disease'); }} suppressHydrationWarning>
                   <CardHeader>
@@ -211,7 +221,7 @@ export default function CropHealthAnalysisPage() {
           </TabsContent>
 
           {/* Pest & Weed ID Tab */}
-          <TabsContent value="pest">
+          <TabsContent value="pest" className="mt-4">
             <Card className="shadow-lg mt-0">
                <form onSubmit={(e: FormEvent<HTMLFormElement>) => { e.preventDefault(); handleAnalysis('pest'); }} suppressHydrationWarning>
                   <CardHeader>
