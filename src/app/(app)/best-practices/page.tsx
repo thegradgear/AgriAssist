@@ -37,7 +37,7 @@ const mapArticleToPractice = (article: NewsApiArticle, index: number): Practice 
   };
 };
 
-const DEFAULT_ARTICLE_QUERY = 'sustainable farming OR precision agriculture OR soil health OR crop rotation OR water management agriculture OR pest control agriculture';
+const DEFAULT_ARTICLE_QUERY = 'modern farming techniques';
 
 const SkeletonPracticeCard = () => (
   <div className="bg-card shadow-md rounded-lg overflow-hidden">
@@ -58,7 +58,7 @@ export default function BestPracticesPage() {
   const [articles, setArticles] = useState<Practice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState(DEFAULT_ARTICLE_QUERY);
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentQuery, setCurrentQuery] = useState(DEFAULT_ARTICLE_QUERY);
   const { toast } = useToast();
 
@@ -67,10 +67,6 @@ export default function BestPracticesPage() {
     setError(null);
     try {
       const effectiveQuery = query.trim() ? query : DEFAULT_ARTICLE_QUERY;
-      if (query.trim() === '' && currentQuery === '') { 
-          // No toast here, the empty results message will suffice.
-      }
-
 
       const response = await fetch(`/api/news?query=${encodeURIComponent(effectiveQuery)}&pageSize=12`);
       
@@ -80,9 +76,9 @@ export default function BestPracticesPage() {
             const errorData = await response.json();
             if (errorData && errorData.error) {
                  errorMsg = errorData.error;
-                 if(errorData.newsApiStatus === 401 || errorData.newsApiStatus === 426) {
+                 if(response.status === 401 || errorData.newsApiStatus === 426) {
                     errorMsg = "NewsAPI configuration error on the server or plan issue. Contact support.";
-                 } else if (errorData.newsApiStatus === 429) {
+                 } else if (response.status === 429) {
                     errorMsg = "NewsAPI rate limit exceeded. Please try again later.";
                  }
             }
@@ -109,28 +105,37 @@ export default function BestPracticesPage() {
       const displayError = err.message || 'Failed to fetch articles.';
       setError(displayError);
       setArticles([]);
+      
+      const isRelevanceError = displayError.toLowerCase().includes('not relevant');
+      
       toast({
         variant: "destructive",
-        title: "Error Fetching Articles",
+        title: isRelevanceError ? "Irrelevant Topic" : "Error Fetching Articles",
         description: displayError,
       });
+
     } finally {
       setIsLoading(false);
     }
-  }, [toast, currentQuery]); 
+  }, [toast]); 
 
   useEffect(() => {
-    if (currentQuery.trim()) {
-      fetchArticles(currentQuery);
-    } else if (currentQuery === '') { 
-      setArticles([]);
-      setIsLoading(false);
-    }
-  }, [fetchArticles, currentQuery]);
+    fetchArticles(DEFAULT_ARTICLE_QUERY);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setCurrentQuery(searchTerm.trim());
+    if (searchTerm.trim()) {
+        setCurrentQuery(searchTerm.trim());
+        fetchArticles(searchTerm.trim());
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Empty Search",
+            description: "Please enter a topic to search for."
+        });
+    }
   };
   
   return (
@@ -143,7 +148,7 @@ export default function BestPracticesPage() {
       <form onSubmit={handleSearch} className="mb-8 flex flex-row gap-2 items-center">
         <div className="relative flex-grow">
           <Input 
-            placeholder="Search articles (e.g., 'organic pest control')" 
+            placeholder="Search for farming topics..." 
             className="w-full pr-10 border-foreground/30 dark:border-muted-foreground" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -176,7 +181,7 @@ export default function BestPracticesPage() {
         </div>
       )}
 
-      {!isLoading && error && (
+      {!isLoading && error && !error.toLowerCase().includes('not relevant') && (
         <Alert variant="destructive" className="mb-8">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -194,9 +199,9 @@ export default function BestPracticesPage() {
             <BookOpen className="mx-auto h-16 w-16 text-primary mb-4" />
             <p className="text-xl font-medium leading-snug">No Articles Found</p>
             <p className="text-muted-foreground mt-1 text-base leading-normal">
-              {currentQuery !== DEFAULT_ARTICLE_QUERY && currentQuery.trim() !== '' 
+              {currentQuery !== DEFAULT_ARTICLE_QUERY 
                 ? `No articles found for your query: "${currentQuery}". Try a different search term.`
-                : "No articles found. Try searching for specific topics or broaden your terms."
+                : "No articles found. Try searching for specific topics."
               }
             </p>
         </div>
