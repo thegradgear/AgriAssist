@@ -38,22 +38,22 @@ const prompt = ai.definePrompt({
   name: 'digitizeSoilCardPrompt',
   input: {schema: DigitizeSoilCardInputSchema},
   output: {schema: DigitizeSoilCardOutputSchema},
-  prompt: `You are an expert at Optical Character Recognition (OCR) and data extraction, specializing in Indian Soil Health Cards. Your task is to analyze the provided image of a Soil Health Card and extract key soil nutrient values. The card often contains a table with columns like "Parameter", "Test Value", and "Unit".
+  prompt: `You are an expert at Optical Character Recognition (OCR) and data extraction, specializing in Indian Soil Health Cards. Your task is to analyze the provided image of a Soil Health Card and extract key soil nutrient values.
 
 Image of the Soil Health Card: {{media url=photoDataUri}}
 
 Instructions:
-1.  Carefully examine the image, paying close attention to any tables listing soil test results.
-2.  For each parameter below, find its row in the table and extract the corresponding 'Test Value'.
-3.  Extract **only the numerical value** for each parameter. Do not include units (like "kg/ha" or "%") or any other text in the final output fields.
+1.  Carefully examine the image to find the values for the soil parameters listed below.
+2.  Extract **only the numerical value** for each parameter. Do not include units (like "kg/ha" or "%") or any other text in the final output fields.
+3.  The parameters might be labeled with full names (e.g., "Available Nitrogen (N)") or abbreviations (e.g., "N").
 4.  If a value for a specific parameter cannot be clearly identified or is not present on the card, you MUST omit that field from the output object. Do not guess or provide a default value.
 
-Parameters to find:
-*   **pH**: The soil pH level. Find the row for "pH" and get its test value.
-*   **Organic Carbon (OC)**: Find the row for "Organic Carbon" or "OC" and get its test value. This is often a percentage.
-*   **Available Nitrogen (N)**: Find the row for "Available Nitrogen" or "N" and get its test value. This is typically in kg/ha.
-*   **Available Phosphorus (P)**: Find the row for "Available Phosphorus" or "P" and get its test value. This is typically in kg/ha.
-*   **Available Potassium (K)**: Find the row for "Available Potassium" or "K" and get its test value. This is typically in kg/ha.
+Find the following values:
+*   **pH**
+*   **Organic Carbon (OC)**
+*   **Available Nitrogen (N)**
+*   **Available Phosphorus (P)**
+*   **Available Potassium (K)**
 
 The output must be a valid JSON object matching the provided schema.
 `,
