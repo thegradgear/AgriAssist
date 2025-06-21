@@ -83,22 +83,36 @@ export default function BestPracticesPage() {
                  }
             }
         } catch(e) {/* ignore json parse error */}
-        throw new Error(errorMsg);
-      }
-      const data = await response.json();
-      
-      if (data.articles && data.articles.length > 0) {
-        setArticles(data.articles.map(mapArticleToPractice));
-      } else if (data.articles && data.articles.length === 0) {
+        
+        // Handle the error directly here instead of throwing
+        const displayError = errorMsg;
+        setError(displayError);
         setArticles([]);
-        if (query !== DEFAULT_ARTICLE_QUERY && query.trim() !== '') {
-            toast({
-                title: "No Articles Found",
-                description: `No articles found for your query: "${query}". Try a different search term.`,
-            });
+        
+        const isRelevanceError = displayError.toLowerCase().includes('not relevant');
+        
+        toast({
+          variant: "destructive",
+          title: isRelevanceError ? "Irrelevant Topic" : "Error Fetching Articles",
+          description: displayError,
+        });
+
+      } else {
+        const data = await response.json();
+      
+        if (data.articles && data.articles.length > 0) {
+          setArticles(data.articles.map(mapArticleToPractice));
+        } else if (data.articles && data.articles.length === 0) {
+          setArticles([]);
+          if (query !== DEFAULT_ARTICLE_QUERY && query.trim() !== '') {
+              toast({
+                  title: "No Articles Found",
+                  description: `No articles found for your query: "${query}". Try a different search term.`,
+              });
+          }
+        } else if (data.error) {
+          throw new Error(data.error);
         }
-      } else if (data.error) {
-        throw new Error(data.error);
       }
     } catch (err: any) {
       console.error("Failed to fetch articles:", err);
