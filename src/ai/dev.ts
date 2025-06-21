@@ -9,3 +9,4 @@ import '@/ai/flows/farming-calendar-flow.ts';
 import '@/ai/flows/validate-search-topic-flow.ts';
 import '@/ai/flows/digitize-soil-card-flow.ts';
 import '@/ai/flows/identify-pest-weed-flow.ts';
+import '@/ai/flows/irrigation-schedule-flow.ts';
