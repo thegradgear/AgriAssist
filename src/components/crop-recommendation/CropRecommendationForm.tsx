@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -221,13 +222,97 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <FormField control={form.control} name="nitrogen" render={({ field }) => ( <FormItem> <FormLabel>Nitrogen (N)</FormLabel> <FormControl> <Input type="number" step="0.1" placeholder="e.g., 50" {...field} suppressHydrationWarning /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="phosphorus" render={({ field }) => ( <FormItem> <FormLabel>Phosphorus (P)</FormLabel> <FormControl> <Input type="number" step="0.1" placeholder="e.g., 30" {...field} suppressHydrationWarning /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="potassium" render={({ field }) => ( <FormItem> <FormLabel>Potassium (K)</FormLabel> <FormControl> <Input type="number" step="0.1" placeholder="e.g., 40" {...field} suppressHydrationWarning /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="temperature" render={({ field }) => ( <FormItem> <FormLabel>Temperature (°C)</FormLabel> <FormControl> <Input type="number" step="0.1" placeholder="e.g., 28.5" {...field} suppressHydrationWarning /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="humidity" render={({ field }) => ( <FormItem> <FormLabel>Humidity (%)</FormLabel> <FormControl> <Input type="number" step="0.1" placeholder="e.g., 75" {...field} suppressHydrationWarning /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="ph" render={({ field }) => ( <FormItem> <FormLabel>Soil pH</FormLabel> <FormControl> <Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} suppressHydrationWarning /> </FormControl> <FormMessage /> </FormItem> )} />
-                  <FormField control={form.control} name="rainfall" render={({ field }) => ( <FormItem className="md:col-span-2 lg:col-span-1"> <FormLabel>Rainfall (mm)</FormLabel> <FormControl> <Input type="number" step="0.1" placeholder="e.g., 150" {...field} suppressHydrationWarning /> </FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField
+                    control={form.control}
+                    name="nitrogen"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nitrogen (N)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 50" {...field} suppressHydrationWarning />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phosphorus"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phosphorus (P)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 30" {...field} suppressHydrationWarning />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="potassium"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Potassium (K)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 40" {...field} suppressHydrationWarning />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="temperature"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Temperature (°C)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 28.5" {...field} suppressHydrationWarning />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="humidity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Humidity (%)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 75" {...field} suppressHydrationWarning />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="ph"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Soil pH</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} suppressHydrationWarning />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="rainfall"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2 lg:col-span-1">
+                        <FormLabel>Rainfall (mm)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.1" placeholder="e.g., 150" {...field} suppressHydrationWarning />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
              <CardFooter>
