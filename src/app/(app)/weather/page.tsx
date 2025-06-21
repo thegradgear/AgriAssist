@@ -46,6 +46,7 @@ export default function WeatherPage() {
   const [currentWeather, setCurrentWeather] = useState<ExtendedCurrentWeatherData | null>(null);
   const [alerts, setAlerts] = useState<WeatherAlert[]>([]);
   
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoadingWeatherData, setIsLoadingWeatherData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -281,6 +282,8 @@ export default function WeatherPage() {
       localStorage.removeItem('weatherCoordinates');
       localStorage.removeItem('currentWeather');
       localStorage.removeItem('weatherAlerts');
+    } finally {
+      setIsInitialLoading(false);
     }
   }, []); // Empty dependency array means this runs once on mount
 
@@ -377,6 +380,8 @@ export default function WeatherPage() {
 
   const disableActions = isLoadingWeatherData || isLoadingSuggestions || !OPENWEATHERMAP_API_KEY;
 
+  const showLoader = isInitialLoading || isLoadingWeatherData;
+
   return (
     <div className="container mx-auto">
       <PageHeader
@@ -440,23 +445,7 @@ export default function WeatherPage() {
         </CardContent>
       </Card>
       
-      {error && (
-         <Card className="mb-8 border-destructive bg-destructive/10">
-          <CardContent className="p-4">
-            <div className="flex items-center">
-              <AlertTriangle className="h-5 w-5 text-destructive mr-2" />
-              <p className="text-sm text-destructive font-medium">{error}</p>
-            </div>
-            {(error.toLowerCase().includes("api key") || error.toLowerCase().includes("next_public_openweathermap_api_key")) && (
-                <p className="text-xs text-destructive mt-2">
-                    Please verify your OpenWeatherMap API key in your <code>.env</code> or <code>src/.env</code> file (as <code>NEXT_PUBLIC_OPENWEATHERMAP_API_KEY</code>) and restart your development server.
-                </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {isLoadingWeatherData && (
+      {showLoader && (
         <div className="space-y-6">
           {/* Skeleton for CurrentWeatherDisplay */}
           <Card className="shadow-lg animate-pulse">
@@ -492,54 +481,74 @@ export default function WeatherPage() {
         </div>
       )}
 
-      {!isLoadingWeatherData && selectedCoordinates && !error && OPENWEATHERMAP_API_KEY && (
-        <div className="space-y-8">
-          {currentWeather && <CurrentWeatherDisplay weather={currentWeather} />}
-          
-          {alerts.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-semibold font-headline mb-4 mt-8 flex items-center">
-                <AlertTriangle className="mr-3 h-6 w-6 text-orange-500" />
-                Active Weather Alerts
-              </h2>
-              <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-                {alerts.map((alert) => (
-                  <WeatherAlertCard key={alert.id} alert={alert} />
-                ))}
-              </div>
-            </div>
+      {!showLoader && (
+        <>
+          {error && (
+             <Card className="mb-8 border-destructive bg-destructive/10">
+              <CardContent className="p-4">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-5 w-5 text-destructive mr-2" />
+                  <p className="text-sm text-destructive font-medium">{error}</p>
+                </div>
+                {(error.toLowerCase().includes("api key") || error.toLowerCase().includes("next_public_openweathermap_api_key")) && (
+                    <p className="text-xs text-destructive mt-2">
+                        Please verify your OpenWeatherMap API key in your <code>.env</code> or <code>src/.env</code> file (as <code>NEXT_PUBLIC_OPENWEATHERMAP_API_KEY</code>) and restart your development server.
+                    </p>
+                )}
+              </CardContent>
+            </Card>
           )}
 
-          {!currentWeather && alerts.length === 0 && (
+          {!error && selectedCoordinates && OPENWEATHERMAP_API_KEY && (
+            <div className="space-y-8">
+              {currentWeather && <CurrentWeatherDisplay weather={currentWeather} />}
+              
+              {alerts.length > 0 && (
+                <div>
+                  <h2 className="text-2xl font-semibold font-headline mb-4 mt-8 flex items-center">
+                    <AlertTriangle className="mr-3 h-6 w-6 text-orange-500" />
+                    Active Weather Alerts
+                  </h2>
+                  <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+                    {alerts.map((alert) => (
+                      <WeatherAlertCard key={alert.id} alert={alert} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!currentWeather && alerts.length === 0 && (
+                 <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud-off mx-auto text-muted-foreground mb-4"><path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"/><path d="m2 2 20 20"/></svg>
+                    <p className="text-xl font-semibold">No Data Available</p>
+                    <p className="text-muted-foreground mt-1">
+                      Could not fetch current weather or alerts for the selected location.
+                    </p>
+                </div>
+              )}
+
+               {currentWeather && alerts.length === 0 && (
+                <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check mx-auto text-primary mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                  <p className="text-xl font-semibold">No Active Alerts</p>
+                  <p className="text-muted-foreground mt-1">
+                    No active weather alerts reported for this location. Current weather is displayed above.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+           {!error && !selectedCoordinates && OPENWEATHERMAP_API_KEY && (
              <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud-off mx-auto text-muted-foreground mb-4"><path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"/><path d="m2 2 20 20"/></svg>
-                <p className="text-xl font-semibold">No Data Available</p>
+                <MapPin className="mx-auto h-16 w-16 text-primary mb-4" />
+                <p className="text-xl font-semibold">Enter City for Weather Info</p>
                 <p className="text-muted-foreground mt-1">
-                  Could not fetch current weather or alerts for the selected location.
+                  Please type a city name above to fetch current weather and alerts.
                 </p>
             </div>
           )}
-
-           {currentWeather && alerts.length === 0 && (
-            <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-check mx-auto text-primary mb-4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-              <p className="text-xl font-semibold">No Active Alerts</p>
-              <p className="text-muted-foreground mt-1">
-                No active weather alerts reported for this location. Current weather is displayed above.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-      
-       {!isLoadingWeatherData && !selectedCoordinates && !error && OPENWEATHERMAP_API_KEY && (
-         <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
-            <MapPin className="mx-auto h-16 w-16 text-primary mb-4" />
-            <p className="text-xl font-semibold">Enter City for Weather Info</p>
-            <p className="text-muted-foreground mt-1">
-              Please type a city name above to fetch current weather and alerts.
-            </p>
-        </div>
+        </>
       )}
     </div>
   );
