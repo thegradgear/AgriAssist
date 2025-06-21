@@ -383,7 +383,7 @@ export default function WeatherPage() {
         title="Weather Information"
         description="Get current weather and alerts by city name (powered by OpenWeatherMap)."
         actions={selectedCoordinates && (
-          <Button onClick={() => selectedCoordinates && fetchWeatherData(selectedCoordinates)} variant="outline" disabled={disableActions || isLoadingWeatherData}>
+          <Button onClick={() => selectedCoordinates && fetchWeatherData(selectedCoordinates)} variant="outline" disabled={disableActions || isLoadingWeatherData} suppressHydrationWarning>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingWeatherData ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
@@ -411,6 +411,7 @@ export default function WeatherPage() {
                 onFocus={() => cityInput.trim().length > 2 && suggestions.length > 0 && setShowSuggestions(true)}
                 placeholder="e.g., London, New Delhi, Tokyo"
                 className="pr-10" // Make space for loader
+                suppressHydrationWarning
               />
               {isLoadingSuggestions && (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-muted-foreground" />
@@ -431,7 +432,7 @@ export default function WeatherPage() {
                 </div>
               )}
             </div>
-            <Button onClick={handleManualCitySearch} disabled={disableActions || !cityInput.trim() || isLoadingWeatherData}>
+            <Button onClick={handleManualCitySearch} disabled={disableActions || !cityInput.trim() || isLoadingWeatherData} suppressHydrationWarning>
               {isLoadingWeatherData && !isLoadingSuggestions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-0 md:mr-2 h-4 w-4" />}
               <span className="hidden md:inline">Get Weather</span>
             </Button>
