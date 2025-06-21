@@ -20,6 +20,7 @@ export interface DailyForecastData {
   temp_max: number;
   temp_min: number;
   description: string;
+  rainfallMM?: number;
 }
 
 interface ForecastDisplayProps {
@@ -123,9 +124,17 @@ export function ForecastDisplay({ hourly, daily }: ForecastDisplayProps) {
                         <p className="text-sm text-muted-foreground">{day.description}</p>
                     </div>
                 </div>
-                <div className="text-right">
-                    <p className="font-semibold text-base">{day.temp_max}° / {day.temp_min}°</p>
-                    <p className="text-sm text-muted-foreground">High / Low</p>
+                <div className="text-right flex items-center gap-4">
+                  {day.rainfallMM !== undefined && day.rainfallMM > 0 && (
+                    <div className='text-right'>
+                       <p className="font-medium text-sm text-blue-500 flex items-center justify-end gap-1"><CloudDrizzle className="h-4 w-4" />{day.rainfallMM} mm</p>
+                       <p className="text-xs text-muted-foreground">Rain</p>
+                    </div>
+                  )}
+                  <div>
+                      <p className="font-semibold text-base">{day.temp_max}° / {day.temp_min}°</p>
+                      <p className="text-sm text-muted-foreground">High / Low</p>
+                  </div>
                 </div>
               </div>
             ))}

@@ -16,20 +16,27 @@ import { useState, useEffect } from 'react';
 import { Loader2, Droplets, Leaf, Thermometer, CloudRain } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 
+export interface DailyForecastInitData {
+    day: string;
+    maxTempC: number;
+    rainfallMM: number;
+}
+
 interface IrrigationFormProps {
   onScheduleResult: (result: IrrigationScheduleOutput | null) => void;
   onLoading: (loading: boolean) => void;
   onError: (error: string | null) => void;
+  initialForecast?: DailyForecastInitData[];
 }
 
-export function IrrigationForm({ onScheduleResult, onLoading, onError }: IrrigationFormProps) {
+export function IrrigationForm({ onScheduleResult, onLoading, onError, initialForecast }: IrrigationFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
-  // Create a default 7-day forecast structure
+  // Create a default 5-day forecast structure
   const today = new Date();
-  const defaultForecast = Array.from({ length: 7 }, (_, i) => ({
+  const defaultForecast = Array.from({ length: 5 }, (_, i) => ({
     day: format(addDays(today, i), 'EEEE'),
     maxTempC: 25,
     rainfallMM: 0,
@@ -40,7 +47,7 @@ export function IrrigationForm({ onScheduleResult, onLoading, onError }: Irrigat
     defaultValues: {
       cropType: '',
       location: '',
-      forecast: defaultForecast,
+      forecast: initialForecast || defaultForecast,
     },
   });
   
@@ -51,7 +58,11 @@ export function IrrigationForm({ onScheduleResult, onLoading, onError }: Irrigat
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    // If initialForecast is passed as a prop, update the form.
+    if (initialForecast) {
+        form.setValue('forecast', initialForecast, { shouldValidate: true });
+    }
+  }, [initialForecast, form]);
 
 
   async function onSubmit(data: IrrigationFormData) {
@@ -65,7 +76,7 @@ export function IrrigationForm({ onScheduleResult, onLoading, onError }: Irrigat
       onScheduleResult(result);
       toast({
         title: 'Irrigation Schedule Generated',
-        description: `7-day watering plan created for ${data.cropType}.`,
+        description: `5-day watering plan created for ${data.cropType}.`,
       });
     } catch (error: any) {
       console.error("Irrigation schedule generation error:", error);
@@ -108,7 +119,7 @@ export function IrrigationForm({ onScheduleResult, onLoading, onError }: Irrigat
           <Droplets className="mr-2 h-6 w-6 text-primary" />
           Irrigation Inputs
         </CardTitle>
-        <CardDescription>Provide crop, soil, and weather details to generate a 7-day watering schedule.</CardDescription>
+        <CardDescription>Provide crop, soil, and weather details to generate a 5-day watering schedule.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -141,7 +152,7 @@ export function IrrigationForm({ onScheduleResult, onLoading, onError }: Irrigat
             </div>
 
             <div>
-              <h3 className="text-lg font-medium mb-3 border-b pb-2">7-Day Weather Forecast</h3>
+              <h3 className="text-lg font-medium mb-3 border-b pb-2">5-Day Weather Forecast</h3>
               <div className="space-y-4">
                 {fields.map((field, index) => (
                   <div key={field.id} className="grid grid-cols-3 gap-3 items-end p-3 border rounded-md bg-muted/30">

@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, RefreshCw, AlertTriangle, CloudSun, MapPin, Search, Navigation, Star, Trash2 } from 'lucide-react';
+import { Loader2, RefreshCw, AlertTriangle, CloudSun, MapPin, Search, Navigation, Star, Trash2, Droplets } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface Coordinates {
   latitude: number;
@@ -31,6 +32,7 @@ const capitalizeWords = (str: string) => {
 };
 
 export default function WeatherPage() {
+  const router = useRouter();
   const [cityInput, setCityInput] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<SavedLocation | null>(null);
 
@@ -107,17 +109,20 @@ export default function WeatherPage() {
         precipitation: Math.round((h.pop || 0) * 100),
       }));
 
-      const dailyForecasts: { [key: string]: { temps: number[], icons: { [key: string]: number }, descriptions: { [key: string]: number } } } = {};
+      const dailyForecasts: { [key: string]: { temps: number[], icons: { [key: string]: number }, descriptions: { [key: string]: number }, rain: number[] } } = {};
       forecastData.list.forEach((entry: any) => {
           const date = format(new Date(entry.dt * 1000), 'yyyy-MM-dd');
           if (!dailyForecasts[date]) {
-              dailyForecasts[date] = { temps: [], icons: {}, descriptions: {} };
+              dailyForecasts[date] = { temps: [], icons: {}, descriptions: {}, rain: [] };
           }
           dailyForecasts[date].temps.push(entry.main.temp);
           const icon = entry.weather[0].icon.replace('n', 'd'); // Use day icon for consistency
           dailyForecasts[date].icons[icon] = (dailyForecasts[date].icons[icon] || 0) + 1;
           const desc = entry.weather[0].description;
           dailyForecasts[date].descriptions[desc] = (dailyForecasts[date].descriptions[desc] || 0) + 1;
+          if (entry.rain && entry.rain['3h']) {
+            dailyForecasts[date].rain.push(entry.rain['3h']);
+          }
       });
 
       const mappedDailyForecast: DailyForecastData[] = Object.keys(dailyForecasts).slice(0, 5).map(date => {
@@ -126,14 +131,16 @@ export default function WeatherPage() {
           const temp_max = Math.round(Math.max(...dayData.temps));
           const icon = Object.keys(dayData.icons).reduce((a, b) => dayData.icons[a] > dayData.icons[b] ? a : b);
           const description = Object.keys(dayData.descriptions).reduce((a, b) => dayData.descriptions[a] > dayData.descriptions[b] ? a : b);
-          
+          const totalRainMM = dayData.rain.reduce((acc, val) => acc + val, 0);
+
           return {
               date: format(parseISO(date), 'E, MMM d'),
               day: format(parseISO(date), 'EEEE'),
               icon,
               temp_max,
               temp_min,
-              description: capitalizeWords(description)
+              description: capitalizeWords(description),
+              rainfallMM: Math.round(totalRainMM),
           };
       });
 
@@ -204,6 +211,26 @@ export default function WeatherPage() {
     setSavedLocations(newSavedLocations);
     localStorage.setItem('savedLocations', JSON.stringify(newSavedLocations));
     toast({ title: "Location Removed", description: `${locationToRemove.name} removed from your favorites.`});
+  };
+
+  const handlePlanIrrigation = () => {
+    if (!dailyForecast || dailyForecast.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'No Forecast Data',
+        description: 'Please fetch a weather forecast before planning irrigation.'
+      });
+      return;
+    }
+
+    const forecastForUrl = dailyForecast.map(day => ({
+      day: day.day,
+      maxTempC: day.temp_max,
+      rainfallMM: day.rainfallMM || 0,
+    }));
+    
+    const forecastString = JSON.stringify(forecastForUrl);
+    router.push(`/irrigation-management?forecast=${encodeURIComponent(forecastString)}`);
   };
 
   useEffect(() => {
@@ -296,14 +323,20 @@ export default function WeatherPage() {
 
       {!isLoading && !error && selectedLocation && (
         <div className="space-y-8">
-            <div className="flex justify-between items-center">
-                <Button onClick={() => fetchWeatherData(selectedLocation)} variant="outline" disabled={isLoading} suppressHydrationWarning>
-                    <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
-                    Refresh
-                </Button>
-                <Button onClick={addSavedLocation} variant="outline" disabled={isLocationSaved || isLoading} suppressHydrationWarning>
-                    <Star className={cn("mr-2 h-4 w-4", isLocationSaved && "fill-amber-400 text-amber-500")} />
-                    {isLocationSaved ? 'Saved' : 'Save Location'}
+            <div className="flex justify-between items-center flex-wrap gap-2">
+                <div className='flex items-center gap-2'>
+                    <Button onClick={() => fetchWeatherData(selectedLocation)} variant="outline" disabled={isLoading} suppressHydrationWarning>
+                        <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
+                        Refresh
+                    </Button>
+                    <Button onClick={addSavedLocation} variant="outline" disabled={isLocationSaved || isLoading} suppressHydrationWarning>
+                        <Star className={cn("mr-2 h-4 w-4", isLocationSaved && "fill-amber-400 text-amber-500")} />
+                        {isLocationSaved ? 'Saved' : 'Save Location'}
+                    </Button>
+                </div>
+                <Button onClick={handlePlanIrrigation} variant="default" disabled={isLoading} suppressHydrationWarning>
+                    <Droplets className="mr-2 h-4 w-4" />
+                    Plan Irrigation
                 </Button>
             </div>
 
@@ -312,12 +345,6 @@ export default function WeatherPage() {
             {(hourlyForecast.length > 0 || dailyForecast.length > 0) && (
               <ForecastDisplay hourly={hourlyForecast} daily={dailyForecast} />
             )}
-
-            <div className="text-center py-10 rounded-lg border bg-card shadow-sm">
-              <CloudSun className="mx-auto h-16 w-16 text-primary mb-4" />
-              <p className="text-xl font-semibold">All Clear!</p>
-              <p className="text-muted-foreground mt-1">No severe weather alerts for {selectedLocation.name}.</p>
-            </div>
         </div>
       )}
 

@@ -3,7 +3,7 @@
 /**
  * @fileOverview Generates an optimal irrigation schedule.
  *
- * - generateIrrigationSchedule - Creates a 7-day watering plan.
+ * - generateIrrigationSchedule - Creates a 5-day watering plan.
  * - IrrigationScheduleInput - The input type for the function.
  * - IrrigationScheduleOutput - The return type for the function.
  */
@@ -33,7 +33,7 @@ const DailyRecommendationSchema = z.object({
 });
 
 const IrrigationScheduleOutputSchema = z.object({
-  weeklySchedule: z.array(DailyRecommendationSchema).describe('A list of daily irrigation recommendations for the week.'),
+  weeklySchedule: z.array(DailyRecommendationSchema).describe('A list of daily irrigation recommendations for the forecast period.'),
   generalAdvice: z.string().describe('Overall advice for the week, such as tips on checking soil moisture or adjusting for unexpected weather.'),
 });
 export type IrrigationScheduleOutput = z.infer<typeof IrrigationScheduleOutputSchema>;
@@ -48,7 +48,7 @@ const prompt = ai.definePrompt({
   input: {schema: IrrigationScheduleInputSchema},
   output: {schema: IrrigationScheduleOutputSchema},
   prompt: `You are an expert agricultural hydrologist specializing in water management for farms in India.
-A farmer needs a 7-day irrigation schedule. Analyze the provided data to give daily watering recommendations.
+A farmer needs a 5-day irrigation schedule. Analyze the provided data to give daily watering recommendations.
 
 FARM DATA:
 - Crop Type: {{{cropType}}}
@@ -56,7 +56,7 @@ FARM DATA:
 - Current Growth Stage: {{{stageOfGrowth}}}
 - Location: {{{location}}}
 
-7-DAY WEATHER FORECAST:
+5-DAY WEATHER FORECAST:
 {{#each forecast}}
 - Day: {{{day}}}, Max Temp: {{{maxTempC}}}°C, Rainfall: {{{rainfallMM}}}mm
 {{/each}}

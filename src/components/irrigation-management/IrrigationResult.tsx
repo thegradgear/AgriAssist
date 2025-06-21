@@ -45,7 +45,7 @@ export function IrrigationResult({ result, loading, error }: IrrigationResultPro
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center"><Droplets className="mr-2 h-5 w-5 text-primary" />Irrigation Schedule</CardTitle>
-          <CardDescription>Your 7-day watering plan will appear here.</CardDescription>
+          <CardDescription>Your 5-day watering plan will appear here.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
@@ -59,7 +59,7 @@ export function IrrigationResult({ result, loading, error }: IrrigationResultPro
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center"><Droplets className="mr-2 h-5 w-5 text-primary" />7-Day Irrigation Schedule</CardTitle>
+        <CardTitle className="flex items-center"><Droplets className="mr-2 h-5 w-5 text-primary" />5-Day Irrigation Schedule</CardTitle>
         <CardDescription>A summary of the AI-generated watering plan for the upcoming week.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

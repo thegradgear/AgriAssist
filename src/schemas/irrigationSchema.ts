@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const soilTypes = ["Loamy", "Sandy", "Clay", "Silt", "Peaty", "Chalky"] as const;
@@ -14,7 +15,7 @@ export const irrigationSchema = z.object({
   soilType: z.enum(soilTypes, { required_error: "Please select a soil type." }),
   stageOfGrowth: z.enum(growthStages, { required_error: "Please select a growth stage." }),
   location: z.string().min(3, "Location is required for context."),
-  forecast: z.array(dailyForecastSchema).length(7, "A 7-day forecast is required."),
+  forecast: z.array(dailyForecastSchema).length(5, "A 5-day forecast is required."),
 });
 
 export type IrrigationFormData = z.infer<typeof irrigationSchema>;
