@@ -98,7 +98,7 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                   <FormItem>
                     <FormLabel>State</FormLabel>
                     <FormControl>
-                       <select {...field} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                       <select {...field} suppressHydrationWarning className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                         <option value="">Select State</option>
                         {indianStates.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
@@ -114,7 +114,7 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                   <FormItem>
                     <FormLabel>District</FormLabel>
                     <FormControl>
-                      <select {...field} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" disabled={districts.length === 0}>
+                      <select {...field} suppressHydrationWarning className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" disabled={districts.length === 0}>
                         <option value="">Select District</option>
                         {districts.map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
@@ -130,7 +130,7 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                   <FormItem>
                     <FormLabel>Season</FormLabel>
                      <FormControl>
-                       <select {...field} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                       <select {...field} suppressHydrationWarning className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                         <option value="">Select Season</option>
                         {seasons.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
@@ -146,7 +146,7 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                   <FormItem>
                     <FormLabel>Crop Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Rice" {...field} />
+                      <Input placeholder="e.g., Rice" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -159,14 +159,14 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                   <FormItem className="md:col-span-2">
                     <FormLabel>Area (in acres)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" placeholder="e.g., 5.5" {...field} />
+                      <Input type="number" step="0.01" placeholder="e.g., 5.5" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <Button type="submit" className="w-full md:w-auto" disabled={isLoading}>
+            <Button type="submit" className="w-full md:w-auto" disabled={isLoading} suppressHydrationWarning>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
