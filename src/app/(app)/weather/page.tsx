@@ -238,20 +238,24 @@ export default function WeatherPage() {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
-    if (cityInput.trim().length > 2) { 
+    // Only fetch suggestions if we are intending to show them (i.e., user is typing)
+    // and the input is long enough. This prevents fetching on initial page load
+    // when cityInput is populated from localStorage.
+    if (showSuggestions && cityInput.trim().length > 2) {
       debounceTimeoutRef.current = setTimeout(() => {
         fetchPlaceSuggestions(cityInput);
-      }, 500); 
+      }, 500);
     } else {
+      // If we are not meant to show suggestions, just clear the suggestions list.
+      // Don't modify `showSuggestions` here to avoid potential loops.
       setSuggestions([]);
-      setShowSuggestions(false);
     }
     return () => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [cityInput, fetchPlaceSuggestions]);
+  }, [cityInput, fetchPlaceSuggestions, showSuggestions]);
 
   // Load from localStorage on mount
   useEffect(() => {
