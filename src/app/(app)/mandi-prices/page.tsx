@@ -41,6 +41,7 @@ export default function MandiPricesPage() {
 
         try {
             const response = await fetch(`/api/mandi-prices?date=${formattedDate}&limit=500`);
+            
             if (!response.ok) {
                 let errorMsg = `Error: ${response.statusText}`;
                 try {
@@ -49,21 +50,29 @@ export default function MandiPricesPage() {
                         errorMsg = errorData.error;
                     }
                 } catch(e) { /* ignore json parse error */ }
-                throw new Error(errorMsg);
-            }
-            const data = await response.json();
-            if (data.records && data.records.length > 0) {
-                setPrices(data.records);
+                
+                // Handle error directly instead of throwing
+                setError(errorMsg);
                 toast({
-                    title: 'Prices Loaded',
-                    description: `${data.records.length} records found for ${formatDateFns(fetchDate, 'PPP')}.`
+                    variant: 'destructive',
+                    title: 'Error Fetching Prices',
+                    description: errorMsg
                 });
             } else {
-                setPrices([]);
-                 toast({
-                    title: 'No Data Found',
-                    description: `No market price data found for ${formatDateFns(fetchDate, 'PPP')}. This can be common for Sundays or public holidays.`
-                });
+                const data = await response.json();
+                if (data.records && data.records.length > 0) {
+                    setPrices(data.records);
+                    toast({
+                        title: 'Prices Loaded',
+                        description: `${data.records.length} records found for ${formatDateFns(fetchDate, 'PPP')}.`
+                    });
+                } else {
+                    setPrices([]);
+                     toast({
+                        title: 'No Data Found',
+                        description: `No market price data found for ${formatDateFns(fetchDate, 'PPP')}. This can be common for Sundays or public holidays.`
+                    });
+                }
             }
         } catch (err: any) {
             console.error('Failed to fetch Mandi prices:', err);
