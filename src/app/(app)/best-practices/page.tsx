@@ -37,18 +37,25 @@ const mapArticleToPractice = (article: NewsApiArticle, index: number): Practice 
   };
 };
 
-const DEFAULT_ARTICLE_QUERY = 'modern farming techniques';
+const filterTopics = [
+  "Modern Farming",
+  "Water Harvesting",
+  "Organic Farming",
+  "Renewable Energy",
+  "Soil Health",
+  "Precision Agriculture",
+];
 
 const SkeletonPracticeCard = () => (
   <div className="bg-card shadow-md rounded-lg overflow-hidden">
     <Skeleton className="w-full h-48" />
     <div className="p-4">
-      <Skeleton className="h-5 w-3/4 mb-2" /> {/* CardTitle skeleton (text-lg) */}
-      <Skeleton className="h-3 w-1/2 mb-3" /> {/* Category skeleton (text-xs) */}
-      <Skeleton className="h-4 w-full mb-1" /> {/* Summary skeleton (text-sm) */}
+      <Skeleton className="h-5 w-3/4 mb-2" />
+      <Skeleton className="h-3 w-1/2 mb-3" />
+      <Skeleton className="h-4 w-full mb-1" />
       <Skeleton className="h-4 w-full mb-1" />
       <Skeleton className="h-4 w-5/6 mb-3" />
-      <Skeleton className="h-4 w-1/3" /> {/* Link/Date skeleton (text-sm/xs) */}
+      <Skeleton className="h-4 w-1/3" />
     </div>
   </div>
 );
@@ -59,16 +66,15 @@ export default function BestPracticesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentQuery, setCurrentQuery] = useState(DEFAULT_ARTICLE_QUERY);
+  const [activeFilter, setActiveFilter] = useState<string>(filterTopics[0]);
+  const [currentQuery, setCurrentQuery] = useState<string>(filterTopics[0]);
   const { toast } = useToast();
 
   const fetchArticles = useCallback(async (query: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const effectiveQuery = query.trim() ? query : DEFAULT_ARTICLE_QUERY;
-
-      const response = await fetch(`/api/news?query=${encodeURIComponent(effectiveQuery)}&pageSize=12`);
+      const response = await fetch(`/api/news?query=${encodeURIComponent(query)}&pageSize=12`);
       
       if (!response.ok) {
         let errorMsg = `Error: ${response.statusText} (${response.status})`;
@@ -84,17 +90,15 @@ export default function BestPracticesPage() {
             }
         } catch(e) {/* ignore json parse error */}
         
-        // Handle the error directly here instead of throwing
-        const displayError = errorMsg;
-        setError(displayError);
+        setError(errorMsg);
         setArticles([]);
         
-        const isRelevanceError = displayError.toLowerCase().includes('not relevant');
+        const isRelevanceError = errorMsg.toLowerCase().includes('not relevant');
         
         toast({
           variant: "destructive",
           title: isRelevanceError ? "Irrelevant Topic" : "Error Fetching Articles",
-          description: displayError,
+          description: errorMsg,
         });
 
       } else {
@@ -104,7 +108,7 @@ export default function BestPracticesPage() {
           setArticles(data.articles.map(mapArticleToPractice));
         } else if (data.articles && data.articles.length === 0) {
           setArticles([]);
-          if (query !== DEFAULT_ARTICLE_QUERY && query.trim() !== '') {
+          if (query.trim() !== '') {
               toast({
                   title: "No Articles Found",
                   description: `No articles found for your query: "${query}". Try a different search term.`,
@@ -134,13 +138,21 @@ export default function BestPracticesPage() {
   }, [toast]); 
 
   useEffect(() => {
-    fetchArticles(DEFAULT_ARTICLE_QUERY);
+    fetchArticles(activeFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleFilterClick = (topic: string) => {
+    setActiveFilter(topic);
+    setCurrentQuery(topic);
+    setSearchTerm(''); // Clear the manual search input
+    fetchArticles(topic);
+  };
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchTerm.trim()) {
+        setActiveFilter(''); // Deactivate filter when performing a manual search
         setCurrentQuery(searchTerm.trim());
         fetchArticles(searchTerm.trim());
     } else {
@@ -158,34 +170,54 @@ export default function BestPracticesPage() {
         title="Agricultural Articles & News"
         description="Explore recent articles and news related to farming techniques, soil health, and agricultural innovations."
       />
-      
-      <form onSubmit={handleSearch} className="mb-8 flex flex-row gap-2 items-center">
-        <div className="relative flex-grow">
-          <Input 
-            placeholder="Search for farming topics..." 
-            className="w-full pr-10 border-foreground/30 dark:border-muted-foreground" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            suppressHydrationWarning
-          />
-          {searchTerm && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-              onClick={() => setSearchTerm('')}
-              suppressHydrationWarning
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Clear search</span>
-            </Button>
-          )}
+
+      <div className="mb-8 space-y-4">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground mb-2">Filter by topic:</p>
+          <div className="flex flex-wrap gap-2">
+            {filterTopics.map(topic => (
+              <Button
+                key={topic}
+                variant={activeFilter === topic ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleFilterClick(topic)}
+                className="rounded-full"
+                suppressHydrationWarning
+              >
+                {topic}
+              </Button>
+            ))}
+          </div>
         </div>
-        <Button type="submit" disabled={isLoading} suppressHydrationWarning>
-          <Search className="mr-2 h-4 w-4" /> Search
-        </Button>
-      </form>
+        
+        <form onSubmit={handleSearch} className="flex flex-row gap-2 items-center">
+          <div className="relative flex-grow">
+            <Input 
+              placeholder="Or search for other topics..." 
+              className="w-full pr-10 border-foreground/30 dark:border-muted-foreground" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              suppressHydrationWarning
+            />
+            {searchTerm && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => setSearchTerm('')}
+                suppressHydrationWarning
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Clear search</span>
+              </Button>
+            )}
+          </div>
+          <Button type="submit" disabled={isLoading} suppressHydrationWarning>
+            <Search className="mr-2 h-4 w-4" /> Search
+          </Button>
+        </form>
+      </div>
 
       {isLoading && (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -213,10 +245,7 @@ export default function BestPracticesPage() {
             <BookOpen className="mx-auto h-16 w-16 text-primary mb-4" />
             <p className="text-xl font-medium leading-snug">No Articles Found</p>
             <p className="text-muted-foreground mt-1 text-base leading-normal">
-              {currentQuery !== DEFAULT_ARTICLE_QUERY 
-                ? `No articles found for your query: "${currentQuery}". Try a different search term.`
-                : "No articles found. Try searching for specific topics."
-              }
+              {`No articles found for your query: "${currentQuery}". Try a different topic or search term.`}
             </p>
         </div>
       )}
