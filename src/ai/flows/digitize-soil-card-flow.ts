@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to digitize Indian Soil Health Cards.
@@ -21,11 +22,11 @@ export type DigitizeSoilCardInput = z.infer<typeof DigitizeSoilCardInputSchema>;
 
 // All fields are optional as the model may not be able to find them in every card.
 const DigitizeSoilCardOutputSchema = z.object({
-  nitrogen: z.number().optional().describe('The extracted Nitrogen (N) value in kg/ha. The model should find this value, which might be listed under "Available Nitrogen".'),
-  phosphorus: z.number().optional().describe('The extracted Phosphorus (P) value in kg/ha. The model should find this value, which might be listed under "Available Phosphorus".'),
-  potassium: z.number().optional().describe('The extracted Potassium (K) value in kg/ha. The model should find this value, which might be listed under "Available Potassium".'),
-  ph: z.number().optional().describe('The extracted pH value of the soil. The model should find this value, which might be listed under "pH".'),
-  organicCarbon: z.number().optional().describe('The extracted Organic Carbon (OC) value, usually as a percentage. The model should find this value, which might be listed under "Organic Carbon".'),
+  nitrogen: z.number().optional().describe('The numerical test value for "Available Nitrogen (N)", typically in kg/ha. Extract only the number.'),
+  phosphorus: z.number().optional().describe('The numerical test value for "Available Phosphorus (P)", typically in kg/ha. Extract only the number.'),
+  potassium: z.number().optional().describe('The numerical test value for "Available Potassium (K)", typically in kg/ha. Extract only the number.'),
+  ph: z.number().optional().describe('The numerical test value for "pH". Extract only the number.'),
+  organicCarbon: z.number().optional().describe('The numerical test value for "Organic Carbon (OC)", usually a percentage. Extract only the number.'),
 });
 export type DigitizeSoilCardOutput = z.infer<typeof DigitizeSoilCardOutputSchema>;
 
@@ -37,20 +38,24 @@ const prompt = ai.definePrompt({
   name: 'digitizeSoilCardPrompt',
   input: {schema: DigitizeSoilCardInputSchema},
   output: {schema: DigitizeSoilCardOutputSchema},
-  prompt: `You are an expert at Optical Character Recognition (OCR) and data extraction, specializing in Indian Soil Health Cards. Your task is to analyze the provided image of a Soil Health Card and extract key soil nutrient values.
+  prompt: `You are an expert at Optical Character Recognition (OCR) and data extraction, specializing in Indian Soil Health Cards. Your task is to analyze the provided image of a Soil Health Card and extract key soil nutrient values. The card often contains a table with columns like "Parameter", "Test Value", and "Unit".
 
 Image of the Soil Health Card: {{media url=photoDataUri}}
 
 Instructions:
-1.  Carefully examine the image to find the following parameters and their corresponding values:
-    *   **pH**: The soil pH level. Look for a label like "pH", "pH(1:2.5)", or similar.
-    *   **Organic Carbon (OC)**: Look for a label like "Organic Carbon" or "OC". The value is often a percentage (%). Extract only the numerical value.
-    *   **Available Nitrogen (N)**: Look for "Available Nitrogen" or "N". The value is typically in kg/ha or kg/acre. Extract only the numerical value.
-    *   **Available Phosphorus (P)**: Look for "Available Phosphorus" or "P". The value is typically in kg/ha or kg/acre. Extract only the numerical value.
-    *   **Available Potassium (K)**: Look for "Available Potassium" or "K". The value is typically in kg/ha or kg/acre. Extract only the numerical value.
-2.  Extract only the numerical values for each parameter. Do not include units (like "kg/ha" or "%") in the final output fields.
-3.  If a value for a specific parameter cannot be clearly identified or is not present on the card, you MUST omit that field from the output object. Do not guess or provide a default value.
-4.  The output must be a valid JSON object matching the provided schema. The model can return values for N, P, K, pH and OC.
+1.  Carefully examine the image, paying close attention to any tables listing soil test results.
+2.  For each parameter below, find its row in the table and extract the corresponding 'Test Value'.
+3.  Extract **only the numerical value** for each parameter. Do not include units (like "kg/ha" or "%") or any other text in the final output fields.
+4.  If a value for a specific parameter cannot be clearly identified or is not present on the card, you MUST omit that field from the output object. Do not guess or provide a default value.
+
+Parameters to find:
+*   **pH**: The soil pH level. Find the row for "pH" and get its test value.
+*   **Organic Carbon (OC)**: Find the row for "Organic Carbon" or "OC" and get its test value. This is often a percentage.
+*   **Available Nitrogen (N)**: Find the row for "Available Nitrogen" or "N" and get its test value. This is typically in kg/ha.
+*   **Available Phosphorus (P)**: Find the row for "Available Phosphorus" or "P" and get its test value. This is typically in kg/ha.
+*   **Available Potassium (K)**: Find the row for "Available Potassium" or "K" and get its test value. This is typically in kg/ha.
+
+The output must be a valid JSON object matching the provided schema.
 `,
 });
 
