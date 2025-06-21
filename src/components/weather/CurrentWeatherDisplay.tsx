@@ -55,11 +55,9 @@ export function CurrentWeatherDisplay({ weather }: CurrentWeatherDisplayProps) {
       <CardHeader className="bg-primary/10 p-4 sm:p-6">
         <div className="flex items-center justify-between">
           <div>
-            {/* CardTitle is text-lg font-medium by default */}
-            <CardTitle className="text-2xl sm:text-3xl font-bold text-primary"> {/* Overriding for larger display */}
+            <CardTitle className="text-2xl sm:text-3xl font-bold text-primary">
               {weather.cityName}
             </CardTitle>
-            {/* CardDescription is text-sm by default */}
             <CardDescription className="text-primary/80">
               Current Weather Conditions
             </CardDescription>
@@ -81,50 +79,52 @@ export function CurrentWeatherDisplay({ weather }: CurrentWeatherDisplayProps) {
         <div className="flex flex-col items-center sm:items-start p-4 bg-background/50 rounded-md shadow">
           <div className="flex items-center text-primary mb-1">
             <Thermometer className="h-7 w-7 mr-2" />
-            <span className="text-4xl font-bold leading-tight">{Math.round(weather.temperature)}°C</span> {/* Data display */}
+            <span className="text-4xl font-bold leading-tight">{Math.round(weather.temperature)}°C</span>
           </div>
-          <p className="text-lg text-foreground font-medium leading-snug">{capitalizeWords(weather.description)}</p> {/* Large body for description */}
-          <p className="text-sm text-muted-foreground leading-normal">Feels like {Math.round(weather.feelsLike)}°C</p> {/* Small text */}
+          <p className="text-lg text-foreground font-medium leading-snug">{capitalizeWords(weather.description)}</p>
+          <p className="text-sm text-muted-foreground leading-normal">Feels like {Math.round(weather.feelsLike)}°C</p>
         </div>
         
         <div className="space-y-3 p-4 bg-background/50 rounded-md shadow">
           <div className="flex items-center text-sm leading-normal">
             <Droplet className="h-5 w-5 mr-2 text-primary/80" />
             <span className="font-medium text-foreground">Humidity:</span>
-            <span className="ml-auto text-muted-foreground font-code">{weather.humidity}%</span> {/* Data: font-code */}
+            <span className="ml-auto text-muted-foreground font-mono">{weather.humidity}%</span>
           </div>
           <div className="flex items-center text-sm leading-normal">
             <Wind className="h-5 w-5 mr-2 text-primary/80" />
             <span className="font-medium text-foreground">Wind:</span>
-            <span className="ml-auto text-muted-foreground font-code">{weather.windSpeed.toFixed(1)} m/s</span>
+            <span className="ml-auto text-muted-foreground font-mono">{weather.windSpeed.toFixed(1)} m/s</span>
           </div>
           <div className="flex items-center text-sm leading-normal">
             <Cloud className="h-5 w-5 mr-2 text-primary/80" />
             <span className="font-medium text-foreground">Cloud Cover:</span>
-            <span className="ml-auto text-muted-foreground font-code">{weather.cloudiness}%</span>
+            <span className="ml-auto text-muted-foreground font-mono">{weather.cloudiness}%</span>
           </div>
           <div className="flex items-center text-sm leading-normal">
             <Gauge className="h-5 w-5 mr-2 text-primary/80" />
             <span className="font-medium text-foreground">Pressure:</span>
-            <span className="ml-auto text-muted-foreground font-code">{weather.pressure} hPa</span>
+            <span className="ml-auto text-muted-foreground font-mono">{weather.pressure} hPa</span>
           </div>
-          <div className="flex items-center text-sm leading-normal">
-            <CloudDrizzle className="h-5 w-5 mr-2 text-primary/80" />
-            <span className="font-medium text-foreground">Rain (last 1h):</span>
-            <span className="ml-auto text-muted-foreground font-code">{(weather.rain1h || 0).toFixed(1)} mm</span>
-          </div>
+           {weather.rain1h !== undefined && (
+             <div className="flex items-center text-sm leading-normal">
+              <CloudDrizzle className="h-5 w-5 mr-2 text-primary/80" />
+              <span className="font-medium text-foreground">Rain (last 1h):</span>
+              <span className="ml-auto text-muted-foreground font-mono">{(weather.rain1h).toFixed(1)} mm</span>
+            </div>
+           )}
         </div>
         
         <div className="sm:col-span-2 grid grid-cols-2 gap-4 p-4 bg-background/50 rounded-md shadow">
             <div className="flex flex-col items-center">
                 <Sunrise className="h-8 w-8 text-amber-500 mb-1" />
-                <p className="text-sm font-medium text-foreground leading-normal">Sunrise</p> {/* Label */}
-                <p className="text-sm text-muted-foreground leading-normal font-code">{formatTimeFromTimestamp(weather.sunrise)}</p> {/* Data */}
+                <p className="text-sm font-medium text-foreground leading-normal">Sunrise</p>
+                <p className="text-sm text-muted-foreground leading-normal font-mono">{formatTimeFromTimestamp(weather.sunrise)}</p>
             </div>
             <div className="flex flex-col items-center">
                 <Sunset className="h-8 w-8 text-orange-600 mb-1" />
                 <p className="text-sm font-medium text-foreground leading-normal">Sunset</p>
-                <p className="text-sm text-muted-foreground leading-normal font-code">{formatTimeFromTimestamp(weather.sunset)}</p>
+                <p className="text-sm text-muted-foreground leading-normal font-mono">{formatTimeFromTimestamp(weather.sunset)}</p>
             </div>
         </div>
 
@@ -132,5 +132,3 @@ export function CurrentWeatherDisplay({ weather }: CurrentWeatherDisplayProps) {
     </Card>
   );
 }
-
-    
