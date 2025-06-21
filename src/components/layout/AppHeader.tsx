@@ -121,7 +121,7 @@ export function AppHeader() {
                  </div>
                  {mounted && user && (
                     <SheetClose asChild>
-                        <Button variant="outline" onClick={handleLogout} className="w-full justify-start gap-2 text-base py-3 h-auto font-medium"> 
+                        <Button variant="ghost" onClick={handleLogout} className="w-full justify-start gap-2 text-base py-3 h-auto font-medium text-destructive hover:bg-destructive hover:text-destructive-foreground"> 
                         <LogOut className="mr-3 h-5 w-5" />
                         <span>Logout</span>
                         </Button>
@@ -171,7 +171,7 @@ export function AppHeader() {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-sm"> 
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-sm text-destructive focus:bg-destructive focus:text-destructive-foreground"> 
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
