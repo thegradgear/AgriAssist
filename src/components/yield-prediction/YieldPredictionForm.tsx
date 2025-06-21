@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -11,28 +12,23 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { indianStatesAndDistricts } from '@/lib/indian-states-districts';
 
 interface YieldPredictionFormProps {
   onPredictionResult: (result: YieldPredictionOutput) => void;
   onPredictionLoading: (loading: boolean) => void;
 }
 
-const indianStates = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", 
-  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", 
-  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", 
-  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", 
-  "Uttarakhand", "West Bengal"
-];
-
+const indianStates = Object.keys(indianStatesAndDistricts);
 const seasons = ["Kharif", "Rabi", "Zaid", "Whole Year"];
 
 
 export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }: YieldPredictionFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [districts, setDistricts] = useState<string[]>([]);
 
   const form = useForm<YieldPredictionFormData>({
     resolver: zodResolver(yieldPredictionSchema),
@@ -44,6 +40,22 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
       area: 0,
     },
   });
+
+  const selectedState = form.watch('state');
+
+  useEffect(() => {
+    if (selectedState && indianStatesAndDistricts[selectedState]) {
+      setDistricts(indianStatesAndDistricts[selectedState]);
+      if (form.getValues('district')) {
+        form.setValue('district', ''); 
+      }
+    } else {
+      setDistricts([]);
+      if (form.getValues('district')) {
+        form.setValue('district', '');
+      }
+    }
+  }, [selectedState, form]);
 
   async function onSubmit(data: YieldPredictionFormData) {
     setIsLoading(true);
@@ -102,7 +114,10 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                   <FormItem>
                     <FormLabel>District</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Pune" {...field} />
+                      <select {...field} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" disabled={districts.length === 0}>
+                        <option value="">Select District</option>
+                        {districts.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
