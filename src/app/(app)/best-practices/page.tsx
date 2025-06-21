@@ -44,6 +44,9 @@ const filterTopics = [
   "Renewable Energy",
   "Soil Health",
   "Precision Agriculture",
+  "AgriTech",
+  "Pest Management",
+  "Market Trends"
 ];
 
 const SkeletonPracticeCard = () => (
