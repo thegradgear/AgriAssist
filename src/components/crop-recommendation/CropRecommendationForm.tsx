@@ -77,7 +77,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                   <FormItem>
                     <FormLabel>Nitrogen (N)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g., 50" {...field} />
+                      <Input type="number" step="0.1" placeholder="e.g., 50" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -90,7 +90,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                   <FormItem>
                     <FormLabel>Phosphorus (P)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g., 30" {...field} />
+                      <Input type="number" step="0.1" placeholder="e.g., 30" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -103,7 +103,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                   <FormItem>
                     <FormLabel>Potassium (K)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g., 40" {...field} />
+                      <Input type="number" step="0.1" placeholder="e.g., 40" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,7 +116,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                   <FormItem>
                     <FormLabel>Temperature (°C)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g., 28.5" {...field} />
+                      <Input type="number" step="0.1" placeholder="e.g., 28.5" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -129,7 +129,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                   <FormItem>
                     <FormLabel>Humidity (%)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g., 75" {...field} />
+                      <Input type="number" step="0.1" placeholder="e.g., 75" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -142,7 +142,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                   <FormItem>
                     <FormLabel>Soil pH</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} />
+                      <Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -155,14 +155,14 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                   <FormItem className="md:col-span-2 lg:col-span-1">
                     <FormLabel>Rainfall (mm)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.1" placeholder="e.g., 150" {...field} />
+                      <Input type="number" step="0.1" placeholder="e.g., 150" {...field} suppressHydrationWarning />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-             <Button type="submit" className="w-full md:w-auto mt-4" disabled={isLoading}>
+             <Button type="submit" className="w-full md:w-auto mt-4" disabled={isLoading} suppressHydrationWarning>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
