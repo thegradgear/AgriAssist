@@ -7,6 +7,7 @@ import { auth, db, getDoc, doc } from '@/lib/firebase';
 import type { ReactNode } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { usePathname, useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export interface UserProfile {
   uid: string;
@@ -35,6 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [firebaseUserInternal, setFirebaseUserInternal] = useState<FirebaseUser | null>(null);
+  const { toast } = useToast();
 
   const fetchUserProfile = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
@@ -58,8 +60,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             name: firebaseUser.displayName || 'User', // Fallback
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching user profile:", error);
+        
+        // Check for Firestore offline error and show a toast
+        if (error.code === 'unavailable') {
+            toast({
+                variant: 'destructive',
+                title: 'Network Connection Issue',
+                description: 'Could not load your latest profile data from the server. Please check your internet connection or Firebase configuration.',
+            });
+        }
+
         // Set a basic user profile from auth if Firestore fetch fails
         setUser({
           uid: firebaseUser.uid,
@@ -72,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setLoading(false);
     setIsAuthenticating(false);
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentAuthUser) => {
