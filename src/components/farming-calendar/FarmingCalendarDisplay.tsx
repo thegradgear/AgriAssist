@@ -3,9 +3,10 @@
 
 import type { FarmingCalendarOutput, CalendarEvent } from '@/ai/flows/farming-calendar-flow';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineIcon, TimelineTitle, TimelineDescription, TimelineBody } from '@/components/shared/Timeline'; 
-import { CalendarCheck, Info, AlertTriangle, Sparkles, MessageSquare, ListChecks } from 'lucide-react'; // Loader2 removed
+import { CalendarCheck, Info, AlertTriangle, Sparkles, MessageSquare } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 interface FarmingCalendarDisplayProps {
@@ -13,20 +14,6 @@ interface FarmingCalendarDisplayProps {
   loading: boolean;
   error: string | null;
 }
-
-const getCategoryIcon = (category: CalendarEvent['category']) => {
-  switch (category) {
-    case 'Preparation': return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.25 7.75H2.75"/><path d="M18 7.75V2.25H6V7.75"/><path d="M12 21.75V7.75"/><path d="M16.5 21.75C16.5 19.53 14.47 17.75 12 17.75C9.53 17.75 7.5 19.53 7.5 21.75"/></svg>; 
-    case 'Planting': return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h.01"/><path d="M11.5 6.5a5.5 5.5 0 0 1 5.21 8.35l-7.71 7.15H6.5a1.5 1.5 0 0 1 0-3H8"/><path d="M17 6.5c-.3 1.8-.81 3.48-1.5 5C14.19 14.52 12.5 16 10 16.5"/></svg>; 
-    case 'Fertilization': return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>; 
-    case 'Irrigation': return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><path d="M12 12a3 3 0 0 0-3 3c0 1.66 1.34 3 3 3s3-1.34 3-3a3 3 0 0 0-3-3z"/></svg>; 
-    case 'Pest & Disease Management': return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a9.87 9.87 0 0 0-7.07 2.93 9.87 9.87 0 0 0-2.93 7.07v0c0 5.57 6.13 11.19 7.07 12 1.35 1.19 2.52.54 2.93.21.41-.33 1.58-.96 2.93-2.19.94-.81 7.07-6.43 7.07-12A9.87 9.87 0 0 0 19.07 4.93 9.87 9.87 0 0 0 12 2z"/><path d="M12 6a3 3 0 1 0 0 6 3 3 0 1 0 0-6z"/></svg>; 
-    case 'Weed Control': return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22h20"/><path d="M12 2v6"/><path d="M9.4 6 5.7 2.3A1.89 1.89 0 0 0 2.3 5.7L6 9.4"/><path d="m14.6 6 3.7-3.7A1.89 1.89 0 0 1 21.7 5.7L18 9.4"/></svg>; 
-    case 'Harvesting': return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 22h20"/><path d="M18.88 3.12a1.53 1.53 0 0 0-2.17 0L9.41 10.4a.5.5 0 0 0 0 .7l4.95 4.95a.5.5 0 0 0 .7 0l7.3-7.3a1.53 1.53 0 0 0 0-2.17Z"/><path d="M15.41 6.12 11.46 2.17a1.41 1.41 0 0 0-2.05 0L2.11 9.48a2.13 2.13 0 0 0 0 3l1.83 1.83c.58.58 1.36.88 2.12.88H8"/></svg>; 
-    case 'Post-Harvest': return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>; 
-    default: return <ListChecks className="w-4 h-4" />;
-  }
-};
 
 const formatDateRange = (startDateStr: string, endDateStr?: string) => {
   try {
@@ -45,35 +32,53 @@ const formatDateRange = (startDateStr: string, endDateStr?: string) => {
   }
 };
 
+const getCategoryBadgeVariant = (category: CalendarEvent['category']): "default" | "secondary" | "destructive" | "outline" => {
+  switch (category) {
+    case 'Harvesting':
+    case 'Post-Harvest':
+      return 'default'; // Primary color for completion
+    case 'Preparation':
+    case 'Planting':
+      return 'secondary';
+    case 'Pest & Disease Management':
+    case 'Weed Control':
+      return 'destructive';
+    case 'Fertilization':
+    case 'Irrigation':
+      return 'outline';
+    default:
+      return 'secondary';
+  }
+}
 
 export function FarmingCalendarDisplay({ result, loading, error }: FarmingCalendarDisplayProps) {
   if (loading) {
     return (
-      <Card className="shadow-lg animate-pulse">
-        <CardHeader>
-          <div className="h-6 bg-muted rounded w-3/5 mb-1"></div>
-          <div className="h-4 bg-muted rounded w-4/5"></div>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {[1,2,3].map(i => (
-            <div key={i} className="flex gap-4">
-                <div className="flex flex-col items-center">
-                    <div className="h-8 w-8 bg-muted rounded-full"></div>
-                    <div className="h-16 w-0.5 bg-muted my-1"></div>
+        <Card className="shadow-lg animate-pulse">
+            <CardHeader>
+                <div className="h-6 bg-muted rounded w-3/5 mb-1"></div>
+                <div className="h-4 bg-muted rounded w-4/5"></div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {/* Desktop skeleton */}
+                <div className="hidden md:block border rounded-md">
+                    <div className="h-12 bg-muted/50 border-b"></div>
+                    <div className="p-4 space-y-3">
+                        <div className="h-8 bg-muted rounded"></div>
+                        <div className="h-8 bg-muted rounded"></div>
+                        <div className="h-8 bg-muted rounded"></div>
+                    </div>
                 </div>
-                <div className="flex-1 space-y-2 py-1">
-                    <div className="h-5 bg-muted rounded w-1/2"></div>
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-4 bg-muted rounded w-full"></div>
+                {/* Mobile skeleton */}
+                <div className="md:hidden space-y-4">
+                     <div className="h-24 bg-muted rounded-lg"></div>
+                     <div className="h-24 bg-muted rounded-lg"></div>
                 </div>
-            </div>
-          ))}
-          <div className="h-10 bg-muted rounded w-full mt-3"></div>
-        </CardContent>
-      </Card>
+            </CardContent>
+        </Card>
     );
   }
-
+  
   if (error) {
     return (
         <Card className="shadow-lg border-destructive bg-destructive/10">
@@ -124,39 +129,61 @@ export function FarmingCalendarDisplay({ result, loading, error }: FarmingCalend
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {result.schedule.length > 0 && (
-          <Timeline>
+        {/* Desktop View: Table */}
+        <div className="hidden md:block">
+            <div className="border rounded-lg">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[180px]">Date(s)</TableHead>
+                            <TableHead>Activity</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Notes</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {result.schedule.map((event, index) => (
+                            <TableRow key={index}>
+                                <TableCell className="font-medium">{formatDateRange(event.startDate, event.endDate)}</TableCell>
+                                <TableCell>{event.eventName}</TableCell>
+                                <TableCell>
+                                    <Badge variant={getCategoryBadgeVariant(event.category)}>{event.category}</Badge>
+                                </TableCell>
+                                <TableCell>{event.description}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+
+        {/* Mobile View: Cards */}
+        <div className="block md:hidden space-y-4">
             {result.schedule.map((event, index) => (
-              <TimelineItem key={index}>
-                <TimelineConnector />
-                <TimelineHeader>
-                  <TimelineIcon>{getCategoryIcon(event.category)}</TimelineIcon>
-                  {/* TimelineTitle is h3 by default, text-md font-semibold leading-snug */}
-                  <TimelineTitle>{event.eventName}</TimelineTitle>
-                </TimelineHeader>
-                <TimelineBody className="ml-2">
-                   {/* TimelineDescription is p text-sm text-muted-foreground leading-normal by default */}
-                  <TimelineDescription className="font-medium mb-1">
-                    {formatDateRange(event.startDate, event.endDate)} ({event.category})
-                  </TimelineDescription>
-                  <p className="text-sm leading-normal">{event.description}</p>
-                </TimelineBody>
-              </TimelineItem>
+                <Card key={index} className="bg-muted/50">
+                    <CardHeader className="pb-3">
+                        <CardTitle>{event.eventName}</CardTitle>
+                        <CardDescription>{formatDateRange(event.startDate, event.endDate)}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        <p className="text-sm leading-normal">{event.description}</p>
+                        <Badge variant={getCategoryBadgeVariant(event.category)}>{event.category}</Badge>
+                    </CardContent>
+                </Card>
             ))}
-          </Timeline>
-        )}
+        </div>
 
         {result.generalAdvice && (
           <Alert variant="default" className="mt-6 bg-accent/50 border-accent">
             <MessageSquare className="h-5 w-5 text-primary" />
-            <AlertTitle className="font-semibold text-primary text-base leading-snug">General Advice</AlertTitle> {/* AlertTitle adjusted to text-base */}
+            <AlertTitle className="font-semibold text-primary text-base leading-snug">General Advice</AlertTitle>
             <AlertDescription className="text-sm whitespace-pre-line leading-normal">{result.generalAdvice}</AlertDescription>
           </Alert>
         )}
 
         <Alert variant="default" className="mt-4">
           <Sparkles className="h-4 w-4 text-primary" />
-          <AlertTitle className="font-semibold text-primary text-base leading-snug">Disclaimer</AlertTitle> {/* AlertTitle adjusted to text-base */}
+          <AlertTitle className="font-semibold text-primary text-base leading-snug">Disclaimer</AlertTitle>
           <AlertDescription className="text-xs leading-normal">
             This farming calendar is AI-generated and provides general guidance. Actual timings may vary based on specific micro-climatic conditions, soil health, pest/disease pressure, and chosen crop variety. Always adapt to your local conditions and consult with local agricultural experts.
           </AlertDescription>
