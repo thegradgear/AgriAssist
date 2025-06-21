@@ -46,9 +46,17 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
       nitrogen: 0,
       phosphorus: 0,
       potassium: 0,
+      ph: 7,
+      ec: 0,
+      organicCarbon: 0,
+      sulphur: 0,
+      zinc: 0,
+      boron: 0,
+      iron: 0,
+      manganese: 0,
+      copper: 0,
       temperature: 25,
       humidity: 60,
-      ph: 7,
       rainfall: 100,
     },
   });
@@ -90,22 +98,18 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
       const result = await digitizeSoilCard({ photoDataUri });
       
       let fieldsUpdatedCount = 0;
-      if (result.nitrogen !== undefined) {
-        form.setValue('nitrogen', result.nitrogen, { shouldValidate: true });
-        fieldsUpdatedCount++;
-      }
-      if (result.phosphorus !== undefined) {
-        form.setValue('phosphorus', result.phosphorus, { shouldValidate: true });
-        fieldsUpdatedCount++;
-      }
-      if (result.potassium !== undefined) {
-        form.setValue('potassium', result.potassium, { shouldValidate: true });
-        fieldsUpdatedCount++;
-      }
-      if (result.ph !== undefined) {
-        form.setValue('ph', result.ph, { shouldValidate: true });
-        fieldsUpdatedCount++;
-      }
+      if (result.nitrogen !== undefined) { form.setValue('nitrogen', result.nitrogen, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.phosphorus !== undefined) { form.setValue('phosphorus', result.phosphorus, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.potassium !== undefined) { form.setValue('potassium', result.potassium, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.ph !== undefined) { form.setValue('ph', result.ph, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.ec !== undefined) { form.setValue('ec', result.ec, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.organicCarbon !== undefined) { form.setValue('organicCarbon', result.organicCarbon, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.sulphur !== undefined) { form.setValue('sulphur', result.sulphur, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.zinc !== undefined) { form.setValue('zinc', result.zinc, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.boron !== undefined) { form.setValue('boron', result.boron, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.iron !== undefined) { form.setValue('iron', result.iron, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.manganese !== undefined) { form.setValue('manganese', result.manganese, { shouldValidate: true }); fieldsUpdatedCount++; }
+      if (result.copper !== undefined) { form.setValue('copper', result.copper, { shouldValidate: true }); fieldsUpdatedCount++; }
 
       if (fieldsUpdatedCount > 0) {
         toast({ title: 'Scan Successful', description: `${fieldsUpdatedCount} field(s) have been automatically filled.` });
@@ -154,7 +158,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
              Automate with Soil Health Card
            </CardTitle>
            <CardDescription>
-             Upload an image of your Soil Health Card to automatically fill in the N, P, K, and pH values below.
+             Upload an image of your Soil Health Card to automatically fill in the soil parameter values below.
            </CardDescription>
          </CardHeader>
          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
@@ -214,108 +218,131 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
        </Card>
 
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline">Enter Soil & Weather Data Manually</CardTitle>
-          <CardDescription>Provide details about your soil and local climate for crop suggestions.</CardDescription>
-        </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="nitrogen"
-                    render={({ field }) => (
+            <CardHeader>
+              <CardTitle className="font-headline">Enter Soil & Weather Data Manually</CardTitle>
+              <CardDescription>Provide details about your soil and local climate for crop suggestions.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <div>
+                <h3 className="text-lg font-semibold mb-4 border-b pb-2">Soil Parameters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <FormField control={form.control} name="ph" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nitrogen (N)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 50" {...field} suppressHydrationWarning />
-                        </FormControl>
+                        <FormLabel>pH</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} suppressHydrationWarning /></FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phosphorus"
-                    render={({ field }) => (
+                    )} />
+                    <FormField control={form.control} name="ec" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phosphorus (P)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 30" {...field} suppressHydrationWarning />
-                        </FormControl>
+                        <FormLabel>EC (dS/m)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="potassium"
-                    render={({ field }) => (
+                    )} />
+                     <FormField control={form.control} name="organicCarbon" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Potassium (K)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 40" {...field} suppressHydrationWarning />
-                        </FormControl>
+                        <FormLabel>Organic Carbon (%)</FormLabel>
+                        <FormControl><Input type="number" step="0.01" placeholder="e.g., 0.75" {...field} suppressHydrationWarning /></FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="temperature"
-                    render={({ field }) => (
+                    )} />
+                    <FormField control={form.control} name="nitrogen" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Temperature (°C)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 28.5" {...field} suppressHydrationWarning />
-                        </FormControl>
+                        <FormLabel>Nitrogen (kg/ha)</FormLabel>
+                        <FormControl><Input type="number" step="1" placeholder="e.g., 120" {...field} suppressHydrationWarning /></FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="humidity"
-                    render={({ field }) => (
+                    )} />
+                    <FormField control={form.control} name="phosphorus" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Humidity (%)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 75" {...field} suppressHydrationWarning />
-                        </FormControl>
+                        <FormLabel>Phosphorus (kg/ha)</FormLabel>
+                        <FormControl><Input type="number" step="1" placeholder="e.g., 50" {...field} suppressHydrationWarning /></FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="ph"
-                    render={({ field }) => (
+                    )} />
+                    <FormField control={form.control} name="potassium" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Soil pH</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 6.5" {...field} suppressHydrationWarning />
-                        </FormControl>
+                        <FormLabel>Potassium (kg/ha)</FormLabel>
+                        <FormControl><Input type="number" step="1" placeholder="e.g., 50" {...field} suppressHydrationWarning /></FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="rainfall"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-2 lg:col-span-1">
-                        <FormLabel>Rainfall (mm)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.1" placeholder="e.g., 150" {...field} suppressHydrationWarning />
-                        </FormControl>
+                    )} />
+                     <FormField control={form.control} name="sulphur" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sulphur (mg/kg)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 15" {...field} suppressHydrationWarning /></FormControl>
                         <FormMessage />
                       </FormItem>
-                    )}
-                  />
+                    )} />
+                     <FormField control={form.control} name="zinc" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Zinc (mg/kg)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.6" {...field} suppressHydrationWarning /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                     <FormField control={form.control} name="boron" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Boron (mg/kg)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                     <FormField control={form.control} name="iron" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Iron (mg/kg)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 4.5" {...field} suppressHydrationWarning /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                     <FormField control={form.control} name="manganese" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Manganese (mg/kg)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.0" {...field} suppressHydrationWarning /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                     <FormField control={form.control} name="copper" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Copper (mg/kg)</FormLabel>
+                        <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.2" {...field} suppressHydrationWarning /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                 </div>
-              </CardContent>
-             <CardFooter>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4 border-b pb-2">Climate Parameters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField control={form.control} name="temperature" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Temperature (°C)</FormLabel>
+                      <FormControl><Input type="number" step="0.1" placeholder="e.g., 28.5" {...field} suppressHydrationWarning /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="humidity" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Humidity (%)</FormLabel>
+                      <FormControl><Input type="number" step="0.1" placeholder="e.g., 75" {...field} suppressHydrationWarning /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="rainfall" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rainfall (mm)</FormLabel>
+                      <FormControl><Input type="number" step="0.1" placeholder="e.g., 150" {...field} suppressHydrationWarning /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
                  <Button type="submit" className="w-full md:w-auto" disabled={isLoading || isScanning} suppressHydrationWarning>
                     {isLoading ? (
                       <> <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Recommending... </>

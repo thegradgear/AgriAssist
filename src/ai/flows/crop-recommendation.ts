@@ -1,4 +1,4 @@
-// 'use server'
+
 'use server';
 
 /**
@@ -13,12 +13,20 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CropRecommendationInputSchema = z.object({
-  nitrogen: z.number().describe('Nitrogen content in the soil.'),
-  phosphorus: z.number().describe('Phosphorus content in the soil.'),
-  potassium: z.number().describe('Potassium content in the soil.'),
+  nitrogen: z.number().describe('Nitrogen content in the soil (kg/ha).'),
+  phosphorus: z.number().describe('Phosphorus content in the soil (kg/ha).'),
+  potassium: z.number().describe('Potassium content in the soil (kg/ha).'),
+  ph: z.number().describe('pH level of the soil.'),
+  ec: z.number().describe('Electrical conductivity of the soil (dS/m).'),
+  organicCarbon: z.number().describe('Organic Carbon content in the soil (%).'),
+  sulphur: z.number().describe('Sulphur content in the soil (mg/kg).'),
+  zinc: z.number().describe('Zinc content in the soil (mg/kg).'),
+  boron: z.number().describe('Boron content in the soil (mg/kg).'),
+  iron: z.number().describe('Iron content in the soil (mg/kg).'),
+  manganese: z.number().describe('Manganese content in the soil (mg/kg).'),
+  copper: z.number().describe('Copper content in the soil (mg/kg).'),
   temperature: z.number().describe('Average temperature in Celsius.'),
   humidity: z.number().describe('Average humidity in percentage.'),
-  ph: z.number().describe('pH level of the soil.'),
   rainfall: z.number().describe('Average rainfall in mm.'),
 });
 export type CropRecommendationInput = z.infer<typeof CropRecommendationInputSchema>;
@@ -41,20 +49,28 @@ const prompt = ai.definePrompt({
   name: 'cropRecommendationPrompt',
   input: {schema: CropRecommendationInputSchema},
   output: {schema: CropRecommendationOutputSchema},
-  prompt: `You are an expert agricultural advisor. A farmer will provide you with soil conditions and weather data, and you will recommend the best crops to plant.
+  prompt: `You are an expert agricultural advisor. A farmer will provide you with comprehensive soil conditions and weather data. You will recommend the best crops to plant.
 
 Soil Conditions:
-Nitrogen: {{nitrogen}}
-Phosphorus: {{phosphorus}}
-Potassium: {{potassium}}
+- pH: {{ph}}
+- Electrical Conductivity (EC): {{ec}} dS/m
+- Organic Carbon (OC): {{organicCarbon}} %
+- Available Nitrogen (N): {{nitrogen}} kg/ha
+- Available Phosphorus (P): {{phosphorus}} kg/ha
+- Available Potassium (K): {{potassium}} kg/ha
+- Available Sulphur (S): {{sulphur}} mg/kg
+- Available Zinc (Zn): {{zinc}} mg/kg
+- Available Boron (B): {{boron}} mg/kg
+- Available Iron (Fe): {{iron}} mg/kg
+- Available Manganese (Mn): {{manganese}} mg/kg
+- Available Copper (Cu): {{copper}} mg/kg
 
 Weather Data:
-Temperature: {{temperature}} Celsius
-Humidity: {{humidity}}%
-pH: {{ph}}
-Rainfall: {{rainfall}} mm
+- Temperature: {{temperature}} Celsius
+- Humidity: {{humidity}}%
+- Rainfall: {{rainfall}} mm
 
-Based on this information, recommend suitable crops and explain your reasoning.
+Based on this detailed information, recommend suitable crops and explain your reasoning, considering all macro and micro-nutrients.
 
 Output the recommended crops as a comma separated list.
 `,

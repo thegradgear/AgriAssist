@@ -22,11 +22,18 @@ export type DigitizeSoilCardInput = z.infer<typeof DigitizeSoilCardInputSchema>;
 
 // All fields are optional as the model may not be able to find them in every card.
 const DigitizeSoilCardOutputSchema = z.object({
-  nitrogen: z.number().optional().describe('The numerical test value for "Available Nitrogen (N)", typically in kg/ha. Extract only the number.'),
-  phosphorus: z.number().optional().describe('The numerical test value for "Available Phosphorus (P)", typically in kg/ha. Extract only the number.'),
-  potassium: z.number().optional().describe('The numerical test value for "Available Potassium (K)", typically in kg/ha. Extract only the number.'),
+  nitrogen: z.number().optional().describe('The numerical test value for "Available Nitrogen(N)", typically in kg/ha. Extract only the number.'),
+  phosphorus: z.number().optional().describe('The numerical test value for "Available Phosphorus(P)", typically in kg/ha. Extract only the number.'),
+  potassium: z.number().optional().describe('The numerical test value for "Available Potassium(K)", typically in kg/ha. Extract only the number.'),
   ph: z.number().optional().describe('The numerical test value for "pH". Extract only the number.'),
+  ec: z.number().optional().describe('The numerical test value for "Electrical Conductivity (EC)", typically in dS/m. Extract only the number.'),
   organicCarbon: z.number().optional().describe('The numerical test value for "Organic Carbon (OC)", usually a percentage. Extract only the number.'),
+  sulphur: z.number().optional().describe('The numerical test value for "Available Sulphur (S)", typically in mg/kg or ppm. Extract only the number.'),
+  zinc: z.number().optional().describe('The numerical test value for "Available Zinc (Zn)", typically in mg/kg or ppm. Extract only the number.'),
+  boron: z.number().optional().describe('The numerical test value for "Available Boron (B)", typically in mg/kg or ppm. Extract only the number.'),
+  iron: z.number().optional().describe('The numerical test value for "Available Iron (Fe)", typically in mg/kg or ppm. Extract only the number.'),
+  manganese: z.number().optional().describe('The numerical test value for "Available Manganese (Mn)", typically in mg/kg or ppm. Extract only the number.'),
+  copper: z.number().optional().describe('The numerical test value for "Available Copper (Cu)", typically in mg/kg or ppm. Extract only the number.'),
 });
 export type DigitizeSoilCardOutput = z.infer<typeof DigitizeSoilCardOutputSchema>;
 
@@ -43,17 +50,24 @@ const prompt = ai.definePrompt({
 Image of the Soil Health Card: {{media url=photoDataUri}}
 
 Instructions:
-1.  Carefully examine the image to find the values for the soil parameters listed below.
-2.  Extract **only the numerical value** for each parameter. Do not include units (like "kg/ha" or "%") or any other text in the final output fields.
-3.  The parameters might be labeled with full names (e.g., "Available Nitrogen (N)") or abbreviations (e.g., "N").
+1.  Carefully examine the image to find the values for all the soil parameters listed below.
+2.  Extract **only the numerical value** for each parameter. Do not include units (like "kg/ha", "%", "mg/kg") or any other text in the final output fields.
+3.  The parameters might be labeled with full names (e.g., "Available Nitrogen (N)") or abbreviations (e.g., "N", "OC").
 4.  If a value for a specific parameter cannot be clearly identified or is not present on the card, you MUST omit that field from the output object. Do not guess or provide a default value.
 
 Find the following values:
 *   **pH**
+*   **Electrical Conductivity (EC)**
 *   **Organic Carbon (OC)**
 *   **Available Nitrogen (N)**
 *   **Available Phosphorus (P)**
 *   **Available Potassium (K)**
+*   **Available Sulphur (S)**
+*   **Available Zinc (Zn)**
+*   **Available Boron (B)**
+*   **Available Iron (Fe)**
+*   **Available Manganese (Mn)**
+*   **Available Copper (Cu)**
 
 The output must be a valid JSON object matching the provided schema.
 `,
