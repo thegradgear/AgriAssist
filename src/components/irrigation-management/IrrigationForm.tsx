@@ -27,9 +27,10 @@ interface IrrigationFormProps {
   onLoading: (loading: boolean) => void;
   onError: (error: string | null) => void;
   initialForecast?: DailyForecastInitData[];
+  initialLocation?: string;
 }
 
-export function IrrigationForm({ onScheduleResult, onLoading, onError, initialForecast }: IrrigationFormProps) {
+export function IrrigationForm({ onScheduleResult, onLoading, onError, initialForecast, initialLocation }: IrrigationFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -46,7 +47,7 @@ export function IrrigationForm({ onScheduleResult, onLoading, onError, initialFo
     resolver: zodResolver(irrigationSchema),
     defaultValues: {
       cropType: '',
-      location: '',
+      location: initialLocation || '',
       forecast: initialForecast || defaultForecast,
     },
   });
@@ -62,7 +63,10 @@ export function IrrigationForm({ onScheduleResult, onLoading, onError, initialFo
     if (initialForecast) {
         form.setValue('forecast', initialForecast, { shouldValidate: true });
     }
-  }, [initialForecast, form]);
+    if (initialLocation) {
+        form.setValue('location', initialLocation, { shouldValidate: true });
+    }
+  }, [initialForecast, initialLocation, form]);
 
 
   async function onSubmit(data: IrrigationFormData) {

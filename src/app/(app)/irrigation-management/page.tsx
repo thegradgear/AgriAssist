@@ -17,11 +17,12 @@ function IrrigationPageContent() {
 
   const searchParams = useSearchParams();
   const forecastParam = searchParams.get('forecast');
+  const locationParam = searchParams.get('location');
 
   let initialForecast: DailyForecastInitData[] | undefined;
   if (forecastParam) {
     try {
-      initialForecast = JSON.parse(forecastParam);
+      initialForecast = JSON.parse(decodeURIComponent(forecastParam));
     } catch (e) {
       console.error("Failed to parse forecast from URL", e);
     }
@@ -39,6 +40,7 @@ function IrrigationPageContent() {
           onLoading={setIsLoading}
           onError={setError}
           initialForecast={initialForecast}
+          initialLocation={locationParam ? decodeURIComponent(locationParam) : undefined}
         />
         <div className="lg:sticky lg:top-24">
             <IrrigationResult result={scheduleResult} loading={isLoading} error={error} />

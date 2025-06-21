@@ -214,11 +214,11 @@ export default function WeatherPage() {
   };
 
   const handlePlanIrrigation = () => {
-    if (!dailyForecast || dailyForecast.length === 0) {
+    if (!dailyForecast || dailyForecast.length === 0 || !selectedLocation) {
       toast({
         variant: 'destructive',
         title: 'No Forecast Data',
-        description: 'Please fetch a weather forecast before planning irrigation.'
+        description: 'Please fetch a weather forecast for a location before planning irrigation.'
       });
       return;
     }
@@ -229,8 +229,9 @@ export default function WeatherPage() {
       rainfallMM: day.rainfallMM || 0,
     }));
     
-    const forecastString = JSON.stringify(forecastForUrl);
-    router.push(`/irrigation-management?forecast=${encodeURIComponent(forecastString)}`);
+    const forecastString = encodeURIComponent(JSON.stringify(forecastForUrl));
+    const locationString = encodeURIComponent(selectedLocation.name);
+    router.push(`/irrigation-management?forecast=${forecastString}&location=${locationString}`);
   };
 
   useEffect(() => {
