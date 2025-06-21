@@ -14,7 +14,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/yield-prediction', label: 'Yield Prediction', icon: BarChart3 },
   { href: '/crop-recommendation', label: 'Crop Recommendation', icon: Leaf },
   { href: '/crop-price-prediction', label: 'Price Prediction', icon: IndianRupee },
-  { href: '/crop-disease-detection', label: 'Disease Detection', icon: Microscope },
+  { href: '/crop-disease-detection', label: 'Crop Health Analysis', icon: Microscope },
   { href: '/farming-calendar', label: 'Farming Calendar', icon: CalendarDays },
   { href: '/cost-calculator', label: 'Cost Calculator', icon: Calculator },
   { href: '/weather', label: 'Weather Alerts', icon: CloudSun },
