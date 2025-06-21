@@ -27,12 +27,12 @@ const DigitizeSoilCardOutputSchema = z.object({
   ph: z.number().optional().describe('The numerical test value for "pH". Extract only the number.'),
   ec: z.number().optional().describe('The numerical test value for "Electrical Conductivity (EC)", typically in dS/m. Extract only the number.'),
   organicCarbon: z.number().optional().describe('The numerical test value for "Organic Carbon (OC)", usually a percentage. Extract only the number.'),
-  sulphur: z.number().optional().describe('The numerical test value for "Available Sulphur (S)", typically in mg/kg or ppm. Extract only the number.'),
-  zinc: z.number().optional().describe('The numerical test value for "Available Zinc (Zn)", typically in mg/kg or ppm. Extract only the number.'),
-  boron: z.number().optional().describe('The numerical test value for "Available Boron (B)", typically in mg/kg or ppm. Extract only the number.'),
-  iron: z.number().optional().describe('The numerical test value for "Available Iron (Fe)", typically in mg/kg or ppm. Extract only the number.'),
-  manganese: z.number().optional().describe('The numerical test value for "Available Manganese (Mn)", typically in mg/kg or ppm. Extract only the number.'),
-  copper: z.number().optional().describe('The numerical test value for "Available Copper (Cu)", typically in mg/kg or ppm. Extract only the number.'),
+  sulphur: z.number().optional().describe('The numerical test value for "Available Sulphur (S)", typically in ppm. Extract only the number.'),
+  zinc: z.number().optional().describe('The numerical test value for "Available Zinc (Zn)", typically in ppm. Extract only the number.'),
+  boron: z.number().optional().describe('The numerical test value for "Available Boron (B)", typically in ppm. Extract only the number.'),
+  iron: z.number().optional().describe('The numerical test value for "Available Iron (Fe)", typically in ppm. Extract only the number.'),
+  manganese: z.number().optional().describe('The numerical test value for "Available Manganese (Mn)", typically in ppm. Extract only the number.'),
+  copper: z.number().optional().describe('The numerical test value for "Available Copper (Cu)", typically in ppm. Extract only the number.'),
 });
 export type DigitizeSoilCardOutput = z.infer<typeof DigitizeSoilCardOutputSchema>;
 

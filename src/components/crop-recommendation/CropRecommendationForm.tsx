@@ -280,42 +280,42 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             <FormField control={form.control} name="sulphur" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Sulphur (mg/kg)</FormLabel>
+                                    <FormLabel>Sulphur (ppm)</FormLabel>
                                     <FormControl><Input type="number" step="0.1" placeholder="e.g., 15" {...field} suppressHydrationWarning /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
                             <FormField control={form.control} name="zinc" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Zinc (mg/kg)</FormLabel>
+                                    <FormLabel>Zinc (ppm)</FormLabel>
                                     <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.6" {...field} suppressHydrationWarning /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
                             <FormField control={form.control} name="boron" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Boron (mg/kg)</FormLabel>
+                                    <FormLabel>Boron (ppm)</FormLabel>
                                     <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.5" {...field} suppressHydrationWarning /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
                             <FormField control={form.control} name="iron" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Iron (mg/kg)</FormLabel>
+                                    <FormLabel>Iron (ppm)</FormLabel>
                                     <FormControl><Input type="number" step="0.1" placeholder="e.g., 4.5" {...field} suppressHydrationWarning /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
                             <FormField control={form.control} name="manganese" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Manganese (mg/kg)</FormLabel>
+                                    <FormLabel>Manganese (ppm)</FormLabel>
                                     <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.0" {...field} suppressHydrationWarning /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
                             <FormField control={form.control} name="copper" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Copper (mg/kg)</FormLabel>
+                                    <FormLabel>Copper (ppm)</FormLabel>
                                     <FormControl><Input type="number" step="0.1" placeholder="e.g., 0.2" {...field} suppressHydrationWarning /></FormControl>
                                     <FormMessage />
                                 </FormItem>

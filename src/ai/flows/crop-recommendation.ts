@@ -19,12 +19,12 @@ const CropRecommendationInputSchema = z.object({
   ph: z.number().describe('pH level of the soil.'),
   ec: z.number().describe('Electrical conductivity of the soil (dS/m).'),
   organicCarbon: z.number().describe('Organic Carbon content in the soil (%).'),
-  sulphur: z.number().describe('Sulphur content in the soil (mg/kg).'),
-  zinc: z.number().describe('Zinc content in the soil (mg/kg).'),
-  boron: z.number().describe('Boron content in the soil (mg/kg).'),
-  iron: z.number().describe('Iron content in the soil (mg/kg).'),
-  manganese: z.number().describe('Manganese content in the soil (mg/kg).'),
-  copper: z.number().describe('Copper content in the soil (mg/kg).'),
+  sulphur: z.number().describe('Sulphur content in the soil (ppm).'),
+  zinc: z.number().describe('Zinc content in the soil (ppm).'),
+  boron: z.number().describe('Boron content in the soil (ppm).'),
+  iron: z.number().describe('Iron content in the soil (ppm).'),
+  manganese: z.number().describe('Manganese content in the soil (ppm).'),
+  copper: z.number().describe('Copper content in the soil (ppm).'),
   temperature: z.number().describe('Average temperature in Celsius.'),
   humidity: z.number().describe('Average humidity in percentage.'),
   rainfall: z.number().describe('Average rainfall in mm.'),
@@ -58,12 +58,12 @@ Soil Conditions:
 - Available Nitrogen (N): {{nitrogen}} kg/ha
 - Available Phosphorus (P): {{phosphorus}} kg/ha
 - Available Potassium (K): {{potassium}} kg/ha
-- Available Sulphur (S): {{sulphur}} mg/kg
-- Available Zinc (Zn): {{zinc}} mg/kg
-- Available Boron (B): {{boron}} mg/kg
-- Available Iron (Fe): {{iron}} mg/kg
-- Available Manganese (Mn): {{manganese}} mg/kg
-- Available Copper (Cu): {{copper}} mg/kg
+- Available Sulphur (S): {{sulphur}} ppm
+- Available Zinc (Zn): {{zinc}} ppm
+- Available Boron (B): {{boron}} ppm
+- Available Iron (Fe): {{iron}} ppm
+- Available Manganese (Mn): {{manganese}} ppm
+- Available Copper (Cu): {{copper}} ppm
 
 Weather Data:
 - Temperature: {{temperature}} Celsius
