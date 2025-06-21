@@ -32,6 +32,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const form = useForm<FarmingCalendarFormData>({
     resolver: zodResolver(farmingCalendarSchema),
@@ -160,7 +161,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
                 render={({ field }) => (
                     <FormItem className="flex flex-col">
                     <FormLabel className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />Approx. Planting Date</FormLabel>
-                    <Popover>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                         <PopoverTrigger asChild>
                         <FormControl>
                             <Button
@@ -184,7 +185,10 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
                         <Calendar
                             mode="single"
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                                field.onChange(date);
+                                setIsCalendarOpen(false);
+                            }}
                             initialFocus
                         />
                         </PopoverContent>
