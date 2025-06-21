@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -17,15 +18,15 @@ export default function FarmingCalendarPage() {
         title="Personalized Farming Calendar"
         description="Get a customized schedule for planting, fertilizing, and harvesting your crops."
       />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-        <div className="md:col-span-1">
+      <div className="grid grid-cols-1 gap-8">
+        <div>
           <FarmingCalendarForm
             onCalendarResult={setCalendarResult}
             onLoading={setIsLoading}
             onError={setError}
           />
         </div>
-        <div className="md:col-span-2">
+        <div>
           <FarmingCalendarDisplay result={calendarResult} loading={isLoading} error={error} />
         </div>
       </div>

@@ -118,7 +118,7 @@ export default function CropDiseaseDetectionPage() {
         description="Upload an image of your crop to get an AI-powered disease diagnosis and suggestions."
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 gap-8">
         <Card className="shadow-lg">
           <CardHeader>
             {/* CardTitle is text-lg font-medium */}
