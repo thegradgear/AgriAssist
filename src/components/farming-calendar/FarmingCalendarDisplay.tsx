@@ -85,7 +85,7 @@ const getCategoryBadgeVariant = (category: CalendarEvent['category']): "default"
 const getContextualLink = (category: CalendarEvent['category']): { href: string; label: string; icon: React.ElementType } | null => {
   switch (category) {
     case 'Pest & Disease Management':
-      return { href: '/crop-disease-detection', label: 'Analyze Crop Health', icon: Microscope };
+      return { href: '/crop-health', label: 'Analyze Crop Health', icon: Microscope };
     case 'Irrigation':
       return { href: '/irrigation-management', label: 'Plan Irrigation', icon: Droplets };
     default:

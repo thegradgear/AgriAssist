@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent for identifying pests and weeds from images.
@@ -25,8 +26,8 @@ const IdentifyPestWeedOutputSchema = z.object({
   commonName: z.string().describe('The common name of the identified pest or weed (e.g., "Aphid", "Dandelion"). If unknown, state "Unable to Identify".'),
   scientificName: z.string().optional().describe('The scientific (Latin) name of the pest or weed. Optional.'),
   isHarmful: z.boolean().describe('Whether the identified entity is generally considered harmful to common crops.'),
-  description: z.string().describe('A brief description of the pest or weed, including its appearance and typical impact on crops.'),
-  managementSuggestion: z.string().describe('Suggested organic and/or chemical methods for managing or removing the pest or weed. Provide helpful tips if not harmful.'),
+  detectionExplanation: z.string().describe('A step-by-step explanation of the key visual factors that led to the identification.'),
+  managementSolutions: z.array(z.string()).describe('A list of actionable management solutions or control measures. If not harmful, provide helpful tips.'),
 });
 export type IdentifyPestWeedOutput = z.infer<typeof IdentifyPestWeedOutputSchema>;
 
@@ -47,14 +48,15 @@ Context Notes: {{{contextNotes}}}
 {{/if}}
 
 Based on the image and notes, perform the following:
-1.  Determine the 'identificationType': Is it a 'PEST' (harmful insect, mite, slug etc.), a 'WEED' (unwanted plant), 'OTHER' (like a beneficial insect e.g. ladybug, or non-plant/pest), or 'UNKNOWN' if you cannot be certain.
-2.  Provide the 'commonName' of the identified entity. If it's a beneficial insect, name it. If you cannot identify it, the name should be "Unable to Identify".
-3.  Provide the 'scientificName' if you know it.
-4.  Set 'isHarmful' to true if it is a common agricultural pest or a competitive weed. Set it to false for beneficial organisms or if it's harmless.
-5.  Write a 'description' of the entity, its key visual features, and why it is or isn't harmful.
-6.  Provide a 'managementSuggestion'. If it's harmful, suggest common organic and chemical control methods. If it is not harmful, provide a brief, helpful tip (e.g., "Ladybugs are beneficial as they eat aphids.").
+1.  **identificationType**: Is it a 'PEST', 'WEED', 'OTHER' (e.g. beneficial insect), or 'UNKNOWN'.
+2.  **commonName**: Provide the common name. If unknown, state "Unable to Identify".
+3.  **scientificName**: Provide the scientific name if known.
+4.  **isHarmful**: Set to true if it is a common pest or weed.
+5.  **detectionExplanation**: Provide a detailed, step-by-step explanation of the key visual factors for identification. For a pest, describe its body shape, color, and size. For a weed, describe its leaf shape, flower, and stem.
+6.  **managementSolutions**: Provide a list of actionable management solutions. Be specific (e.g., "Manual Removal: Hand-pull weeds before they set seed." or "Biological Control: Introduce ladybugs to control aphid populations."). If it's not harmful, provide helpful facts as the solutions.
 
-If the image quality is too poor or the subject is not clear, set type to 'UNKNOWN' and name to 'Unable to Identify'.`,
+If the image quality is too poor, set type to 'UNKNOWN' and name to 'Unable to Identify' and explain why in 'detectionExplanation'.
+`,
 });
 
 const identifyPestWeedFlow = ai.defineFlow(
@@ -66,13 +68,12 @@ const identifyPestWeedFlow = ai.defineFlow(
   async input => {
     const {output} = await prompt(input);
     if (!output) {
-      // Fallback in case the model returns nothing.
       return {
         identificationType: 'UNKNOWN',
         commonName: 'Unable to Identify',
         isHarmful: false,
-        description: 'The AI model could not provide an identification for the uploaded image.',
-        managementSuggestion: 'Please try a clearer image or consult a local expert.',
+        detectionExplanation: 'The AI model could not provide an identification. The image may be unclear or the model response was invalid.',
+        managementSolutions: ['Please try a clearer image or consult a local expert.'],
       };
     }
     return output;

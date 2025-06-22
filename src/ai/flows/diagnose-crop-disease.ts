@@ -25,8 +25,9 @@ const DiagnoseCropDiseaseOutputSchema = z.object({
   isDiseased: z.boolean().describe('Whether or not the plant appears to be diseased based on the image.'),
   diseaseName: z.string().describe('The common name of the identified disease, or "Appears Healthy" if no disease is detected.'),
   confidence: z.number().min(0).max(1).describe('The confidence level (0.0 to 1.0) of the disease diagnosis. Less relevant if healthy.'),
-  description: z.string().describe('A general description of the visual symptoms observed or reasons for the diagnosis (e.g., "Yellow spots on leaves", "Plant appears vigorous and free of pests").'),
-  remedySuggestion: z.string().describe('Suggested organic or chemical remedies if a disease is found, or general care tips if the plant appears healthy.'),
+  severity: z.enum(['Low', 'Medium', 'High', 'N/A']).describe('The estimated severity of the infection. Set to "N/A" if not applicable (e.g., healthy or unable to diagnose).'),
+  detectionExplanation: z.string().describe("A step-by-step explanation of the key visual factors (symptoms) that led to the diagnosis. If healthy, explain why it appears so."),
+  remedies: z.array(z.string()).describe("A list of actionable remedies or solutions. Include organic and chemical options if applicable. If healthy, provide a general care tip."),
 });
 export type DiagnoseCropDiseaseOutput = z.infer<typeof DiagnoseCropDiseaseOutputSchema>;
 
@@ -47,13 +48,14 @@ Crop Type (as stated by farmer): {{{cropType}}}
 {{/if}}
 
 Based on the visual symptoms in the image:
-1. Determine if the plant appears to be diseased. Set 'isDiseased' to true or false.
-2. If diseased, identify the most likely disease and set 'diseaseName' to its common name. Provide a 'confidence' score (0.0 to 1.0) for this diagnosis.
-3. If the plant appears healthy, set 'diseaseName' to "Appears Healthy" and 'confidence' can be 1.0.
-4. Provide a 'description' of the key visual symptoms observed (e.g., "Wilting leaves with brown spots", "No visible signs of stress or infection") that led to your conclusion.
-5. If a disease is identified, suggest a common 'remedySuggestion' (can be organic or chemical, mention if multiple options exist). If healthy, provide a brief, general care tip as the 'remedySuggestion'.
+1.  **isDiseased**: Determine if the plant appears diseased.
+2.  **diseaseName**: If diseased, identify the common name. If healthy, set to "Appears Healthy".
+3.  **confidence**: Provide a confidence score (0.0-1.0) for the diagnosis.
+4.  **severity**: If diseased, estimate the infection severity as 'Low', 'Medium', or 'High' based on the extent of symptoms visible. If healthy or unable to diagnose, set to 'N/A'.
+5.  **detectionExplanation**: Provide a detailed, step-by-step explanation of the key visual symptoms observed (e.g., "Step 1: Observed yellow, circular spots on the lower leaves. Step 2: Some spots show a 'halo' effect, typical of early blight...") that led to your conclusion.
+6.  **remedies**: Provide a list of actionable remedies. For each remedy, be specific. For example: "Organic Remedy: Spray a solution of neem oil (2ml per liter of water) every 7-10 days." or "Chemical Remedy: Apply a copper-based fungicide, such as Mancozeb, following label instructions."
 
-Prioritize common diseases. If the image quality is too poor for a diagnosis, or if it's not a plant, indicate this in the description and set 'isDiseased' to false, 'diseaseName' to "Unable to Diagnose".
+If the image quality is poor or it's not a plant, set 'isDiseased' to false, 'diseaseName' to "Unable to Diagnose", confidence to 0, severity to "N/A", and explain the issue in 'detectionExplanation'.
 `,
 });
 
@@ -66,16 +68,15 @@ const diagnoseCropDiseaseFlow = ai.defineFlow(
   async input => {
     const {output} = await prompt(input);
     if (!output) {
-      // Fallback in case the model returns nothing, though Zod schema should enforce structure.
       return {
         isDiseased: false,
         diseaseName: 'Unable to Diagnose',
         confidence: 0,
-        description: 'The AI model could not provide a diagnosis for the uploaded image.',
-        remedySuggestion: 'Please try a clearer image or consult a local expert.',
+        severity: 'N/A',
+        detectionExplanation: 'The AI model could not provide a diagnosis. The image may be unclear or the model response was invalid.',
+        remedies: ['Please try a clearer image or consult a local expert.'],
       };
     }
     return output;
   }
 );
-
