@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
 import { useState, useEffect } from 'react';
 import { Loader2, AlertTriangle, CalendarIcon, Search, Landmark } from 'lucide-react';
@@ -30,50 +31,42 @@ export default function MandiPricesPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [isShowingMockData, setIsShowingMockData] = useState(false);
     const { toast } = useToast();
 
     const fetchPrices = async (fetchDate: Date) => {
         setIsLoading(true);
         setError(null);
         setPrices([]);
+        setIsShowingMockData(false);
 
         const formattedDate = formatDateFns(fetchDate, 'yyyy-MM-dd');
 
         try {
             const response = await fetch(`/api/mandi-prices?date=${formattedDate}&limit=500`);
-            
+            const data = await response.json();
+
             if (!response.ok) {
-                let errorMsg = `Error: ${response.statusText}`;
-                try {
-                    const errorData = await response.json();
-                    if (errorData.error) {
-                        errorMsg = errorData.error;
-                    }
-                } catch(e) { /* ignore json parse error */ }
-                
-                // Handle error directly instead of throwing
-                setError(errorMsg);
+                throw new Error(data.error || 'Failed to fetch prices.');
+            }
+            
+            if (data.isMockData) {
+                setIsShowingMockData(true);
+                setPrices(data.records);
+            } else if (data.records && data.records.length > 0) {
+                setPrices(data.records);
                 toast({
-                    variant: 'destructive',
-                    title: 'Error Fetching Prices',
-                    description: errorMsg
+                    title: 'Prices Loaded',
+                    description: `${data.records.length} records found for ${formatDateFns(fetchDate, 'PPP')}.`
                 });
             } else {
-                const data = await response.json();
-                if (data.records && data.records.length > 0) {
-                    setPrices(data.records);
-                    toast({
-                        title: 'Prices Loaded',
-                        description: `${data.records.length} records found for ${formatDateFns(fetchDate, 'PPP')}.`
-                    });
-                } else {
-                    setPrices([]);
-                     toast({
-                        title: 'No Data Found',
-                        description: `No market price data found for ${formatDateFns(fetchDate, 'PPP')}. This can be common for Sundays or public holidays.`
-                    });
-                }
+                setPrices([]);
+                 toast({
+                    title: 'No Data Found',
+                    description: `No market price data found for ${formatDateFns(fetchDate, 'PPP')}. This is common for Sundays or public holidays.`
+                });
             }
+            
         } catch (err: any) {
             console.error('Failed to fetch Mandi prices:', err);
             setError(err.message || 'An unexpected error occurred.');
@@ -157,6 +150,16 @@ export default function MandiPricesPage() {
                     </Button>
                 </CardContent>
             </Card>
+            
+            {isShowingMockData && (
+                 <Alert variant="destructive" className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Displaying Sample Data</AlertTitle>
+                    <AlertDescription>
+                        Could not fetch live market prices. The data below is for demonstration purposes and may not reflect the selected date. Please check your API key or try again later.
+                    </AlertDescription>
+                </Alert>
+            )}
 
             {isLoading && (
                  <Card>
@@ -167,22 +170,19 @@ export default function MandiPricesPage() {
                 </Card>
             )}
 
-            {!isLoading && error && (
+            {!isLoading && error && !isShowingMockData && (
                 <Card className="border-destructive bg-destructive/10">
                     <CardContent className="p-6 flex items-center gap-4">
                         <AlertTriangle className="h-8 w-8 text-destructive" />
                         <div>
                             <h3 className="font-semibold text-destructive">Failed to Load Data</h3>
                             <p className="text-sm text-destructive/80">{error}</p>
-                            {error.toLowerCase().includes("api key") && (
-                                <p className="text-xs mt-2">Please ensure the `DATA_GOV_IN_API_KEY` is correctly set in the server environment.</p>
-                            )}
                         </div>
                     </CardContent>
                 </Card>
             )}
 
-            {!isLoading && !error && prices.length === 0 && (
+            {!isLoading && !isShowingMockData && prices.length === 0 && (
                 <Card>
                     <CardContent className="p-6 text-center">
                         <Landmark className="h-10 w-10 text-muted-foreground mx-auto" />
@@ -192,10 +192,10 @@ export default function MandiPricesPage() {
                 </Card>
             )}
             
-            {!isLoading && !error && prices.length > 0 && (
+            {!isLoading && prices.length > 0 && (
                 <Card className="shadow-lg">
                     <CardHeader>
-                        <CardTitle>Market Prices for {date ? formatDateFns(date, 'PPP') : ''}</CardTitle>
+                        <CardTitle>Market Prices for {isShowingMockData ? 'Sample Data' : (date ? formatDateFns(date, 'PPP') : '')}</CardTitle>
                         <CardDescription>Showing prices in INR per Quintal.</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -209,7 +209,7 @@ export default function MandiPricesPage() {
                                             <TableHead>Variety</TableHead>
                                             <TableHead className="text-right">Min Price</TableHead>
                                             <TableHead className="text-right">Max Price</TableHead>
-                                            <TableHead className="text-right">Modal Price</TableHead>
+                                            <TableHead className="font-semibold text-right">Modal Price</TableHead>
                                             <TableHead>State</TableHead>
                                         </TableRow>
                                     </TableHeader>
