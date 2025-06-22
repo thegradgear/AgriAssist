@@ -37,6 +37,7 @@ interface FarmingCalendarDisplayProps {
   error: string | null;
   reportId?: string; // Optional: ID if it's a saved report
   onDelete?: (id: string) => void; // Optional: Callback to handle deletion
+  onUpdate?: (reportId: string, updatedTasks: string[]) => void; // Callback to update parent state
 }
 
 export interface FarmingCalendarReport {
@@ -92,13 +93,12 @@ const getContextualLink = (category: CalendarEvent['category']): { href: string;
   }
 };
 
-export function FarmingCalendarDisplay({ result, inputs, loading, error, reportId, onDelete }: FarmingCalendarDisplayProps) {
+export function FarmingCalendarDisplay({ result, inputs, loading, error, reportId, onDelete, onUpdate }: FarmingCalendarDisplayProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set(result?.completedTasks || []));
 
-  // Effect to update local state if the result prop changes (e.g., loading a different saved report)
   useEffect(() => {
     setCompletedTasks(new Set(result?.completedTasks || []));
   }, [result]);
@@ -112,7 +112,6 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
     }
     setCompletedTasks(newSet);
 
-    // If it's a saved report, update it in Firestore
     if (reportId && user) {
       try {
         const reportRef = doc(db, 'users', user.uid, 'farmingCalendars', reportId);
@@ -124,6 +123,10 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
             description: `Task "${eventName}" status updated.`,
             duration: 2000,
         });
+        // Notify parent component of the update
+        if (onUpdate) {
+          onUpdate(reportId, Array.from(newSet));
+        }
       } catch (err) {
         console.error("Failed to update task status:", err);
         toast({
@@ -200,7 +203,6 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
   }
 
   if (!result || !result.schedule || result.schedule.length === 0) {
-    // Don't show anything if it's part of a saved list with no results
     if (reportId) return null;
 
     return (

@@ -62,6 +62,16 @@ export function SavedFarmingCalendars() {
 
     fetchReports();
   }, [user]);
+  
+  const handleUpdateCompletedTasks = (reportId: string, updatedTasks: string[]) => {
+    setReports(prevReports => 
+      prevReports.map(report => 
+        report.id === reportId 
+          ? { ...report, results: { ...report.results, completedTasks: updatedTasks } } 
+          : report
+      )
+    );
+  };
 
   const handleDelete = async (reportId: string) => {
     if (!user) return;
@@ -122,6 +132,7 @@ export function SavedFarmingCalendars() {
                 error={null}
                 reportId={report.id}
                 onDelete={handleDelete}
+                onUpdate={handleUpdateCompletedTasks}
              />
           </AccordionContent>
         </AccordionItem>
