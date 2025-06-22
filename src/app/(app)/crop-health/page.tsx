@@ -260,7 +260,7 @@ export default function CropHealthAnalysisPage() {
                         {diseaseResult.isDiseased && diseaseResult.diseaseName !== "Unable to Diagnose" ? <AlertTriangle className="mr-2 h-5 w-5 text-destructive" /> : (diseaseResult.diseaseName === "Unable to Diagnose" ? <HelpCircle className="mr-2 h-5 w-5 text-amber-600" /> : <CheckCircle className="mr-2 h-5 w-5 text-green-600" />)}
                         Diagnosis Result
                     </CardTitle>
-                    {user && <Button size="sm" onClick={handleSaveAnalysis} disabled={isSaving}>{isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Saving...</> : <><Save className="mr-2 h-4 w-4"/>Save</>}</Button>}
+                    {user && <Button size="sm" onClick={handleSaveAnalysis} disabled={isSaving} suppressHydrationWarning>{isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Saving...</> : <><Save className="mr-2 h-4 w-4"/>Save</>}</Button>}
                 </div>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -279,7 +279,9 @@ export default function CropHealthAnalysisPage() {
               )}
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground">Detection Explanation</Label>
-                <p className="text-sm text-foreground mt-1 whitespace-pre-line bg-muted/50 p-3 rounded-md">{diseaseResult.detectionExplanation}</p>
+                <div className="text-sm text-foreground mt-1 whitespace-pre-line bg-muted/50 p-3 rounded-md">
+                    {diseaseResult.detectionExplanation.split('\n').map((line, index) => <p key={index}>{line}</p>)}
+                </div>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground">Remedies & Solutions</Label>
@@ -300,7 +302,7 @@ export default function CropHealthAnalysisPage() {
                         {pestWeedResult.identificationType === 'PEST' ? <Bug className="mr-2 h-5 w-5" /> : <Leaf className="mr-2 h-5 w-5" />}
                         Identification Result
                     </CardTitle>
-                    {user && <Button size="sm" onClick={handleSaveAnalysis} disabled={isSaving}>{isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Saving...</> : <><Save className="mr-2 h-4 w-4"/>Save</>}</Button>}
+                    {user && <Button size="sm" onClick={handleSaveAnalysis} disabled={isSaving} suppressHydrationWarning>{isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Saving...</> : <><Save className="mr-2 h-4 w-4"/>Save</>}</Button>}
                 </div>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -311,7 +313,9 @@ export default function CropHealthAnalysisPage() {
               </div>
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground">Detection Explanation</Label>
-                <p className="text-sm text-foreground mt-1 whitespace-pre-line bg-muted/50 p-3 rounded-md">{pestWeedResult.detectionExplanation}</p>
+                <div className="text-sm text-foreground mt-1 whitespace-pre-line bg-muted/50 p-3 rounded-md">
+                   {pestWeedResult.detectionExplanation.split('\n').map((line, index) => <p key={index}>{line}</p>)}
+                </div>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground">Management Solutions</Label>
@@ -343,13 +347,13 @@ export default function CropHealthAnalysisPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                <div className="space-y-3">
                   <Label htmlFor="crop-image" className="sr-only">Crop Image</Label>
-                  <Input id="crop-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} ref={fileInputRef} className="block w-full h-auto py-0 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
-                  <Button variant="outline" className="w-full" onClick={() => setIsCameraOpen(true)}><Camera className="mr-2 h-4 w-4"/>Use Camera</Button>
+                  <Input id="crop-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} ref={fileInputRef} className="block w-full h-auto py-0 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" suppressHydrationWarning />
+                  <Button variant="outline" className="w-full" onClick={() => setIsCameraOpen(true)} suppressHydrationWarning><Camera className="mr-2 h-4 w-4"/>Use Camera</Button>
                </div>
                {imagePreviewUrl && (
                 <div className="relative group">
                   <Image src={imagePreviewUrl} alt="Crop preview" width={500} height={300} className="rounded-md object-contain max-h-[300px] w-full border" data-ai-hint="crop health" />
-                  <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 opacity-70 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage} aria-label="Remove image"><XCircle className="h-5 w-5" /></Button>
+                  <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 opacity-70 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage} aria-label="Remove image" suppressHydrationWarning><XCircle className="h-5 w-5" /></Button>
                 </div>
               )}
              </div>
@@ -367,14 +371,14 @@ export default function CropHealthAnalysisPage() {
               <form onSubmit={(e: FormEvent<HTMLFormElement>) => { e.preventDefault(); handleAnalysis(); }}>
                 <TabsContent value="disease" forceMount={true} className={activeTab === 'disease' ? 'block' : 'hidden'}>
                   <CardHeader><CardTitle className="flex items-center"><Microscope className="mr-2 h-5 w-5 text-primary" />Analyze for Diseases</CardTitle><CardDescription>Provide the crop type to improve diagnosis accuracy.</CardDescription></CardHeader>
-                  <CardContent><Label htmlFor="crop-type">Crop Type (Optional)</Label><Input id="crop-type" type="text" placeholder="e.g., Tomato, Wheat, Rice" value={cropType} onChange={(e) => setCropType(e.target.value)} className="mt-1" /></CardContent>
+                  <CardContent><Label htmlFor="crop-type">Crop Type (Optional)</Label><Input id="crop-type" type="text" placeholder="e.g., Tomato, Wheat, Rice" value={cropType} onChange={(e) => setCropType(e.target.value)} className="mt-1" suppressHydrationWarning /></CardContent>
                 </TabsContent>
                 <TabsContent value="pest" forceMount={true} className={activeTab === 'pest' ? 'block' : 'hidden'}>
                   <CardHeader><CardTitle className="flex items-center"><Bug className="mr-2 h-5 w-5 text-primary" />Analyze for Pests & Weeds</CardTitle><CardDescription>Add optional notes about where you found it.</CardDescription></CardHeader>
-                  <CardContent><Label htmlFor="context-notes">Context Notes (Optional)</Label><Textarea id="context-notes" placeholder="e.g., Found on the underside of leaves" value={contextNotes} onChange={(e) => setContextNotes(e.target.value)} className="mt-1" /></CardContent>
+                  <CardContent><Label htmlFor="context-notes">Context Notes (Optional)</Label><Textarea id="context-notes" placeholder="e.g., Found on the underside of leaves" value={contextNotes} onChange={(e) => setContextNotes(e.target.value)} className="mt-1" suppressHydrationWarning /></CardContent>
                 </TabsContent>
                 <CardFooter>
-                  <Button type="submit" className="w-full" disabled={isLoading || !imageFile}>
+                  <Button type="submit" className="w-full" disabled={isLoading || !imageFile} suppressHydrationWarning>
                     {isLoading ? ( <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...</> ) : 'Analyze Image'}
                   </Button>
                 </CardFooter>
@@ -411,8 +415,8 @@ export default function CropHealthAnalysisPage() {
                  )}
             </div>
             <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCameraOpen(false)}>Cancel</Button>
-                <Button onClick={handleCapture} disabled={!hasCameraPermission}>
+                <Button variant="outline" onClick={() => setIsCameraOpen(false)} suppressHydrationWarning>Cancel</Button>
+                <Button onClick={handleCapture} disabled={!hasCameraPermission} suppressHydrationWarning>
                     <Camera className="mr-2 h-4 w-4" /> Capture Photo
                 </Button>
             </DialogFooter>
