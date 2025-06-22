@@ -20,7 +20,7 @@ interface Coordinates {
   longitude: number;
 }
 
-interface SavedLocation extends Coordinates {
+export interface SavedLocation extends Coordinates {
   name: string;
 }
 
