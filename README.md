@@ -8,7 +8,6 @@ This is a Next.js application built with Firebase Studio, designed to assist Ind
 - **Yield Prediction:** Forecast crop yields using AI.
 - **Crop Recommendation:** Get tailored crop suggestions based on soil and weather data.
 - **Price Prediction:** Estimate future market prices for your crops.
-- **Mandi Prices:** View live, daily market prices from Agmarknet.
 - **Crop Health Analysis:** Detect crop diseases and identify pests/weeds from images.
 - **Farming Calendar:** Generate a personalized schedule for farming activities.
 - **Irrigation Management:** Receive optimal watering schedules.
@@ -37,17 +36,12 @@ You will need to acquire API keys from the following services:
     - Under the "General" tab, find your web app configuration.
     - Copy the `apiKey`, `authDomain`, `projectId`, etc., into the `NEXT_PUBLIC_FIREBASE_*` variables in `src/.env`.
 
-2.  **data.gov.in (for Mandi Prices):**
-    - Go to [https://data.gov.in](https://data.gov.in) and register for an account.
-    - After logging in, go to your "My Account" page to find your API key.
-    - Copy this key to the `DATA_GOV_IN_API_KEY` variable.
-
-3.  **NewsAPI (for Articles & News):**
+2.  **NewsAPI (for Articles & News):**
     - Go to [https://newsapi.org](https://newsapi.org) and register for a free developer account.
     - Your API key will be available on your account dashboard.
     - Copy this key to the `NEWSAPI_KEY` variable.
 
-4.  **OpenWeatherMap (for Weather):**
+3.  **OpenWeatherMap (for Weather):**
     - Go to [https://openweathermap.org](https://openweathermap.org) and create a free account.
     - Navigate to the "API keys" tab in your account dashboard to find your key.
     - Copy this key to the `NEXT_PUBLIC_OPENWEATHERMAP_API_KEY` variable.
