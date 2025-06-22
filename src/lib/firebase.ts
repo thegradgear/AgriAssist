@@ -1,6 +1,20 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, updateProfile } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  getDocs,
+  orderBy,
+  deleteDoc,
+  serverTimestamp,
+  where
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,4 +30,21 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-export { app, auth, db, updateProfile, doc, setDoc, getDoc, updateDoc };
+export { 
+    app, 
+    auth, 
+    db, 
+    updateProfile, 
+    doc, 
+    setDoc, 
+    getDoc, 
+    updateDoc,
+    collection,
+    addDoc,
+    query,
+    getDocs,
+    orderBy,
+    deleteDoc,
+    serverTimestamp,
+    where
+};

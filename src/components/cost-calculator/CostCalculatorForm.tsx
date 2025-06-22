@@ -13,11 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { Loader2, Trash2, PlusCircle, Calculator, Leaf, IndianRupee, Scaling } from 'lucide-react';
 
-interface CostCalculatorFormProps {
-  onCalculated: (results: CalculatedCosts | null) => void;
-  initialData?: Partial<CostCalculatorFormData>;
-}
-
 export interface CalculatedCosts {
   totalCost: number;
   totalRevenue: number;
@@ -27,6 +22,18 @@ export interface CalculatedCosts {
   cropName: string;
   area: number;
   areaUnit: string;
+  // New break-even fields
+  breakEvenYield: number;
+  breakEvenYieldUnit: string;
+  breakEvenPrice: number;
+  breakEvenPriceUnit: string;
+}
+
+interface CostCalculatorFormProps {
+  onCalculated: (results: CalculatedCosts | null) => void;
+  onFormSubmit: (inputs: CostCalculatorFormData | null) => void;
+  onLoading: (loading: boolean) => void;
+  initialData?: Partial<CostCalculatorFormData>;
 }
 
 const areaUnits = ['acre', 'hectare'] as const;
@@ -43,9 +50,8 @@ const areaConversionToAcre: Record<typeof areaUnits[number], number> = {
 };
 
 
-export function CostCalculatorForm({ onCalculated, initialData }: CostCalculatorFormProps) {
+export function CostCalculatorForm({ onCalculated, onFormSubmit, onLoading, initialData }: CostCalculatorFormProps) {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false); 
   const [isClient, setIsClient] = useState(false);
 
   const form = useForm<CostCalculatorFormData>({
@@ -54,7 +60,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
       cropName: '',
       area: 1,
       areaUnit: 'acre',
-      costItems: [], // Initialize empty for SSR, populate in useEffect
+      costItems: [],
       expectedYield: 1000,
       yieldUnit: 'kg',
       yieldPerAreaUnit: 'acre',
@@ -70,7 +76,6 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
 
   useEffect(() => {
     setIsClient(true);
-    // Populate default cost items on client mount if not already populated (e.g. by initialData)
     if (!initialData && form.getValues('costItems').length === 0) {
       const clientDefaultCostItems = staticDefaultCostItems.map(item => ({
         ...item,
@@ -82,11 +87,11 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
 
 
   function onSubmit(data: CostCalculatorFormData) {
-    setIsLoading(true); 
+    onLoading(true);
+    onFormSubmit(data);
     
     try {
       const totalCultivationAreaInAcres = data.area * areaConversionToAcre[data.areaUnit];
-
       const totalCost = data.costItems.reduce((acc, item) => acc + (item.costPerUnit * item.quantity), 0);
 
       const yieldInKg = data.expectedYield * yieldConversionToKg[data.yieldUnit];
@@ -104,6 +109,10 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
         amount: item.costPerUnit * item.quantity,
         percentage: totalCost > 0 ? ((item.costPerUnit * item.quantity) / totalCost) * 100 : 0,
       }));
+
+      // Break-Even Calculations
+      const breakEvenYield = priceInKg > 0 ? totalCost / priceInKg : Infinity;
+      const breakEvenPrice = totalYieldInKg > 0 ? totalCost / totalYieldInKg : Infinity;
       
       onCalculated({
         totalCost,
@@ -114,6 +123,10 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
         cropName: data.cropName,
         area: data.area,
         areaUnit: data.areaUnit,
+        breakEvenYield: breakEvenYield,
+        breakEvenYieldUnit: 'kg',
+        breakEvenPrice: breakEvenPrice,
+        breakEvenPriceUnit: 'per kg',
       });
 
       toast({
@@ -130,7 +143,7 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
       });
       onCalculated(null);
     } finally {
-      setIsLoading(false);
+      onLoading(false);
     }
   }
 
@@ -149,7 +162,6 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
                 <CardDescription>Enter details about your crop, area, costs, and expected returns.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                {/* Skeletons for Crop/Area, Cost Items, Yield/Price */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-md">
                     <div className="h-10 bg-muted rounded"></div>
                     <div className="h-10 bg-muted rounded"></div>
@@ -377,8 +389,8 @@ export function CostCalculatorForm({ onCalculated, initialData }: CostCalculator
 
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading} suppressHydrationWarning>
-              {isLoading ? (
+            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting} suppressHydrationWarning>
+              {form.formState.isSubmitting ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Calculating...</>
               ) : (
                 'Calculate Costs & Profit'
