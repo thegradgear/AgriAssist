@@ -2,11 +2,11 @@
 'use server';
 
 /**
- * @fileOverview Crop price prediction flow for farmers.
+ * @fileOverview Crop price prediction flow for farmers with MSP comparison and factor analysis.
  *
  * - predictCropPrice - Predicts crop price based on farmer inputs.
  * - PredictCropPriceInput - The input type for the predictCropPrice function.
- * - PredictCropPriceOutput - The return type for the predictCropPrice function.
+ * - PredictCropPriceOutput - The return type for the predictCroprice function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -26,15 +26,30 @@ const PredictCropPriceInputSchema = z.object({
 
 export type PredictCropPriceInput = z.infer<typeof PredictCropPriceInputSchema>;
 
+const FactorSchema = z.object({
+  name: z.string().describe('The name of the factor (e.g., Seasonality, Market Demand, Quality).'),
+  impact: z.enum(['Positive', 'Negative', 'Neutral']).describe('The impact of this factor on the price: Positive, Negative, or Neutral.'),
+  reason: z.string().describe('A brief explanation of why this factor has the given impact.'),
+});
+
+const MspComparisonSchema = z.object({
+  knownMsp: z.number().describe('The known Minimum Support Price (MSP) for the crop in the same unit as the predicted price.'),
+  differencePercentage: z.number().describe('The percentage difference between the predicted price and the MSP. Positive if above MSP, negative if below.'),
+  outlook: z.string().describe('A brief sentence describing the comparison (e.g., "Predicted price is significantly above MSP.").'),
+});
+
+
 const PredictCropPriceOutputSchema = z.object({
   predictedPrice: z.number().describe('The most likely predicted market price for the crop.'),
   priceUnit: z.string().describe('The unit for the predicted price (e.g., "INR/quintal", "INR/kg", "INR/tonne"). The AI should choose the most common unit for the crop and market.'),
   priceRangeMin: z.number().optional().describe('The lower end of the potential price range, if a range can be estimated.'),
   priceRangeMax: z.number().optional().describe('The upper end of the potential price range, if a range can be estimated.'),
   confidenceLevel: z.number().min(0).max(1).describe('The confidence level of the prediction (0.0 to 1.0), where 1.0 is very confident.'),
-  factorsConsidered: z.string().describe('A brief explanation of the key factors that influenced this price prediction (e.g., seasonality, market trends, historical data if provided, location).'),
+  factors: z.array(FactorSchema).describe('A list of key factors that influenced this price prediction, each with its name, impact, and a short reason.'),
+  mspComparison: MspComparisonSchema.optional().describe('Comparison with the Minimum Support Price (MSP), if applicable for the crop. Omit this field entirely if the crop does not have a well-known, published MSP.'),
   marketOutlook: z.string().optional().describe('A short general outlook for the crop in the specified market and time, if discernible (e.g., "Prices expected to be stable", "High demand anticipated").'),
 });
+
 
 export type PredictCropPriceOutput = z.infer<typeof PredictCropPriceOutputSchema>;
 
@@ -47,7 +62,7 @@ const prompt = ai.definePrompt({
   input: {schema: PredictCropPriceInputSchema},
   output: {schema: PredictCropPriceOutputSchema},
   prompt: `You are an expert agricultural market analyst specializing in predicting crop prices in India.
-A farmer will provide details about their crop, market, and intended sale period. Your task is to predict the market price.
+A farmer will provide details about their crop, market, and intended sale period. Your task is to predict the market price and provide a structured analysis.
 
 Farmer's Input:
 - Crop Name: {{{cropName}}}
@@ -62,16 +77,22 @@ Farmer's Input:
 {{/if~}}
 
 Instructions for your prediction:
-1.  **Predicted Price & Unit**: Provide the most likely 'predictedPrice' and the most common 'priceUnit' for this crop in the specified Indian market (e.g., "INR/quintal", "INR/kg").
-2.  **Price Range (Optional)**: If possible, estimate a 'priceRangeMin' and 'priceRangeMax'. If not confident enough for a range, omit these.
-3.  **Confidence Level**: Assign a 'confidenceLevel' (0.0 to 1.0) for your overall prediction.
-4.  **Factors Considered**: Briefly explain the 'factorsConsidered' in your prediction. Mention seasonality, general market trends for the crop, impact of location, and effect of quality/historical data if provided.
-5.  **Market Outlook (Optional)**: Provide a brief 'marketOutlook' if you can discern one (e.g., "Demand looks strong", "Supply glut expected").
+1.  **Predicted Price & Unit**: Provide the 'predictedPrice' and the most common 'priceUnit' for this crop in the specified Indian market (e.g., "INR/quintal", "INR/kg").
+2.  **Price Range (Optional)**: If possible, estimate a 'priceRangeMin' and 'priceRangeMax'.
+3.  **Confidence Level**: Assign a 'confidenceLevel' (0.0 to 1.0).
+4.  **Factors**: Provide a structured list of 'factors'. For each factor, include:
+    *   'name': The factor's name (e.g., Seasonality, Market Demand, Input Costs).
+    *   'impact': 'Positive', 'Negative', or 'Neutral'.
+    *   'reason': A concise explanation (e.g., "Harvest season may lead to higher supply, putting downward pressure on prices.").
+5.  **MSP Comparison (Crucial)**: 
+    *   Check if the '{{{cropName}}}' is a major crop with a well-known Minimum Support Price (MSP) announced by the Government of India (e.g., Paddy, Wheat, Jowar, Bajra, Maize, Ragi, Tur, Moong, Urad, Groundnut, Soybean, etc.).
+    *   If it is, provide the 'mspComparison' object containing 'knownMsp' (in the same unit as your prediction), 'differencePercentage', and an 'outlook' sentence.
+    *   If the crop has no widely published MSP, or if it's a minor crop or vegetable, **OMIT the mspComparison field completely**.
+6.  **Market Outlook (Optional)**: Provide a brief 'marketOutlook' if you can discern one.
 
-Base your prediction on typical Indian agricultural market dynamics, seasonality, inflation, government policies (like MSP if highly relevant and widely known for the crop), and general supply-demand for the {{{cropName}}} in {{{marketLocation}}} around {{{monthOfSale}}}, {{{yearOfSale}}}.
-If grade/quality is provided, factor it in (e.g., premium grade might fetch higher prices).
-If historical data is provided by the farmer, use it as a reference point but also consider broader market changes since then.
-If essential information is critically missing for a reasonable prediction (e.g. crop type and market location are too vague), state this in 'factorsConsidered' and provide a very low confidence score with a generic price or no price.
+Base your prediction on typical Indian agricultural market dynamics, seasonality, inflation, government policies (like MSP), and general supply-demand for the crop.
+If grade/quality is provided, factor it in. If historical data is provided, use it as a reference point but also consider broader market changes.
+If essential information is critically missing, state this in one of the factor reasons and provide a very low confidence score.
 `,
 });
 
@@ -89,7 +110,11 @@ const predictCropPriceFlow = ai.defineFlow(
             predictedPrice: 0,
             priceUnit: 'N/A',
             confidenceLevel: 0,
-            factorsConsidered: 'Could not generate a prediction based on the provided input. The model did not return a valid response.',
+            factors: [{
+              name: 'Model Error',
+              impact: 'Negative',
+              reason: 'Could not generate a prediction based on the provided input. The model did not return a valid response.'
+            }],
         };
     }
     return output;
