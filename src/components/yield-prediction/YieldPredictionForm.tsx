@@ -3,12 +3,12 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { yieldPredictionSchema, type YieldPredictionFormData } from '@/schemas/yieldPredictionSchema';
+import { yieldPredictionSchema, type YieldPredictionFormData, soilTypes, irrigationOptions } from '@/schemas/yieldPredictionSchema';
 import type { YieldPredictionOutput } from '@/ai/flows/yield-prediction';
 import { predictYield } from '@/ai/flows/yield-prediction';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +17,7 @@ import { Loader2 } from 'lucide-react';
 import { indianStatesAndDistricts } from '@/lib/indian-states-districts';
 
 interface YieldPredictionFormProps {
-  onPredictionResult: (result: YieldPredictionOutput) => void;
+  onPredictionResult: (result: YieldPredictionOutput | null) => void;
   onPredictionLoading: (loading: boolean) => void;
 }
 
@@ -37,7 +37,9 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
       district: '',
       season: '',
       crop: '',
-      area: 0,
+      area: 1, // Defaulting to 1 to avoid placeholder issues with number fields
+      soilType: undefined,
+      irrigationAvailability: undefined,
     },
   });
 
@@ -74,7 +76,7 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
         title: 'Prediction Failed',
         description: error.message || 'Could not predict yield. Please try again.',
       });
-       onPredictionResult({predictedYield: 0, unit: '', confidence: 0}); // Clear previous results on error
+       onPredictionResult(null);
     } finally {
       setIsLoading(false);
       onPredictionLoading(false);
@@ -87,9 +89,9 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
         <CardTitle className="font-headline">Enter Crop Details</CardTitle>
         <CardDescription>Provide the necessary information to predict your crop yield.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -97,12 +99,16 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>State</FormLabel>
-                    <FormControl>
-                       <select {...field} suppressHydrationWarning className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                        <option value="">Select State</option>
-                        {indianStates.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                       <FormControl>
+                        <SelectTrigger suppressHydrationWarning>
+                          <SelectValue placeholder="Select State" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {indianStates.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -113,12 +119,16 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>District</FormLabel>
-                    <FormControl>
-                      <select {...field} suppressHydrationWarning className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" disabled={districts.length === 0}>
-                        <option value="">Select District</option>
-                        {districts.map(d => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={districts.length === 0}>
+                       <FormControl>
+                        <SelectTrigger suppressHydrationWarning>
+                           <SelectValue placeholder="Select District" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -129,12 +139,16 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Season</FormLabel>
-                     <FormControl>
-                       <select {...field} suppressHydrationWarning className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                        <option value="">Select Season</option>
-                        {seasons.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </FormControl>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                       <FormControl>
+                        <SelectTrigger suppressHydrationWarning>
+                          <SelectValue placeholder="Select Season" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {seasons.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -156,7 +170,7 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                 control={form.control}
                 name="area"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
+                  <FormItem>
                     <FormLabel>Area (in acres)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="e.g., 5.5" {...field} suppressHydrationWarning />
@@ -165,20 +179,62 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
                   </FormItem>
                 )}
               />
+               <FormField
+                control={form.control}
+                name="soilType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Soil Type (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                       <FormControl>
+                        <SelectTrigger suppressHydrationWarning>
+                          <SelectValue placeholder="Select Soil Type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {soilTypes.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="irrigationAvailability"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Irrigation Availability (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                       <FormControl>
+                        <SelectTrigger suppressHydrationWarning>
+                          <SelectValue placeholder="Select Irrigation Type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {irrigationOptions.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-            <Button type="submit" className="w-full md:w-auto" disabled={isLoading} suppressHydrationWarning>
-              {isLoading ? (
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" className="w-full" disabled={isLoading} suppressHydrationWarning>
+            {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Predicting...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Predicting...
                 </>
-              ) : (
+            ) : (
                 'Predict Yield'
-              )}
+            )}
             </Button>
-          </form>
-        </Form>
-      </CardContent>
+          </CardFooter>
+        </form>
+      </Form>
     </Card>
   );
 }

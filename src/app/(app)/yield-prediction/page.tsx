@@ -16,12 +16,14 @@ export default function YieldPredictionPage() {
         title="Crop Yield Prediction"
         description="Estimate your crop yield based on various agricultural factors."
       />
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <YieldPredictionForm 
           onPredictionResult={setPredictionResult} 
           onPredictionLoading={setIsLoading} 
         />
-        <YieldPredictionResult result={predictionResult} loading={isLoading} />
+        <div className="lg:sticky lg:top-24">
+            <YieldPredictionResult result={predictionResult} loading={isLoading} />
+        </div>
       </div>
     </div>
   );
