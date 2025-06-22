@@ -35,6 +35,8 @@ const DailyRecommendationSchema = z.object({
 const IrrigationScheduleOutputSchema = z.object({
   weeklySchedule: z.array(DailyRecommendationSchema).describe('A list of daily irrigation recommendations for the forecast period.'),
   generalAdvice: z.string().describe('Overall advice for the week, such as tips on checking soil moisture or adjusting for unexpected weather.'),
+  totalRainfallMM: z.number().describe('The total forecasted rainfall in millimeters over the schedule period.'),
+  totalIrrigationMM: z.number().describe('The total recommended irrigation in millimeters over the schedule period.'),
 });
 export type IrrigationScheduleOutput = z.infer<typeof IrrigationScheduleOutputSchema>;
 
@@ -70,6 +72,7 @@ INSTRUCTIONS:
 3.  **Provide Reasoning**: For each day, give a concise 'reasoning'. Example: "High temperature and no rain forecasted, and the crop is in the critical flowering stage." or "Sufficient rainfall expected, no irrigation needed."
 4.  **Generate Weekly Schedule**: Compile the recommendations for all days into the 'weeklySchedule' array.
 5.  **Give General Advice**: Provide 1-2 sentences of 'generalAdvice'. This should include tips like "Always check the top 2-3 inches of soil for dryness before watering, regardless of the schedule." or "Sandy soil requires you to monitor moisture levels more frequently."
+6.  **Calculate Totals**: Sum up the total forecasted rainfall from the input and the total recommended irrigation water amount ('waterAmountMM') for the entire schedule period. Provide these sums in the 'totalRainfallMM' and 'totalIrrigationMM' output fields.
 
 Your goal is to help the farmer conserve water while ensuring the crop is not stressed. Be practical and clear.`,
 });

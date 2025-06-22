@@ -4,6 +4,7 @@
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ProfileForm } from '@/components/profile/ProfileForm';
 import { SavedCostReports } from '@/components/profile/SavedCostReports';
+import { SavedIrrigationSchedules } from '@/components/profile/SavedIrrigationSchedules';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
@@ -48,6 +49,11 @@ export default function ProfilePage() {
         <div>
           <h2 className="text-2xl font-semibold font-headline mb-4">Saved Cost Reports</h2>
           <SavedCostReports />
+        </div>
+        <Separator />
+        <div>
+          <h2 className="text-2xl font-semibold font-headline mb-4">Saved Irrigation Schedules</h2>
+          <SavedIrrigationSchedules />
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { IrrigationForm, type DailyForecastInitData } from '@/components/irrigation-management/IrrigationForm';
 import { IrrigationResult } from '@/components/irrigation-management/IrrigationResult';
 import type { IrrigationScheduleOutput } from '@/ai/flows/irrigation-schedule-flow';
+import type { IrrigationFormData } from '@/schemas/irrigationSchema';
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function IrrigationPageContent() {
   const [scheduleResult, setScheduleResult] = useState<IrrigationScheduleOutput | null>(null);
+  const [formInputs, setFormInputs] = useState<IrrigationFormData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,13 +39,19 @@ function IrrigationPageContent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <IrrigationForm
           onScheduleResult={setScheduleResult}
+          onFormSubmit={setFormInputs}
           onLoading={setIsLoading}
           onError={setError}
           initialForecast={initialForecast}
           initialLocation={locationParam ? decodeURIComponent(locationParam) : undefined}
         />
         <div className="lg:sticky lg:top-24">
-            <IrrigationResult result={scheduleResult} loading={isLoading} error={error} />
+            <IrrigationResult 
+                result={scheduleResult} 
+                inputs={formInputs}
+                loading={isLoading} 
+                error={error} 
+            />
         </div>
       </div>
     </div>

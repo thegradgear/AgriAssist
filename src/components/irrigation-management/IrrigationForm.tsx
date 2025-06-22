@@ -24,13 +24,14 @@ export interface DailyForecastInitData {
 
 interface IrrigationFormProps {
   onScheduleResult: (result: IrrigationScheduleOutput | null) => void;
+  onFormSubmit: (inputs: IrrigationFormData | null) => void;
   onLoading: (loading: boolean) => void;
   onError: (error: string | null) => void;
   initialForecast?: DailyForecastInitData[];
   initialLocation?: string;
 }
 
-export function IrrigationForm({ onScheduleResult, onLoading, onError, initialForecast, initialLocation }: IrrigationFormProps) {
+export function IrrigationForm({ onScheduleResult, onFormSubmit, onLoading, onError, initialForecast, initialLocation }: IrrigationFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -74,6 +75,7 @@ export function IrrigationForm({ onScheduleResult, onLoading, onError, initialFo
     onLoading(true);
     onError(null);
     onScheduleResult(null);
+    onFormSubmit(data);
 
     try {
       const result = await generateIrrigationSchedule(data);
