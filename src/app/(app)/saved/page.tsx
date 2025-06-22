@@ -38,19 +38,19 @@ export default function SavedItemsPage() {
       />
       <Tabs defaultValue="calendars" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
-          <TabsTrigger value="calendars" className="py-2.5 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="calendars" className="py-2.5 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:text-primary data-[state=active]:hover:text-primary-foreground">
             <CalendarDays className="mr-2 h-4 w-4" />
             Calendars
           </TabsTrigger>
-          <TabsTrigger value="costs" className="py-2.5 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="costs" className="py-2.5 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:text-primary data-[state=active]:hover:text-primary-foreground">
             <Calculator className="mr-2 h-4 w-4" />
             Cost Reports
           </TabsTrigger>
-          <TabsTrigger value="irrigation" className="py-2.5 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="irrigation" className="py-2.5 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:text-primary data-[state=active]:hover:text-primary-foreground">
             <Droplets className="mr-2 h-4 w-4" />
             Irrigation
           </TabsTrigger>
-          <TabsTrigger value="health" className="py-2.5 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="health" className="py-2.5 text-sm md:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:text-primary data-[state=active]:hover:text-primary-foreground">
             <Microscope className="mr-2 h-4 w-4" />
             Health Analyses
           </TabsTrigger>
