@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { ProfileForm } from '@/components/profile/ProfileForm';
 import { SavedCostReports } from '@/components/profile/SavedCostReports';
 import { SavedIrrigationSchedules } from '@/components/profile/SavedIrrigationSchedules';
+import { SavedFarmingCalendars } from '@/components/profile/SavedFarmingCalendars';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
@@ -44,6 +45,11 @@ export default function ProfilePage() {
       <div className="max-w-4xl mx-auto space-y-12">
         <div className="max-w-2xl">
           <ProfileForm currentUser={user} />
+        </div>
+        <Separator />
+        <div>
+          <h2 className="text-2xl font-semibold font-headline mb-4">Saved Farming Calendars</h2>
+          <SavedFarmingCalendars />
         </div>
         <Separator />
         <div>

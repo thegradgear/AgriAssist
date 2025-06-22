@@ -1,18 +1,36 @@
 
 'use client';
 
+import { useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { db, addDoc, collection, serverTimestamp } from '@/lib/firebase';
 import type { FarmingCalendarOutput, CalendarEvent } from '@/ai/flows/farming-calendar-flow';
+import type { FarmingCalendarFormData } from '@/schemas/farmingCalendarSchema';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CalendarCheck, Info, AlertTriangle, Sparkles, MessageSquare } from 'lucide-react';
+import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineIcon, TimelineTitle, TimelineDescription, TimelineBody } from '@/components/shared/Timeline';
+import { CalendarCheck, Info, AlertTriangle, Sparkles, MessageSquare, Loader2, Save, Microscope, Droplets, ArrowRight } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface FarmingCalendarDisplayProps {
   result: FarmingCalendarOutput | null;
+  inputs: FarmingCalendarFormData | null;
   loading: boolean;
   error: string | null;
+}
+
+export interface FarmingCalendarReport {
+  userId: string;
+  createdAt: any; 
+  inputs: FarmingCalendarFormData;
+  results: FarmingCalendarOutput;
 }
 
 const formatDateRange = (startDateStr: string, endDateStr?: string) => {
@@ -27,7 +45,6 @@ const formatDateRange = (startDateStr: string, endDateStr?: string) => {
     }
     return dateText;
   } catch (e) {
-    console.error("Date parsing/formatting error:", e);
     return `${startDateStr}${endDateStr ? ' - ' + endDateStr : ''}`;
   }
 };
@@ -36,7 +53,7 @@ const getCategoryBadgeVariant = (category: CalendarEvent['category']): "default"
   switch (category) {
     case 'Harvesting':
     case 'Post-Harvest':
-      return 'default'; // Primary color for completion
+      return 'default';
     case 'Preparation':
     case 'Planting':
       return 'secondary';
@@ -49,32 +66,79 @@ const getCategoryBadgeVariant = (category: CalendarEvent['category']): "default"
     default:
       return 'secondary';
   }
-}
+};
 
-export function FarmingCalendarDisplay({ result, loading, error }: FarmingCalendarDisplayProps) {
+const getContextualLink = (category: CalendarEvent['category']): { href: string; label: string; icon: React.ElementType } | null => {
+  switch (category) {
+    case 'Pest & Disease Management':
+      return { href: '/crop-disease-detection', label: 'Analyze Crop Health', icon: Microscope };
+    case 'Irrigation':
+      return { href: '/irrigation-management', label: 'Plan Irrigation', icon: Droplets };
+    default:
+      return null;
+  }
+};
+
+
+export function FarmingCalendarDisplay({ result, inputs, loading, error }: FarmingCalendarDisplayProps) {
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleTaskToggle = (eventName: string) => {
+    setCompletedTasks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(eventName)) {
+        newSet.delete(eventName);
+      } else {
+        newSet.add(eventName);
+      }
+      return newSet;
+    });
+  };
+  
+  const handleSaveCalendar = async () => {
+    if (!result || !inputs || !user) {
+      toast({
+        variant: 'destructive',
+        title: 'Cannot Save Calendar',
+        description: 'You must be logged in and have a valid calendar result to save.',
+      });
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const reportData = {
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        inputs,
+        results: result,
+      };
+      const reportsCollectionRef = collection(db, 'users', user.uid, 'farmingCalendars');
+      await addDoc(reportsCollectionRef, reportData);
+      toast({
+        title: 'Calendar Saved',
+        description: 'Your farming calendar has been saved to your profile.',
+      });
+    } catch (error) {
+      console.error('Error saving calendar:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: 'Could not save the calendar. Please try again.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+
   if (loading) {
     return (
         <Card className="shadow-lg animate-pulse">
-            <CardHeader>
-                <div className="h-6 bg-muted rounded w-3/5 mb-1"></div>
-                <div className="h-4 bg-muted rounded w-4/5"></div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                {/* Desktop skeleton */}
-                <div className="hidden md:block border rounded-md">
-                    <div className="h-12 bg-muted/50 border-b"></div>
-                    <div className="p-4 space-y-3">
-                        <div className="h-8 bg-muted rounded"></div>
-                        <div className="h-8 bg-muted rounded"></div>
-                        <div className="h-8 bg-muted rounded"></div>
-                    </div>
-                </div>
-                {/* Mobile skeleton */}
-                <div className="md:hidden space-y-4">
-                     <div className="h-24 bg-muted rounded-lg"></div>
-                     <div className="h-24 bg-muted rounded-lg"></div>
-                </div>
-            </CardContent>
+            <CardHeader><div className="h-6 bg-muted rounded w-3/5 mb-1"></div><div className="h-4 bg-muted rounded w-4/5"></div></CardHeader>
+            <CardContent className="space-y-4"><div className="h-40 bg-muted rounded"></div><div className="h-24 bg-muted rounded"></div></CardContent>
         </Card>
     );
   }
@@ -82,17 +146,8 @@ export function FarmingCalendarDisplay({ result, loading, error }: FarmingCalend
   if (error) {
     return (
         <Card className="shadow-lg border-destructive bg-destructive/10">
-            <CardHeader>
-                <CardTitle className="flex items-center text-destructive">
-                    <AlertTriangle className="mr-2 h-5 w-5" />
-                    Error Generating Calendar
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Alert variant="destructive" className="border-0">
-                    <AlertDescription className="text-sm leading-normal">{error}</AlertDescription>
-                </Alert>
-            </CardContent>
+            <CardHeader><CardTitle className="flex items-center text-destructive"><AlertTriangle className="mr-2 h-5 w-5" />Error Generating Calendar</CardTitle></CardHeader>
+            <CardContent><Alert variant="destructive" className="border-0"><AlertDescription>{error}</AlertDescription></Alert></CardContent>
         </Card>
     );
   }
@@ -100,19 +155,8 @@ export function FarmingCalendarDisplay({ result, loading, error }: FarmingCalend
   if (!result || !result.schedule || result.schedule.length === 0) {
     return (
       <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <CalendarCheck className="mr-2 h-5 w-5 text-primary" />
-            Farming Schedule
-          </CardTitle>
-          <CardDescription>Your personalized farming calendar will appear here.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Info className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground leading-normal">Enter details in the form to generate your farming schedule.</p>
-          </div>
-        </CardContent>
+        <CardHeader><CardTitle className="flex items-center"><CalendarCheck className="mr-2 h-5 w-5 text-primary" />Farming Schedule</CardTitle><CardDescription>Your personalized farming calendar will appear here.</CardDescription></CardHeader>
+        <CardContent><div className="text-center py-8"><Info className="mx-auto h-12 w-12 text-muted-foreground mb-3" /><p className="text-sm text-muted-foreground">Enter details in the form to generate your farming schedule.</p></div></CardContent>
       </Card>
     );
   }
@@ -120,74 +164,62 @@ export function FarmingCalendarDisplay({ result, loading, error }: FarmingCalend
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <CalendarCheck className="mr-2 h-5 w-5 text-primary" />
-          Farming Calendar for {result.cropName}
-        </CardTitle>
-        <CardDescription>
-          Location: {result.location} | Approx. Planting: {formatDateRange(result.plantingDate)}
-        </CardDescription>
+        <div className="flex justify-between items-start flex-wrap gap-2">
+            <div>
+                <CardTitle className="flex items-center"><CalendarCheck className="mr-2 h-5 w-5 text-primary" />Farming Calendar for {result.cropName}</CardTitle>
+                <CardDescription>Location: {result.location} | Approx. Planting: {formatDateRange(result.plantingDate)}</CardDescription>
+            </div>
+             {user && (
+              <Button onClick={handleSaveCalendar} disabled={isSaving} size="sm">
+                {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : <><Save className="mr-2 h-4 w-4" />Save Calendar</>}
+              </Button>
+            )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Desktop View: Table */}
-        <div className="hidden md:block">
-            <div className="border rounded-lg">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[180px]">Date(s)</TableHead>
-                            <TableHead>Activity</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Notes</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {result.schedule.map((event, index) => (
-                            <TableRow key={index}>
-                                <TableCell className="font-medium">{formatDateRange(event.startDate, event.endDate)}</TableCell>
-                                <TableCell>{event.eventName}</TableCell>
-                                <TableCell>
-                                    <Badge variant={getCategoryBadgeVariant(event.category)}>{event.category}</Badge>
-                                </TableCell>
-                                <TableCell>{event.description}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-        </div>
+        <Timeline>
+          {result.schedule.map((event, index) => {
+            const isCompleted = completedTasks.has(event.eventName);
+            const contextualLink = getContextualLink(event.category);
 
-        {/* Mobile View: Cards */}
-        <div className="block md:hidden space-y-4">
-            {result.schedule.map((event, index) => (
-                <Card key={index} className="bg-muted/50">
-                    <CardHeader className="pb-3">
-                        <CardTitle>{event.eventName}</CardTitle>
-                        <CardDescription>{formatDateRange(event.startDate, event.endDate)}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        <p className="text-sm leading-normal">{event.description}</p>
-                        <Badge variant={getCategoryBadgeVariant(event.category)}>{event.category}</Badge>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
+            return (
+              <TimelineItem key={index} className={cn(isCompleted && "opacity-60")}>
+                <TimelineConnector />
+                <TimelineBody>
+                  <TimelineHeader>
+                    <TimelineIcon><CalendarCheck className="h-4 w-4" /></TimelineIcon>
+                     <div className="flex items-center gap-4 ml-8 w-full">
+                        <Checkbox id={`task-${index}`} checked={isCompleted} onCheckedChange={() => handleTaskToggle(event.eventName)} className="h-5 w-5"/>
+                        <div className="flex-1">
+                          <TimelineTitle className={cn("ml-0", isCompleted && "line-through text-muted-foreground")}>{event.eventName}</TimelineTitle>
+                          <TimelineDescription className="ml-0">{formatDateRange(event.startDate, event.endDate)}</TimelineDescription>
+                        </div>
+                        <Badge variant={getCategoryBadgeVariant(event.category)} className="ml-auto self-start">{event.category}</Badge>
+                      </div>
+                  </TimelineHeader>
+                  <div className="ml-16 pl-1 pt-2 space-y-3">
+                    <p className="text-sm text-muted-foreground">{event.description}</p>
+                    {contextualLink && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={contextualLink.href}>
+                          <contextualLink.icon className="mr-2 h-4 w-4" />
+                          {contextualLink.label}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                </TimelineBody>
+              </TimelineItem>
+            );
+          })}
+        </Timeline>
 
         {result.generalAdvice && (
-          <Alert variant="default" className="mt-6 bg-accent/50 border-accent">
-            <MessageSquare className="h-5 w-5 text-primary" />
-            <AlertTitle className="font-semibold text-primary text-base leading-snug">General Advice</AlertTitle>
-            <AlertDescription className="text-sm whitespace-pre-line leading-normal">{result.generalAdvice}</AlertDescription>
-          </Alert>
+          <Alert variant="default" className="mt-6 bg-accent/50 border-accent"><MessageSquare className="h-5 w-5 text-primary" /><AlertTitle className="font-semibold text-primary">General Advice</AlertTitle><AlertDescription className="whitespace-pre-line">{result.generalAdvice}</AlertDescription></Alert>
         )}
 
-        <Alert variant="default" className="mt-4">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <AlertTitle className="font-semibold text-primary text-base leading-snug">Disclaimer</AlertTitle>
-          <AlertDescription className="text-xs leading-normal">
-            This farming calendar is AI-generated and provides general guidance. Actual timings may vary based on specific micro-climatic conditions, soil health, pest/disease pressure, and chosen crop variety. Always adapt to your local conditions and consult with local agricultural experts.
-          </AlertDescription>
-        </Alert>
+        <Alert variant="default" className="mt-4"><Sparkles className="h-4 w-4 text-primary" /><AlertTitle className="font-semibold text-primary">Disclaimer</AlertTitle><AlertDescription className="text-xs">This AI-generated calendar provides general guidance. Actual timings may vary based on local conditions. Always adapt to your specific farm environment.</AlertDescription></Alert>
       </CardContent>
     </Card>
   );

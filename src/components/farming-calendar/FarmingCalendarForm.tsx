@@ -17,10 +17,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { Loader2, CalendarIcon, MapPin, Trees, Leaf, CheckSquare } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { format as formatDateFns } from 'date-fns'; // Renamed to avoid conflict
+import { format as formatDateFns } from 'date-fns';
 
 interface FarmingCalendarFormProps {
   onCalendarResult: (result: FarmingCalendarOutput | null) => void;
+  onFormSubmit: (inputs: FarmingCalendarFormData) => void;
   onLoading: (loading: boolean) => void;
   onError: (error: string | null) => void;
 }
@@ -28,7 +29,7 @@ interface FarmingCalendarFormProps {
 const soilTypes = ["Loamy", "Sandy", "Clay", "Silt", "Peaty", "Chalky", "Not Sure"] as const;
 const farmingPractices = ["Conventional", "Organic", "Integrated Pest Management (IPM)", "Other"] as const;
 
-export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: FarmingCalendarFormProps) {
+export function FarmingCalendarForm({ onCalendarResult, onFormSubmit, onLoading, onError }: FarmingCalendarFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -39,7 +40,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
     defaultValues: {
       cropName: '',
       location: '',
-      plantingDate: undefined, // Initialize as undefined for SSR
+      plantingDate: undefined,
       soilType: undefined,
       farmingPractice: undefined,
     },
@@ -47,8 +48,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
 
   useEffect(() => {
     setIsClient(true);
-    // Set client-side default after mount
-     if (form.getValues('plantingDate') === undefined) {
+    if (form.getValues('plantingDate') === undefined) {
       form.setValue('plantingDate', new Date());
     }
   }, [form]);
@@ -67,9 +67,10 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
     onLoading(true);
     onError(null);
     onCalendarResult(null);
+    onFormSubmit(data);
 
     try {
-      const aiInput = formatDataForAI(data as FarmingCalendarFormData & { plantingDate: Date }); // Cast because we ensured it
+      const aiInput = formatDataForAI(data as FarmingCalendarFormData & { plantingDate: Date });
       const result = await generateFarmingCalendar(aiInput);
       onCalendarResult(result);
       toast({
@@ -186,7 +187,7 @@ export function FarmingCalendarForm({ onCalendarResult, onLoading, onError }: Fa
                             mode="single"
                             selected={field.value}
                             onSelect={(date) => {
-                                field.onChange(date);
+                                if (date) field.onChange(date);
                                 setIsCalendarOpen(false);
                             }}
                             initialFocus
