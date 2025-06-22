@@ -269,14 +269,11 @@ export default function CropHealthAnalysisPage() {
                 <p className={`text-xl font-bold ${diseaseResult.isDiseased && diseaseResult.diseaseName !== "Unable to Diagnose" ? 'text-destructive' : (diseaseResult.diseaseName === "Unable to Diagnose" ? 'text-amber-600' : 'text-green-600')}`}>{diseaseResult.diseaseName}</p>
               </div>
               {diseaseResult.isDiseased && diseaseResult.diseaseName !== "Unable to Diagnose" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs font-semibold text-muted-foreground">Confidence</Label>
-                    <div className="flex items-center gap-2 mt-1"><Progress value={diseaseResult.confidence * 100} className="w-full h-2.5" /><span className="text-sm font-semibold text-primary">{(diseaseResult.confidence * 100).toFixed(0)}%</span></div>
-                  </div>
-                   <div>
-                    <Label className="text-xs font-semibold text-muted-foreground">Severity</Label>
-                    <div className="flex items-center gap-2 mt-1"><Progress value={severityValue} className="w-full h-2.5" /><span className="text-sm font-semibold text-primary">{diseaseResult.severity}</span></div>
+                <div>
+                  <Label className="text-xs font-semibold text-muted-foreground">Severity</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Progress value={severityValue} className="w-full h-2.5" />
+                    <span className="text-sm font-semibold text-primary">{diseaseResult.severity}</span>
                   </div>
                 </div>
               )}

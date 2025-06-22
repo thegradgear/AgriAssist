@@ -52,7 +52,7 @@ Based on the visual symptoms in the image:
 2.  **diseaseName**: If diseased, identify the common name. If healthy, set to "Appears Healthy".
 3.  **confidence**: Provide a confidence score (0.0-1.0) for the diagnosis.
 4.  **severity**: If diseased, estimate the infection severity as 'Low', 'Medium', or 'High' based on the extent of symptoms visible. If healthy or unable to diagnose, set to 'N/A'.
-5.  **detectionExplanation**: Provide a detailed, step-by-step explanation of the key visual symptoms observed (e.g., "Step 1: Observed yellow, circular spots on the lower leaves. Step 2: Some spots show a 'halo' effect, typical of early blight...") that led to your conclusion.
+5.  **detectionExplanation**: Provide a detailed, step-by-step explanation of the key visual symptoms observed (e.g., "Step 1: Observed yellow, circular spots on the lower leaves. Step 2: Some spots show a 'halo' effect, typical of early blight...") that led to your conclusion. Each step must be on a new line, separated by a newline character.
 6.  **remedies**: Provide a list of actionable remedies. For each remedy, be specific. For example: "Organic Remedy: Spray a solution of neem oil (2ml per liter of water) every 7-10 days." or "Chemical Remedy: Apply a copper-based fungicide, such as Mancozeb, following label instructions."
 
 If the image quality is poor or it's not a plant, set 'isDiseased' to false, 'diseaseName' to "Unable to Diagnose", confidence to 0, severity to "N/A", and explain the issue in 'detectionExplanation'.

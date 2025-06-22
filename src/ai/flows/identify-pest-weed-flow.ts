@@ -52,7 +52,7 @@ Based on the image and notes, perform the following:
 2.  **commonName**: Provide the common name. If unknown, state "Unable to Identify".
 3.  **scientificName**: Provide the scientific name if known.
 4.  **isHarmful**: Set to true if it is a common pest or weed.
-5.  **detectionExplanation**: Provide a detailed, step-by-step explanation of the key visual factors for identification. For a pest, describe its body shape, color, and size. For a weed, describe its leaf shape, flower, and stem.
+5.  **detectionExplanation**: Provide a detailed, step-by-step explanation of the key visual factors for identification. For a pest, describe its body shape, color, and size. For a weed, describe its leaf shape, flower, and stem. Each step must be on a new line, separated by a newline character.
 6.  **managementSolutions**: Provide a list of actionable management solutions. Be specific (e.g., "Manual Removal: Hand-pull weeds before they set seed." or "Biological Control: Introduce ladybugs to control aphid populations."). If it's not harmful, provide helpful facts as the solutions.
 
 If the image quality is too poor, set type to 'UNKNOWN' and name to 'Unable to Identify' and explain why in 'detectionExplanation'.
