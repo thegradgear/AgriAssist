@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { db, addDoc, collection, serverTimestamp } from '@/lib/firebase';
+import { db, addDoc, collection, serverTimestamp, doc, updateDoc } from '@/lib/firebase';
 import type { FarmingCalendarOutput, CalendarEvent } from '@/ai/flows/farming-calendar-flow';
 import type { FarmingCalendarFormData } from '@/schemas/farmingCalendarSchema';
 
@@ -14,8 +14,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineIcon, TimelineTitle, TimelineDescription, TimelineBody } from '@/components/shared/Timeline';
-import { CalendarCheck, Info, AlertTriangle, Sparkles, MessageSquare, Loader2, Save, Microscope, Droplets, ArrowRight } from 'lucide-react';
+import { CalendarCheck, Info, AlertTriangle, Sparkles, MessageSquare, Loader2, Save, Microscope, Droplets, ArrowRight, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -24,13 +35,15 @@ interface FarmingCalendarDisplayProps {
   inputs: FarmingCalendarFormData | null;
   loading: boolean;
   error: string | null;
+  reportId?: string; // Optional: ID if it's a saved report
+  onDelete?: (id: string) => void; // Optional: Callback to handle deletion
 }
 
 export interface FarmingCalendarReport {
   userId: string;
   createdAt: any; 
   inputs: FarmingCalendarFormData;
-  results: FarmingCalendarOutput;
+  results: FarmingCalendarOutput & { completedTasks?: string[] }; // Add completedTasks here
 }
 
 const formatDateRange = (startDateStr: string, endDateStr?: string) => {
@@ -79,23 +92,55 @@ const getContextualLink = (category: CalendarEvent['category']): { href: string;
   }
 };
 
-
-export function FarmingCalendarDisplay({ result, inputs, loading, error }: FarmingCalendarDisplayProps) {
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+export function FarmingCalendarDisplay({ result, inputs, loading, error, reportId, onDelete }: FarmingCalendarDisplayProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set(result?.completedTasks || []));
 
-  const handleTaskToggle = (eventName: string) => {
-    setCompletedTasks(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(eventName)) {
-        newSet.delete(eventName);
-      } else {
-        newSet.add(eventName);
+  // Effect to update local state if the result prop changes (e.g., loading a different saved report)
+  useEffect(() => {
+    setCompletedTasks(new Set(result?.completedTasks || []));
+  }, [result]);
+  
+  const handleTaskToggle = async (eventName: string) => {
+    const newSet = new Set(completedTasks);
+    if (newSet.has(eventName)) {
+      newSet.delete(eventName);
+    } else {
+      newSet.add(eventName);
+    }
+    setCompletedTasks(newSet);
+
+    // If it's a saved report, update it in Firestore
+    if (reportId && user) {
+      try {
+        const reportRef = doc(db, 'users', user.uid, 'farmingCalendars', reportId);
+        await updateDoc(reportRef, {
+          'results.completedTasks': Array.from(newSet),
+        });
+        toast({
+            title: 'Progress Saved',
+            description: `Task "${eventName}" status updated.`,
+            duration: 2000,
+        });
+      } catch (err) {
+        console.error("Failed to update task status:", err);
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: 'Could not save task progress. Please check your connection.',
+        });
+        // Revert local state on failure
+        const revertedSet = new Set(completedTasks);
+        if (revertedSet.has(eventName)) {
+            revertedSet.delete(eventName);
+        } else {
+            revertedSet.add(eventName);
+        }
+        setCompletedTasks(revertedSet);
       }
-      return newSet;
-    });
+    }
   };
   
   const handleSaveCalendar = async () => {
@@ -109,11 +154,14 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error }: Farmi
     }
     setIsSaving(true);
     try {
-      const reportData = {
+      const reportData: Omit<FarmingCalendarReport, 'id'> = {
         userId: user.uid,
         createdAt: serverTimestamp(),
         inputs,
-        results: result,
+        results: {
+            ...result,
+            completedTasks: [], // Initialize with empty completed tasks
+        },
       };
       const reportsCollectionRef = collection(db, 'users', user.uid, 'farmingCalendars');
       await addDoc(reportsCollectionRef, reportData);
@@ -132,7 +180,6 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error }: Farmi
       setIsSaving(false);
     }
   };
-
 
   if (loading) {
     return (
@@ -153,6 +200,9 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error }: Farmi
   }
 
   if (!result || !result.schedule || result.schedule.length === 0) {
+    // Don't show anything if it's part of a saved list with no results
+    if (reportId) return null;
+
     return (
       <Card className="shadow-lg">
         <CardHeader><CardTitle className="flex items-center"><CalendarCheck className="mr-2 h-5 w-5 text-primary" />Farming Schedule</CardTitle><CardDescription>Your personalized farming calendar will appear here.</CardDescription></CardHeader>
@@ -169,10 +219,29 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error }: Farmi
                 <CardTitle className="flex items-center"><CalendarCheck className="mr-2 h-5 w-5 text-primary" />Farming Calendar for {result.cropName}</CardTitle>
                 <CardDescription>Location: {result.location} | Approx. Planting: {formatDateRange(result.plantingDate)}</CardDescription>
             </div>
-             {user && (
+             {user && !reportId && (
               <Button onClick={handleSaveCalendar} disabled={isSaving} size="sm">
                 {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : <><Save className="mr-2 h-4 w-4" />Save Calendar</>}
               </Button>
+            )}
+            {reportId && onDelete && (
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="ml-auto"><Trash2 className="mr-2 h-4 w-4"/>Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete this farming calendar.
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(reportId)}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             )}
         </div>
       </CardHeader>
@@ -189,7 +258,12 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error }: Farmi
                   <TimelineHeader>
                     <TimelineIcon><CalendarCheck className="h-4 w-4" /></TimelineIcon>
                      <div className="flex items-center gap-4 ml-8 w-full">
-                        <Checkbox id={`task-${index}`} checked={isCompleted} onCheckedChange={() => handleTaskToggle(event.eventName)} className="h-5 w-5"/>
+                        <Checkbox 
+                            id={`task-${reportId || 'new'}-${index}`} 
+                            checked={isCompleted} 
+                            onCheckedChange={() => handleTaskToggle(event.eventName)} 
+                            className="h-5 w-5"
+                        />
                         <div className="flex-1">
                           <TimelineTitle className={cn("ml-0", isCompleted && "line-through text-muted-foreground")}>{event.eventName}</TimelineTitle>
                           <TimelineDescription className="ml-0">{formatDateRange(event.startDate, event.endDate)}</TimelineDescription>

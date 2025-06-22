@@ -4,24 +4,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, collection, query, orderBy, getDocs, deleteDoc, doc } from '@/lib/firebase';
-import type { FarmingCalendarReport } from '@/components/farming-calendar/FarmingCalendarDisplay';
+import { FarmingCalendarDisplay, type FarmingCalendarReport } from '@/components/farming-calendar/FarmingCalendarDisplay';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trash2, Calendar, MapPin, Trees, Info, CalendarCheck } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { Calendar, MapPin, Trees, Info } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface ReportWithId extends FarmingCalendarReport {
   id: string;
@@ -54,8 +42,13 @@ export function SavedFarmingCalendars() {
             createdAt: data.createdAt?.toDate(),
             inputs: {
               ...data.inputs,
-              plantingDate: data.inputs.plantingDate?.toDate(),
+              // Handle both Timestamp and string date formats for plantingDate
+              plantingDate: data.inputs.plantingDate?.toDate ? data.inputs.plantingDate.toDate() : new Date(data.inputs.plantingDate),
             },
+            results: {
+              ...data.results,
+              completedTasks: data.results.completedTasks || [],
+            }
           } as ReportWithId;
         });
         setReports(fetchedReports);
@@ -122,41 +115,14 @@ export function SavedFarmingCalendars() {
             </div>
           </AccordionTrigger>
           <AccordionContent>
-            <div className="p-4 bg-muted/50 rounded-md space-y-4">
-               <h4 className="font-semibold text-lg">Calendar Summary</h4>
-               <ul className="space-y-2 text-sm">
-                {report.results.schedule.slice(0, 3).map((event, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                        <CalendarCheck className="h-4 w-4 text-primary shrink-0" />
-                        <span><strong>{event.eventName}:</strong> {format(parseISO(event.startDate), "MMM d")}</span>
-                    </li>
-                ))}
-                {report.results.schedule.length > 3 && (
-                     <li className="flex items-center gap-2 text-muted-foreground">
-                        ... and {report.results.schedule.length - 3} more activities.
-                    </li>
-                )}
-               </ul>
-               <div className="border-t pt-4">
-                   <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/>Delete Calendar</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete this farming calendar from our servers.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(report.id)}>Continue</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
-               </div>
-            </div>
+             <FarmingCalendarDisplay 
+                result={report.results}
+                inputs={report.inputs}
+                loading={false}
+                error={null}
+                reportId={report.id}
+                onDelete={handleDelete}
+             />
           </AccordionContent>
         </AccordionItem>
       ))}
