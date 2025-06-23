@@ -39,6 +39,24 @@ const DigitizeSoilCardOutputSchema = z.object({
 });
 export type DigitizeSoilCardOutput = z.infer<typeof DigitizeSoilCardOutputSchema>;
 
+// Define a specific return type for the server action wrapper
+export type DigitizeSoilCardServerActionOutput = 
+  | { success: true; data: DigitizeSoilCardOutput }
+  | { success: false; error: string };
+
+
+// The wrapper function now returns the new type and handles errors
+export async function digitizeSoilCard(input: DigitizeSoilCardInput): Promise<DigitizeSoilCardServerActionOutput> {
+  try {
+    const data = await digitizeSoilCardFlow(input);
+    return { success: true, data };
+  } catch (e: any) {
+    // Log the full error on the server for debugging, but only return the message
+    console.error("Error in digitizeSoilCardFlow:", e);
+    return { success: false, error: e.message || "An unknown error occurred during card digitization." };
+  }
+}
+
 
 // NEW: Image Validation Schema and Prompt
 const ImageValidationSchema = z.object({
@@ -271,10 +289,6 @@ Row 12 (Available Copper): What number is in the Test Value column?
 
 Extract only the numerical values from the Test Value column.`,
 });
-
-export async function digitizeSoilCard(input: DigitizeSoilCardInput): Promise<DigitizeSoilCardOutput> {
-  return digitizeSoilCardFlow(input);
-}
 
 const digitizeSoilCardFlow = ai.defineFlow(
   {

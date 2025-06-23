@@ -166,32 +166,38 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
     setIsScanning(true);
     
     try {
-      const photoDataUri = await fileToDataUri(imageFile);
-      const result = await digitizeSoilCard({ photoDataUri });
-      
-      let fieldsUpdatedCount = 0;
-      if (result.nitrogen !== undefined) { form.setValue('nitrogen', result.nitrogen, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.phosphorus !== undefined) { form.setValue('phosphorus', result.phosphorus, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.potassium !== undefined) { form.setValue('potassium', result.potassium, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.ph !== undefined) { form.setValue('ph', result.ph, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.ec !== undefined) { form.setValue('ec', result.ec, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.organicCarbon !== undefined) { form.setValue('organicCarbon', result.organicCarbon, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.sulphur !== undefined) { form.setValue('sulphur', result.sulphur, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.zinc !== undefined) { form.setValue('zinc', result.zinc, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.boron !== undefined) { form.setValue('boron', result.boron, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.iron !== undefined) { form.setValue('iron', result.iron, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.manganese !== undefined) { form.setValue('manganese', result.manganese, { shouldValidate: true }); fieldsUpdatedCount++; }
-      if (result.copper !== undefined) { form.setValue('copper', result.copper, { shouldValidate: true }); fieldsUpdatedCount++; }
+        const photoDataUri = await fileToDataUri(imageFile);
+        const result = await digitizeSoilCard({ photoDataUri });
+        
+        if (result.success) {
+            const data = result.data;
+            let fieldsUpdatedCount = 0;
+            if (data.nitrogen !== undefined) { form.setValue('nitrogen', data.nitrogen, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.phosphorus !== undefined) { form.setValue('phosphorus', data.phosphorus, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.potassium !== undefined) { form.setValue('potassium', data.potassium, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.ph !== undefined) { form.setValue('ph', data.ph, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.ec !== undefined) { form.setValue('ec', data.ec, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.organicCarbon !== undefined) { form.setValue('organicCarbon', data.organicCarbon, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.sulphur !== undefined) { form.setValue('sulphur', data.sulphur, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.zinc !== undefined) { form.setValue('zinc', data.zinc, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.boron !== undefined) { form.setValue('boron', data.boron, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.iron !== undefined) { form.setValue('iron', data.iron, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.manganese !== undefined) { form.setValue('manganese', data.manganese, { shouldValidate: true }); fieldsUpdatedCount++; }
+            if (data.copper !== undefined) { form.setValue('copper', data.copper, { shouldValidate: true }); fieldsUpdatedCount++; }
 
-      if (fieldsUpdatedCount > 0) {
-        toast({ title: 'Scan Successful', description: `${fieldsUpdatedCount} field(s) have been automatically filled.` });
-      } else {
-         toast({ variant: 'destructive', title: 'No Data Found', description: 'Could not extract any soil data from the image. Please try a clearer image or enter values manually.' });
-      }
-
-    } catch (error: any) {
-        console.error("Soil card digitization error:", error);
-        toast({ variant: 'destructive', title: 'Scan Failed', description: error.message || 'Could not process the image. Please try again.' });
+            if (fieldsUpdatedCount > 0) {
+                toast({ title: 'Scan Successful', description: `${fieldsUpdatedCount} field(s) have been automatically filled.` });
+            } else {
+                toast({ variant: 'destructive', title: 'No Data Found', description: 'Could not extract any soil data from the image. Please try a clearer image or enter values manually.' });
+            }
+        } else {
+            // Handle the structured error from the server action
+            toast({ variant: 'destructive', title: 'Scan Failed', description: result.error });
+        }
+    } catch (e: any) {
+        // Handle unexpected system/network errors
+        console.error("An unexpected error occurred during scan:", e);
+        toast({ variant: 'destructive', title: 'Scan Error', description: "An unexpected error occurred. Please check your connection and try again." });
     } finally {
         setIsScanning(false);
     }
