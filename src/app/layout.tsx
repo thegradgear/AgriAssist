@@ -8,6 +8,10 @@ import { ThemeProvider } from "next-themes";
 export const metadata: Metadata = {
   title: 'AgriAssist',
   description: 'Intelligent farming assistance for Indian farmers.',
+  icons: {
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%232D7A2D'><path d='M11 20A7 7 0 0 1 4 13H2a10 10 0 0 0 10 10zM2 13h2a7 7 0 0 1 7-7V4a10 10 0 0 0-10 10zM22 4h-2a7 7 0 0 0-7 7v2a10 10 0 0 1 10-10z'/></svg>",
+  },
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({
