@@ -1,4 +1,3 @@
-
 // src/components/crop-recommendation/CropRecommendationForm.tsx
 'use client';
 
@@ -213,21 +212,75 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
              Automate with Soil Health Card
            </CardTitle>
            <CardDescription>
-             Upload an image of your Soil Health Card to automatically fill in the soil parameter values below.
+             Upload a clear image of your Soil Health Card, then click scan to autofill the soil parameters below.
            </CardDescription>
          </CardHeader>
-         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-           <div className="space-y-4">
-             <Input
-                id="soil-card-image"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleImageChange}
-                ref={fileInputRef}
-                className="block w-full h-auto py-0 text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                disabled={isScanning}
-                suppressHydrationWarning
-              />
+         <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              {/* Uploader Column */}
+              <div
+                className="relative flex flex-col justify-center items-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background/50 hover:bg-background/70 transition-colors"
+                onClick={() => !isScanning && fileInputRef.current?.click()}
+              >
+                <input
+                  id="soil-card-image"
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleImageChange}
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={isScanning}
+                />
+                <div className="text-center">
+                  <UploadCloud className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm font-semibold text-primary">
+                    Click to upload an image
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PNG, JPG, or WEBP (max 5MB)
+                  </p>
+                </div>
+              </div>
+              
+              {/* Preview Column */}
+              <div className="relative group w-full h-48">
+                {imagePreviewUrl ? (
+                  <>
+                    <Image
+                      src={imagePreviewUrl}
+                      alt="Soil health card preview"
+                      layout="fill"
+                      objectFit="contain"
+                      className="rounded-md border bg-background"
+                      data-ai-hint="soil health card"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity h-7 w-7"
+                      onClick={handleRemoveImage}
+                      aria-label="Remove image"
+                      disabled={isScanning}
+                      suppressHydrationWarning
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full border-2 border-dashed rounded-lg bg-muted/50">
+                    <div className="text-center text-muted-foreground">
+                      <ScanLine className="mx-auto h-8 w-8 mb-2" />
+                      <p className="text-sm">Image Preview</p>
+                      <p className="text-xs">Your upload will appear here</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Scan Button */}
+            <div className="pt-2">
               <Button onClick={handleScanCard} className="w-full" disabled={!imageFile || isScanning} suppressHydrationWarning>
                 {isScanning ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning Card...</>
@@ -235,40 +288,7 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
                   <><ScanLine className="mr-2 h-4 w-4" /> Scan Card & Fill Form</>
                 )}
               </Button>
-           </div>
-            <div className="relative group">
-              {imagePreviewUrl ? (
-                <>
-                  <Image
-                    src={imagePreviewUrl}
-                    alt="Soil health card preview"
-                    width={400}
-                    height={250}
-                    className="rounded-md object-contain max-h-[250px] w-full border bg-background"
-                    data-ai-hint="soil health card"
-                  />
-                  <Button 
-                    type="button" 
-                    variant="destructive" 
-                    size="icon" 
-                    className="absolute top-2 right-2 opacity-50 group-hover:opacity-100 transition-opacity h-7 w-7"
-                    onClick={handleRemoveImage}
-                    aria-label="Remove image"
-                    disabled={isScanning}
-                    suppressHydrationWarning
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                 <div className="flex items-center justify-center w-full h-48 border-2 border-dashed rounded-lg bg-muted/50">
-                   <div className="text-center text-muted-foreground">
-                     <UploadCloud className="mx-auto h-10 w-10 mb-2" />
-                     <p className="text-sm">Image Preview</p>
-                   </div>
-                 </div>
-              )}
-           </div>
+            </div>
          </CardContent>
        </Card>
 
