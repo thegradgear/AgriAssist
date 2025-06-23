@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -20,27 +19,23 @@ export default function FarmingCalendarPage() {
         title="Personalized Farming Calendar"
         description="Get a customized schedule for planting, fertilizing, and harvesting your crops."
       />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div>
-          <FarmingCalendarForm
-            onCalendarResult={(result) => {
-              setCalendarResult(result);
-              // Clear previous inputs if result is null (e.g. on error)
-              if (!result) setFormInputs(null);
-            }}
-            onFormSubmit={setFormInputs}
-            onLoading={setIsLoading}
-            onError={setError}
-          />
-        </div>
-        <div className="lg:sticky lg:top-24">
-          <FarmingCalendarDisplay 
-            result={calendarResult} 
-            inputs={formInputs}
-            loading={isLoading} 
-            error={error} 
-          />
-        </div>
+      <div className="grid grid-cols-1 gap-8 items-start">
+        <FarmingCalendarForm
+          onCalendarResult={(result) => {
+            setCalendarResult(result);
+            // Clear previous inputs if result is null (e.g. on error)
+            if (!result) setFormInputs(null);
+          }}
+          onFormSubmit={setFormInputs}
+          onLoading={setIsLoading}
+          onError={setError}
+        />
+        <FarmingCalendarDisplay 
+          result={calendarResult} 
+          inputs={formInputs}
+          loading={isLoading} 
+          error={error} 
+        />
       </div>
     </div>
   );
