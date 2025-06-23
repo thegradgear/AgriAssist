@@ -15,11 +15,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { useState, useRef, type ChangeEvent, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, ScanLine, UploadCloud, Sparkles, XCircle } from 'lucide-react';
+import { Loader2, ScanLine, UploadCloud, Sparkles, XCircle, Camera, Video } from 'lucide-react';
 import Image from 'next/image';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface CropRecommendationFormProps {
-  onRecommendationResult: (result: CropRecommendationOutput) => void;
+  onRecommendationResult: (result: CropRecommendationOutput | null) => void;
   onRecommendationLoading: (loading: boolean) => void;
 }
 
@@ -37,13 +45,48 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
   const [isLoading, setIsLoading] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  useEffect(() => {
+    if (isCameraOpen) {
+      const getCameraPermission = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          setHasCameraPermission(true);
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description: 'Please enable camera permissions in your browser settings.',
+          });
+        }
+      };
+      getCameraPermission();
+    } else {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+    }
+  }, [isCameraOpen, toast]);
 
   const form = useForm<CropRecommendationFormData>({
     resolver: zodResolver(cropRecommendationSchema),
@@ -66,19 +109,23 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
     },
   });
 
+  const processFile = (file: File) => {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Please upload a JPG, PNG, or WEBP image.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'File Too Large', description: 'Please upload an image smaller than 5MB.' });
+      return;
+    }
+    setImageFile(file);
+    setImagePreviewUrl(URL.createObjectURL(file));
+  };
+
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-       if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        toast({ variant: 'destructive', title: 'Invalid File Type', description: 'Please upload a JPG, PNG, or WEBP image.' });
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) { 
-         toast({ variant: 'destructive', title: 'File Too Large', description: 'Please upload an image smaller than 5MB.' });
-        return;
-      }
-      setImageFile(file);
-      setImagePreviewUrl(URL.createObjectURL(file));
+      processFile(file);
     }
   };
   
@@ -90,9 +137,29 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
     }
   };
   
+  const handleCapture = () => {
+    if (videoRef.current && canvasRef.current) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        if (context) {
+            context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            canvas.toBlob(blob => {
+              if (blob) {
+                 const capturedFile = new File([blob], "capture.jpg", { type: "image/jpeg" });
+                 processFile(capturedFile);
+              }
+            }, 'image/jpeg', 0.95);
+        }
+        setIsCameraOpen(false);
+    }
+  };
+
   const handleScanCard = async () => {
     if (!imageFile) {
-      toast({ variant: 'destructive', title: 'No Image', description: 'Please upload an image of your Soil Health Card first.' });
+      toast({ variant: 'destructive', title: 'No Image', description: 'Please upload or capture an image of your Soil Health Card first.' });
       return;
     }
     
@@ -212,74 +279,58 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
              Automate with Soil Health Card
            </CardTitle>
            <CardDescription>
-             Upload a clear image of your Soil Health Card, then click scan to autofill the soil parameters below.
+             Upload or capture an image of your Soil Health Card, then scan to autofill the soil parameters below.
            </CardDescription>
          </CardHeader>
          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              {/* Uploader Column */}
-              <div
-                className="relative flex flex-col justify-center items-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background/50 hover:bg-background/70 transition-colors"
-                onClick={() => !isScanning && fileInputRef.current?.click()}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label
+                htmlFor="soil-card-upload"
+                className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-background/50 hover:bg-background/70 transition-colors"
               >
-                <input
-                  id="soil-card-image"
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handleImageChange}
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={isScanning}
-                />
-                <div className="text-center">
-                  <UploadCloud className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-sm font-semibold text-primary">
-                    Click to upload an image
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    PNG, JPG, or WEBP (max 5MB)
-                  </p>
+                <div className="flex flex-col items-center justify-center">
+                  <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                  <p className="text-sm text-foreground font-semibold">Upload from File</p>
                 </div>
-              </div>
-              
-              {/* Preview Column */}
-              <div className="relative group w-full h-48">
-                {imagePreviewUrl ? (
-                  <>
-                    <Image
-                      src={imagePreviewUrl}
-                      alt="Soil health card preview"
-                      layout="fill"
-                      objectFit="contain"
-                      className="rounded-md border bg-background"
-                      data-ai-hint="soil health card"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity h-7 w-7"
-                      onClick={handleRemoveImage}
-                      aria-label="Remove image"
-                      disabled={isScanning}
-                      suppressHydrationWarning
-                    >
-                      <XCircle className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full border-2 border-dashed rounded-lg bg-muted/50">
-                    <div className="text-center text-muted-foreground">
-                      <ScanLine className="mx-auto h-8 w-8 mb-2" />
-                      <p className="text-sm">Image Preview</p>
-                      <p className="text-xs">Your upload will appear here</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+                <input id="soil-card-upload" type="file" className="hidden" ref={fileInputRef} onChange={handleImageChange} accept="image/jpeg,image/png,image/webp" disabled={isScanning || isCameraOpen} />
+              </label>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="h-24 text-base"
+                onClick={() => setIsCameraOpen(true)}
+                disabled={isScanning || isCameraOpen}
+              >
+                <Camera className="mr-2 h-6 w-6"/> Use Camera
+              </Button>
             </div>
+
+            {imagePreviewUrl && (
+              <div className="relative group w-full max-w-md mx-auto">
+                <Image
+                  src={imagePreviewUrl}
+                  alt="Soil health card preview"
+                  width={400}
+                  height={250}
+                  className="rounded-md border bg-background object-contain w-full"
+                  data-ai-hint="soil health card"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity h-7 w-7"
+                  onClick={handleRemoveImage}
+                  aria-label="Remove image"
+                  disabled={isScanning}
+                  suppressHydrationWarning
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             
-            {/* Scan Button */}
             <div className="pt-2">
               <Button onClick={handleScanCard} className="w-full" disabled={!imageFile || isScanning} suppressHydrationWarning>
                 {isScanning ? (
@@ -439,6 +490,32 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
           </form>
         </Form>
       </Card>
+      
+      <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Live Camera</DialogTitle>
+                <DialogDescription>Position your Soil Health Card in the frame and click capture.</DialogDescription>
+            </DialogHeader>
+            <div className="relative">
+                <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
+                <canvas ref={canvasRef} className="hidden" />
+                 {hasCameraPermission === false && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white p-4 rounded-md">
+                        <Video className="h-12 w-12 mb-4"/>
+                        <p className="text-lg font-semibold">Camera Access Denied</p>
+                        <p className="text-sm text-center">Please enable camera permissions in your browser settings to use this feature.</p>
+                    </div>
+                 )}
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCameraOpen(false)} suppressHydrationWarning>Cancel</Button>
+                <Button onClick={handleCapture} disabled={!hasCameraPermission} suppressHydrationWarning>
+                    <Camera className="mr-2 h-4 w-4" /> Capture Photo
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
