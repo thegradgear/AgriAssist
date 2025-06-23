@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { indianStatesAndDistricts } from '@/lib/indian-states-districts';
 
@@ -29,6 +30,11 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [districts, setDistricts] = useState<string[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const form = useForm<YieldPredictionFormData>({
     resolver: zodResolver(yieldPredictionSchema),
@@ -81,6 +87,52 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
       setIsLoading(false);
       onPredictionLoading(false);
     }
+  }
+
+  if (!isClient) {
+    return (
+      <Card className="shadow-lg animate-pulse">
+        <CardHeader>
+          <Skeleton className="h-7 w-3/5" />
+          <Skeleton className="h-5 w-4/5 mt-2" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="md:col-span-2 space-y-2">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Skeleton className="h-10 w-full" />
+        </CardFooter>
+      </Card>
+    );
   }
 
   return (

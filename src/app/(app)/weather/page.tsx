@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Coordinates {
   latitude: number;
@@ -30,6 +31,78 @@ const capitalizeWords = (str: string) => {
   if (!str) return '';
   return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 };
+
+const WeatherPageSkeleton = () => (
+    <div className="container mx-auto animate-pulse">
+      <PageHeader
+        title="Weather Forecasts"
+        description="Get detailed current, hourly, and 5-day weather forecasts for any location."
+      />
+      
+      <Card className="mb-8">
+        <CardHeader>
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-5 w-72 mt-1" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-10 flex-grow" />
+              <Skeleton className="h-10 w-10 rounded-md" />
+              <Skeleton className="h-10 w-10 rounded-md" />
+            </div>
+             <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <div className="flex flex-wrap gap-2">
+                    <Skeleton className="h-7 w-24 rounded-full" />
+                    <Skeleton className="h-7 w-32 rounded-full" />
+                </div>
+            </div>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-9 w-24 rounded-md" />
+                <Skeleton className="h-9 w-32 rounded-md" />
+            </div>
+            <Skeleton className="h-9 w-36 rounded-md" />
+        </div>
+        
+        {/* Current Weather Skeleton */}
+        <Card>
+            <CardHeader className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <Skeleton className="h-8 w-48 rounded-md" />
+                        <Skeleton className="h-5 w-64 rounded-md mt-2" />
+                    </div>
+                    <Skeleton className="h-20 w-20 rounded-full" />
+                </div>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                 <div className="flex flex-col items-center sm:items-start p-4 bg-muted/50 rounded-md">
+                    <Skeleton className="h-10 w-32 rounded-md" />
+                    <Skeleton className="h-6 w-24 rounded-md mt-2" />
+                    <Skeleton className="h-4 w-28 rounded-md mt-1" />
+                </div>
+                <div className="space-y-3 p-4 bg-muted/50 rounded-md">
+                    <Skeleton className="h-5 w-full rounded-md" />
+                    <Skeleton className="h-5 w-full rounded-md" />
+                    <Skeleton className="h-5 w-full rounded-md" />
+                    <Skeleton className="h-5 w-full rounded-md" />
+                </div>
+            </CardContent>
+        </Card>
+
+        {/* Forecast Skeleton */}
+        <Card>
+            <CardHeader><Skeleton className="h-7 w-48 rounded-md" /></CardHeader>
+            <CardContent><Skeleton className="h-48 w-full rounded-md" /></CardContent>
+        </Card>
+      </div>
+    </div>
+);
 
 export default function WeatherPage() {
   const router = useRouter();
@@ -251,6 +324,10 @@ export default function WeatherPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount
+  
+  if (isLoading && !currentWeather) {
+    return <WeatherPageSkeleton />;
+  }
 
   const isLocationSaved = selectedLocation && savedLocations.some(l => l.name === selectedLocation.name);
 
@@ -302,13 +379,6 @@ export default function WeatherPage() {
             )}
         </CardContent>
       </Card>
-
-      {isLoading && (
-        <div className="text-center py-10">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-muted-foreground">Fetching weather data...</p>
-        </div>
-      )}
 
       {error && !isLoading && (
         <Card className="border-destructive bg-destructive/10">

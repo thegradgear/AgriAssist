@@ -1,3 +1,4 @@
+
 // src/components/crop-recommendation/CropRecommendationForm.tsx
 'use client';
 
@@ -13,7 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef, type ChangeEvent, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, ScanLine, UploadCloud, Sparkles, XCircle } from 'lucide-react';
 import Image from 'next/image';
 
@@ -35,10 +37,14 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const form = useForm<CropRecommendationFormData>({
     resolver: zodResolver(cropRecommendationSchema),
@@ -147,6 +153,55 @@ export function CropRecommendationForm({ onRecommendationResult, onRecommendatio
       setIsLoading(false);
       onRecommendationLoading(false);
     }
+  }
+
+  if (!isClient) {
+    return (
+      <div className="space-y-8 animate-pulse">
+        <Card className="shadow-lg bg-accent/20 border-accent">
+          <CardHeader>
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-full mt-2" />
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-48 w-full rounded-md" />
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <Skeleton className="h-7 w-2/3" />
+            <Skeleton className="h-5 w-4/5 mt-2" />
+          </CardHeader>
+          <CardContent className="space-y-8">
+            <div className="space-y-4">
+                <Skeleton className="h-5 w-1/3" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                </div>
+            </div>
+            <div className="space-y-4">
+                <Skeleton className="h-5 w-1/3" />
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-16 w-full" />
+                </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Skeleton className="h-10 w-1/3" />
+          </CardFooter>
+        </Card>
+      </div>
+    );
   }
 
   return (

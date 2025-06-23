@@ -13,7 +13,8 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Leaf, Eye, EyeOff } from 'lucide-react';
 
 export function LoginForm() {
@@ -21,6 +22,11 @@ export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -48,6 +54,34 @@ export function LoginForm() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (!isClient) {
+    return (
+      <Card className="w-full max-w-md shadow-xl bg-card">
+        <CardHeader className="text-center">
+          <div className="flex justify-center items-center mb-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+          </div>
+          <Skeleton className="h-8 w-48 mx-auto" />
+          <Skeleton className="h-5 w-64 mx-auto mt-2" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <Skeleton className="h-5 w-2/3 mx-auto mt-6" />
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
