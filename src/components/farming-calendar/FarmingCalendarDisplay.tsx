@@ -259,18 +259,26 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
                 <TimelineBody>
                   <TimelineHeader>
                     <TimelineIcon><CalendarCheck className="h-4 w-4" /></TimelineIcon>
-                     <div className="flex items-center gap-4 ml-8 w-full">
+                     <div className="flex items-start gap-3 ml-8 w-full">
                         <Checkbox 
                             id={`task-${reportId || 'new'}-${index}`} 
                             checked={isCompleted} 
                             onCheckedChange={() => handleTaskToggle(event.eventName)} 
-                            className="h-5 w-5"
+                            className="h-5 w-5 mt-1.5 flex-shrink-0"
                         />
-                        <div className="flex-1">
-                          <TimelineTitle className={cn("ml-0", isCompleted && "line-through text-muted-foreground")}>{event.eventName}</TimelineTitle>
-                          <TimelineDescription className="ml-0">{formatDateRange(event.startDate, event.endDate)}</TimelineDescription>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start flex-wrap gap-x-4 gap-y-1">
+                                <TimelineTitle className={cn("ml-0", isCompleted && "line-through text-muted-foreground")}>
+                                    {event.eventName}
+                                </TimelineTitle>
+                                <Badge variant={getCategoryBadgeVariant(event.category)} className="mt-1 flex-shrink-0">
+                                    {event.category}
+                                </Badge>
+                            </div>
+                            <TimelineDescription className="ml-0">
+                                {formatDateRange(event.startDate, event.endDate)}
+                            </TimelineDescription>
                         </div>
-                        <Badge variant={getCategoryBadgeVariant(event.category)} className="ml-auto self-start">{event.category}</Badge>
                       </div>
                   </TimelineHeader>
                   <div className="ml-16 pl-1 pt-2 space-y-3">

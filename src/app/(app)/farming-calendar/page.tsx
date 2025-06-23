@@ -20,7 +20,7 @@ export default function FarmingCalendarPage() {
         title="Personalized Farming Calendar"
         description="Get a customized schedule for planting, fertilizing, and harvesting your crops."
       />
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div>
           <FarmingCalendarForm
             onCalendarResult={(result) => {
@@ -33,7 +33,7 @@ export default function FarmingCalendarPage() {
             onError={setError}
           />
         </div>
-        <div>
+        <div className="lg:sticky lg:top-24">
           <FarmingCalendarDisplay 
             result={calendarResult} 
             inputs={formInputs}
