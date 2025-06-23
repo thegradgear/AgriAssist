@@ -276,7 +276,7 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
                                 <TimelineTitle className={cn("ml-0", isCompleted && "line-through text-muted-foreground")}>
                                     {event.eventName}
                                 </TimelineTitle>
-                                <Badge variant={getCategoryBadgeVariant(event.category)} className="flex-shrink-0 sm:ml-auto">
+                                <Badge variant={getCategoryBadgeVariant(event.category)} className="mr-5 flex-shrink-0 sm:ml-auto">
                                     {event.category}
                                 </Badge>
                             </div>
