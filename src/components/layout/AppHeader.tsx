@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"; 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
@@ -142,21 +141,12 @@ export function AppHeader() {
       <div className="hidden lg:flex lg:flex-1"></div>
 
       <div className="flex items-center gap-3">
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                        <Link href="/saved">
-                            <Bookmark className="h-5 w-5" />
-                            <span className="sr-only">Saved Items</span>
-                        </Link>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Saved Items</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/saved">
+            <Bookmark />
+            <span>Saved</span>
+          </Link>
+        </Button>
 
         <div className="hidden lg:flex"> 
           <ThemeToggle />
