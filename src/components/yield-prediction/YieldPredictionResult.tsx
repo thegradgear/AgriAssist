@@ -2,7 +2,7 @@
 'use client';
 
 import type { YieldPredictionOutput } from '@/ai/flows/yield-prediction';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BarChart3, TrendingUp, AlertTriangle, ChevronsLeftRight } from 'lucide-react';
 
@@ -59,10 +59,10 @@ export function YieldPredictionResult({ result, loading }: YieldPredictionResult
         </div>
         
         {result.riskFactors && (
-            <Alert variant="default" className="bg-amber-500/10 border-amber-500/30">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <AlertTitle className="text-amber-700 font-semibold">Key Risk Factors</AlertTitle>
-                <AlertDescription className="text-amber-700/80">
+            <Alert variant="default" className="bg-warning/10 border-warning/30">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <AlertTitle className="font-semibold text-foreground">Key Risk Factors</AlertTitle>
+                <AlertDescription className="text-xs text-muted-foreground">
                     {result.riskFactors}
                 </AlertDescription>
             </Alert>
@@ -74,12 +74,20 @@ export function YieldPredictionResult({ result, loading }: YieldPredictionResult
             Next Steps
           </h3>
           <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 leading-normal">
-            <li>This prediction is an estimate. Actual yields can vary based on weather, pest pressure, and farm management practices.</li>
             <li>Use this information for planning purposes, such as estimating storage needs and potential revenue.</li>
             <li>Consult local agricultural extension services for more region-specific advice.</li>
           </ul>
         </div>
       </CardContent>
+      <CardFooter className="mt-auto">
+        <Alert variant="default" className="w-full bg-warning/10 border-warning/30">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertTitle className="font-semibold text-foreground">Disclaimer</AlertTitle>
+            <AlertDescription className="text-xs text-muted-foreground">
+                This prediction is an estimate. Actual yields can vary based on weather, pest pressure, and farm management practices.
+            </AlertDescription>
+        </Alert>
+      </CardFooter>
     </Card>
   );
 }

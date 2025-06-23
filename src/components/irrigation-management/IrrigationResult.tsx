@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ChartConfig, ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineIcon, TimelineTitle, TimelineDescription, TimelineBody } from '@/components/shared/Timeline';
-import { Droplets, Info, AlertTriangle, Sparkles, CloudSun, X, Check, Save, Loader2, BarChart2 } from 'lucide-react';
+import { Droplets, Info, AlertTriangle, CloudSun, X, Check, Save, Loader2, BarChart2 } from 'lucide-react';
 import { Button } from '../ui/button';
 
 interface IrrigationResultProps {
@@ -204,10 +204,10 @@ export function IrrigationResult({ result, inputs, loading, error }: IrrigationR
             </CardContent>
         </Card>
 
-        <Alert variant="default" className="mt-4">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <AlertTitle className="font-semibold text-primary">Disclaimer</AlertTitle>
-          <AlertDescription className="text-xs">
+        <Alert variant="default" className="mt-4 bg-warning/10 border-warning/30">
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <AlertTitle className="font-semibold text-foreground">Disclaimer</AlertTitle>
+          <AlertDescription className="text-xs text-muted-foreground">
             This schedule is an AI-generated estimate. Always check soil moisture manually before irrigating. Actual water needs can vary with unforeseen weather changes and specific field conditions.
           </AlertDescription>
         </Alert>

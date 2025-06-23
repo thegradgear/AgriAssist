@@ -26,7 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineIcon, TimelineTitle, TimelineDescription, TimelineBody } from '@/components/shared/Timeline';
-import { CalendarCheck, Info, AlertTriangle, Sparkles, MessageSquare, Loader2, Save, Microscope, Droplets, ArrowRight, Trash2 } from 'lucide-react';
+import { CalendarCheck, Info, AlertTriangle, MessageSquare, Loader2, Save, Microscope, Droplets, ArrowRight, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -295,7 +295,11 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
           <Alert variant="default" className="mt-6 bg-accent/50 border-accent"><MessageSquare className="h-5 w-5 text-primary" /><AlertTitle className="font-semibold text-primary">General Advice</AlertTitle><AlertDescription className="whitespace-pre-line">{result.generalAdvice}</AlertDescription></Alert>
         )}
 
-        <Alert variant="default" className="mt-4"><Sparkles className="h-4 w-4 text-primary" /><AlertTitle className="font-semibold text-primary">Disclaimer</AlertTitle><AlertDescription className="text-xs">This AI-generated calendar provides general guidance. Actual timings may vary based on local conditions. Always adapt to your specific farm environment.</AlertDescription></Alert>
+        <Alert variant="default" className="mt-4 bg-warning/10 border-warning/30">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertTitle className="font-semibold text-foreground">Disclaimer</AlertTitle>
+            <AlertDescription className="text-xs text-muted-foreground">This AI-generated calendar provides general guidance. Actual timings may vary based on local conditions. Always adapt to your specific farm environment.</AlertDescription>
+        </Alert>
       </CardContent>
     </Card>
   );

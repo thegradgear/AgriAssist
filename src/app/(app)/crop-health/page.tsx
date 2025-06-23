@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, type ChangeEvent, type FormEvent, useEffect } from 'react';
@@ -13,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, addDoc, collection, serverTimestamp } from '@/lib/firebase';
-import { UploadCloud, Microscope, Bug, Leaf, CheckCircle, AlertTriangle, Lightbulb, Loader2, Sparkles, XCircle, HelpCircle, Camera, Video, Save } from 'lucide-react';
+import { UploadCloud, Microscope, Bug, Leaf, CheckCircle, AlertTriangle, Lightbulb, Loader2, XCircle, HelpCircle, Camera, Video, Save } from 'lucide-react';
 
 import { diagnoseCropDisease, type DiagnoseCropDiseaseOutput } from '@/ai/flows/diagnose-crop-disease';
 import { identifyPestWeed, type IdentifyPestWeedOutput } from '@/ai/flows/identify-pest-weed-flow';
@@ -427,9 +428,10 @@ export default function CropHealthAnalysisPage() {
         {renderResultCard()}
 
         {(diseaseResult || pestWeedResult) && !isLoading && (
-            <Alert variant="default" className="mt-4 bg-accent/50 border-accent">
-                <Sparkles className="h-4 w-4 text-primary" /><AlertTitle className="font-semibold text-primary text-base">Disclaimer</AlertTitle>
-                <AlertDescription className="text-xs">This AI-powered analysis is for informational purposes only. Always verify with local specialists before making treatment decisions.</AlertDescription>
+            <Alert variant="default" className="mt-4 bg-warning/10 border-warning/30">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <AlertTitle className="font-semibold text-foreground">Disclaimer</AlertTitle>
+                <AlertDescription className="text-xs text-muted-foreground">This AI-powered analysis is for informational purposes only. Always verify with local specialists before making treatment decisions.</AlertDescription>
             </Alert>
         )}
       </div>
