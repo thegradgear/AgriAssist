@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, updateProfile } from 'firebase/auth';
+import { getAuth, updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { 
   getFirestore, 
   doc, 
@@ -48,5 +48,8 @@ export {
     deleteDoc,
     serverTimestamp,
     where,
-    limit
+    limit,
+    EmailAuthProvider,
+    reauthenticateWithCredential,
+    updatePassword
 };

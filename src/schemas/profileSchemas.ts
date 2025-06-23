@@ -10,3 +10,20 @@ export const profileSchema = z.object({
 });
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
+
+
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1, { message: 'Current password is required.' }),
+  newPassword: z.string()
+    .min(8, { message: "Password must be at least 8 characters long." })
+    .regex(/(?=.*[a-z])/, { message: "Must contain at least one lowercase letter." })
+    .regex(/(?=.*[A-Z])/, { message: "Must contain at least one uppercase letter." })
+    .regex(/(?=.*\d)/, { message: "Must contain at least one number." })
+    .regex(/(?=.*[@$!%*?&])/, { message: "Must contain at least one special character." }),
+  confirmNewPassword: z.string(),
+}).refine(data => data.newPassword === data.confirmNewPassword, {
+  message: "New passwords don't match.",
+  path: ['confirmNewPassword'],
+});
+
+export type PasswordChangeFormData = z.infer<typeof passwordChangeSchema>;
