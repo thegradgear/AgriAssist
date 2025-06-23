@@ -51,8 +51,7 @@ export async function digitizeSoilCard(input: DigitizeSoilCardInput): Promise<Di
     const data = await digitizeSoilCardFlow(input);
     return { success: true, data };
   } catch (e: any) {
-    // Log the full error on the server for debugging, but only return the message
-    console.error("Error in digitizeSoilCardFlow:", e);
+    // Return a user-friendly error message
     return { success: false, error: e.message || "An unknown error occurred during card digitization." };
   }
 }
@@ -298,30 +297,24 @@ const digitizeSoilCardFlow = ai.defineFlow(
   },
   async input => {
     // Step 0: Validate the image first
-    console.log('Step 0: Validating image...');
     const validationResult = await imageValidationPrompt(input);
     
     if (!validationResult.output || !validationResult.output.isSoilCard) {
       const reason = validationResult.output?.reason || 'The provided image is not a valid Soil Health Card.';
-      console.error('Image validation failed:', reason);
       // Throw an error that the frontend will catch and display in a toast.
       throw new Error(reason); 
     }
-    console.log('Image validation successful. Proceeding with extraction.');
-
 
     let result: DigitizeSoilCardOutput = {};
     
     // Step 1: Main extraction attempt
-    console.log('Step 1: Attempting main extraction...');
     try {
       const mainResult = await mainExtractionPrompt(input);
       if (mainResult.output) {
         result = { ...mainResult.output };
-        console.log(`Main extraction: ${Object.keys(result).length}/12 fields extracted`);
       }
     } catch (error) {
-      console.error('Main extraction failed:', error);
+      // Main extraction can fail, proceed to next steps
     }
     
     // Step 2: Check for Iron, Manganese, Copper specifically
@@ -331,7 +324,6 @@ const digitizeSoilCardFlow = ai.defineFlow(
     );
     
     if (missingProblematic.length > 0) {
-      console.log(`Step 2: Ultra-focused extraction for problematic micronutrients: ${missingProblematic.join(', ')}`);
       try {
         const microResult = await micronutrientExtractionPrompt(input);
         
@@ -340,10 +332,9 @@ const digitizeSoilCardFlow = ai.defineFlow(
           if (microResult.output.iron !== undefined) result.iron = microResult.output.iron;
           if (microResult.output.manganese !== undefined) result.manganese = microResult.output.manganese;
           if (microResult.output.copper !== undefined) result.copper = microResult.output.copper;
-          console.log(`After micronutrient extraction: ${Object.keys(result).length}/12 fields`);
         }
       } catch (error) {
-        console.error('Micronutrient extraction failed:', error);
+        // Micronutrient extraction can fail, proceed
       }
     }
     
@@ -372,7 +363,6 @@ const digitizeSoilCardFlow = ai.defineFlow(
     }
     
     if (missingFields.length > 0) {
-      console.log(`Step 2b: General focused extraction for remaining fields: ${missingFields.join(', ')}`);
       try {
         const focusedResult = await focusedExtractionPrompt({
           photoDataUri: input.photoDataUri,
@@ -382,10 +372,9 @@ const digitizeSoilCardFlow = ai.defineFlow(
         if (focusedResult.output) {
           // Merge results, preferring focused extraction for missing fields
           result = { ...result, ...focusedResult.output };
-          console.log(`After general focused extraction: ${Object.keys(result).length}/12 fields`);
         }
       } catch (error) {
-        console.error('General focused extraction failed:', error);
+         // Focused extraction can fail, proceed
       }
     }
     
@@ -395,7 +384,6 @@ const digitizeSoilCardFlow = ai.defineFlow(
     );
     
     if (stillMissingProblematic.length > 0) {
-      console.log(`Step 4: Alternative extraction approach for: ${stillMissingProblematic.join(', ')}`);
       try {
         const altResult = await alternativeExtractionPrompt(input);
         if (altResult.output && altResult.output.bottomRowValues && altResult.output.bottomRowValues.length >= 3) {
@@ -404,19 +392,16 @@ const digitizeSoilCardFlow = ai.defineFlow(
           
           if (result.iron === undefined && ironVal !== undefined) {
             result.iron = ironVal;
-            console.log(`Alternative extraction found Iron: ${ironVal}`);
           }
           if (result.manganese === undefined && manganeseVal !== undefined) {
             result.manganese = manganeseVal;
-            console.log(`Alternative extraction found Manganese: ${manganeseVal}`);
           }
           if (result.copper === undefined && copperVal !== undefined) {
             result.copper = copperVal;
-            console.log(`Alternative extraction found Copper: ${copperVal}`);
           }
         }
       } catch (error) {
-        console.error('Alternative extraction failed:', error);
+         // Alt extraction can fail, proceed
       }
     }
     
@@ -429,7 +414,6 @@ const digitizeSoilCardFlow = ai.defineFlow(
     }
     
     if (stillMissing.length > 0) {
-      console.log(`Step 5: Row-by-row extraction for ${stillMissing.length} remaining fields`);
       try {
         const rowResult = await rowByRowPrompt(input);
         if (rowResult.output) {
@@ -454,28 +438,14 @@ const digitizeSoilCardFlow = ai.defineFlow(
               result[key as keyof DigitizeSoilCardOutput] = value;
             }
           }
-          console.log(`After row-by-row extraction: ${Object.keys(result).length}/12 fields`);
         }
       } catch (error) {
-        console.error('Row-by-row extraction failed:', error);
+        // Row-by-row can fail, proceed
       }
     }
     
     // Step 6: Validation and cleanup
     const finalResult = validateAndCleanResults(result);
-    const finalCount = Object.keys(finalResult).length;
-    
-    console.log(`Final results: ${finalCount}/12 fields extracted`);
-    if (finalCount < 12) {
-      const missing = [];
-      for (const [key, label] of Object.entries(fieldMapping)) {
-        if (finalResult[key as keyof DigitizeSoilCardOutput] === undefined) {
-          missing.push(label);
-        }
-      }
-      console.warn(`Missing fields: ${missing.join(', ')}`);
-    }
-    
     return finalResult;
   }
 );
@@ -505,7 +475,6 @@ function validateAndCleanResults(result: DigitizeSoilCardOutput): DigitizeSoilCa
       if (range && value >= range.min && value <= range.max) {
         cleaned[key as keyof DigitizeSoilCardOutput] = value;
       } else if (range) {
-        console.warn(`${key} value ${value} outside expected range ${range.min}-${range.max}`);
         // Still include it but log the warning
         cleaned[key as keyof DigitizeSoilCardOutput] = value;
       } else {

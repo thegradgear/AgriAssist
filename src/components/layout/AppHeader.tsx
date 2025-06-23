@@ -141,13 +141,6 @@ export function AppHeader() {
       <div className="hidden lg:flex lg:flex-1"></div>
 
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/saved">
-            <Bookmark />
-            <span>Saved</span>
-          </Link>
-        </Button>
-
         <div className="hidden lg:flex"> 
           <ThemeToggle />
         </div>
@@ -174,11 +167,18 @@ export function AppHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/saved" className="text-sm"> 
+                  <Bookmark className="mr-2 h-4 w-4" />
+                  <span>Saved Items</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href="/profile" className="text-sm"> 
                   <UserSquare className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-sm text-destructive focus:bg-destructive focus:text-destructive-foreground"> 
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>

@@ -14,7 +14,6 @@ export interface UserProfile {
   email: string | null;
   name: string | null;
   contactNumber?: string;
-  otherDetails?: string;
 }
 
 interface AuthContextType {
@@ -50,7 +49,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             email: firebaseUser.email,
             name: data.name || firebaseUser.displayName,
             contactNumber: data.contactNumber,
-            otherDetails: data.otherDetails,
           });
         } else {
           // User exists in auth but not in Firestore, create a basic profile

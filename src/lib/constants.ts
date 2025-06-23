@@ -1,6 +1,6 @@
 
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, BarChart3, Leaf, CloudSun, BookOpen, Microscope, IndianRupee, CalendarDays, Calculator, Droplets, Bookmark, UserSquare } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Leaf, CloudSun, BookOpen, Microscope, IndianRupee, CalendarDays, Calculator, Droplets, Bookmark } from 'lucide-react';
 
 export interface NavItem {
   href: string;
@@ -19,7 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: '/farming-calendar', label: 'Farming Calendar', icon: CalendarDays, description: "Generate a personalized activity schedule." },
   { href: '/irrigation-management', label: 'Irrigation Management', icon: Droplets, description: "Optimize your watering schedule for 5 days." },
   { href: '/cost-calculator', label: 'Cost Calculator', icon: Calculator, description: "Estimate expenses and potential profits." },
-  { href: ' /weather', label: 'Weather Alerts', icon: CloudSun, description: "Get detailed current and future forecasts." },
+  { href: '/weather', label: 'Weather Alerts', icon: CloudSun, description: "Get detailed current and future forecasts." },
   { href: '/best-practices', label: 'Best Practices', icon: BookOpen, description: "Explore articles and news on innovations." },
-  { href: '/profile', label: 'My Profile', icon: UserSquare, description: "Manage your personal account details." },
+  { href: '/saved', label: 'Saved Items', icon: Bookmark, description: "Review all your saved reports and analyses." },
 ];

@@ -55,7 +55,6 @@ export function SignupForm() {
         name: data.name,
         email: data.email,
         contactNumber: '', // Initialize contactNumber as empty
-        // otherDetails: '', // otherDetails removed
         createdAt: new Date().toISOString(),
       });
       

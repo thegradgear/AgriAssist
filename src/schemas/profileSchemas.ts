@@ -6,7 +6,6 @@ export const profileSchema = z.object({
   contactNumber: z.string().optional().refine(val => !val || /^\+?[1-9]\d{1,14}$/.test(val) || val === '', {
     message: "Invalid phone number format. Should be like +1234567890 or empty.",
   }),
-  // otherDetails field removed
 });
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
