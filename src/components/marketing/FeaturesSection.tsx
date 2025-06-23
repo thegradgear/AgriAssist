@@ -1,4 +1,6 @@
 
+'use client';
+
 import { BarChart3, Leaf, Droplets, BookOpen, Microscope, IndianRupee, CalendarDays, Calculator, CloudSun } from 'lucide-react';
 import { FeatureCard } from './FeatureCard';
 import {
@@ -7,7 +9,10 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel"
+import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 const appFeatures = [
   {
@@ -58,6 +63,28 @@ const appFeatures = [
 ];
 
 export function FeaturesSection() {
+  const [api, setApi] = useState<CarouselApi>()
+  const [current, setCurrent] = useState(0)
+
+  useEffect(() => {
+    if (!api) {
+      return
+    }
+    
+    setCurrent(api.selectedScrollSnap())
+    
+    const onSelect = (api: CarouselApi) => {
+      setCurrent(api.selectedScrollSnap())
+    }
+
+    api.on("select", onSelect)
+    
+    return () => {
+      api.off("select", onSelect)
+    }
+  }, [api])
+
+
   return (
     <section id="features" className="py-16 md:py-24 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -70,6 +97,7 @@ export function FeaturesSection() {
           </p>
         </div>
         <Carousel 
+          setApi={setApi}
           opts={{
             align: "start",
             loop: true,
@@ -89,9 +117,22 @@ export function FeaturesSection() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden sm:flex" />
-          <CarouselNext className="hidden sm:flex" />
+          <CarouselPrevious className="left-2 z-10 bg-background/50 hover:bg-background" />
+          <CarouselNext className="right-2 z-10 bg-background/50 hover:bg-background" />
         </Carousel>
+        <div className="flex items-center justify-center gap-2 mt-8">
+          {appFeatures.map((_, index) => (
+            <button
+                key={index}
+                onClick={() => api?.scrollTo(index)}
+                className={cn(
+                    "h-2 w-2 rounded-full transition-all duration-300",
+                    index === current ? "w-4 bg-primary" : "bg-muted-foreground/50 hover:bg-muted-foreground"
+                )}
+                aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
