@@ -228,7 +228,7 @@ const CalendarWidget = () => {
         )}
       </CardContent>
       <CardContent className="pt-0">
-          <Link href="/farming-calendar" className="text-sm font-medium text-primary flex items-center">
+          <Link href="/saved" className="text-sm font-medium text-primary flex items-center">
             <span className="group-hover:underline">Go to Calendar</span> <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </CardContent>
