@@ -22,7 +22,7 @@ export function HeroSection() {
                   Join AgriAssist Today <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="hover:bg-primary/10 hover:border-primary transition-all duration-300">
+              <Button size="lg" variant="outline" asChild className="hover:bg-primary/10 hover:border-primary hover:text-primary transition-all duration-300">
                 <Link href="#features">Explore Features</Link>
               </Button>
             </div>
