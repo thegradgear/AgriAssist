@@ -1,12 +1,9 @@
-
 'use client';
 
 import { useState, useRef, type ChangeEvent, type FormEvent, useEffect } from 'react';
 import Image from 'next/image';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -265,12 +262,12 @@ export default function CropHealthAnalysisPage() {
             </CardHeader>
             <CardContent className="space-y-5">
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">Status</Label>
+                <p className="text-xs font-semibold text-muted-foreground">Status</p>
                 <p className={`text-xl font-bold ${diseaseResult.isDiseased && diseaseResult.diseaseName !== "Unable to Diagnose" ? 'text-destructive' : (diseaseResult.diseaseName === "Unable to Diagnose" ? 'text-amber-600' : 'text-green-600')}`}>{diseaseResult.diseaseName}</p>
               </div>
               {diseaseResult.isDiseased && diseaseResult.diseaseName !== "Unable to Diagnose" && (
                 <div>
-                  <Label className="text-xs font-semibold text-muted-foreground">Severity</Label>
+                  <p className="text-xs font-semibold text-muted-foreground">Severity</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Progress value={severityValue} className="w-full h-2.5" />
                     <span className="text-sm font-semibold text-primary">{diseaseResult.severity}</span>
@@ -278,13 +275,13 @@ export default function CropHealthAnalysisPage() {
                 </div>
               )}
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">Detection Explanation</Label>
+                <p className="text-xs font-semibold text-muted-foreground">Detection Explanation</p>
                 <div className="text-sm text-foreground mt-1 whitespace-pre-line bg-muted/50 p-3 rounded-md">
                     {diseaseResult.detectionExplanation.split('\n').map((line, index) => <p key={index}>{line}</p>)}
                 </div>
               </div>
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">Remedies & Solutions</Label>
+                <p className="text-xs font-semibold text-muted-foreground">Remedies & Solutions</p>
                 <ul className="text-sm text-foreground mt-1 list-disc list-inside bg-primary/10 p-3 rounded-md space-y-1">
                     {diseaseResult.remedies.map((remedy, i) => <li key={i}>{remedy}</li>)}
                 </ul>
@@ -307,18 +304,18 @@ export default function CropHealthAnalysisPage() {
             </CardHeader>
             <CardContent className="space-y-5">
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">Identification</Label>
+                <p className="text-xs font-semibold text-muted-foreground">Identification</p>
                 <p className={`text-xl font-bold ${pestWeedResult.isHarmful ? 'text-destructive' : 'text-green-600'}`}>{pestWeedResult.commonName}</p>
                 {pestWeedResult.scientificName && <p className="text-sm text-muted-foreground italic">{pestWeedResult.scientificName}</p>}
               </div>
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">Detection Explanation</Label>
+                <p className="text-xs font-semibold text-muted-foreground">Detection Explanation</p>
                 <div className="text-sm text-foreground mt-1 whitespace-pre-line bg-muted/50 p-3 rounded-md">
                    {pestWeedResult.detectionExplanation.split('\n').map((line, index) => <p key={index}>{line}</p>)}
                 </div>
               </div>
               <div>
-                <Label className="text-xs font-semibold text-muted-foreground">Management Solutions</Label>
+                <p className="text-xs font-semibold text-muted-foreground">Management Solutions</p>
                 <ul className="text-sm text-foreground mt-1 list-disc list-inside bg-primary/10 p-3 rounded-md space-y-1">
                     {pestWeedResult.managementSolutions.map((solution, i) => <li key={i}>{solution}</li>)}
                 </ul>
@@ -341,22 +338,56 @@ export default function CropHealthAnalysisPage() {
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center"><UploadCloud className="mr-2 h-5 w-5 text-primary" />Upload or Capture Image</CardTitle>
-            <CardDescription>Select a file (JPG, PNG, max 5MB) or use your camera. For best results, use a clear image.</CardDescription>
+            <CardDescription>Select a file (JPG, PNG, max 5MB) or use your camera. For best results, use a clear image of the affected plant part.</CardDescription>
           </CardHeader>
-          <CardContent>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-               <div className="space-y-3">
-                  <Label htmlFor="crop-image" className="sr-only">Crop Image</Label>
-                  <Input id="crop-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} ref={fileInputRef} className="block w-full h-auto py-0 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" suppressHydrationWarning />
-                  <Button variant="outline" className="w-full" onClick={() => setIsCameraOpen(true)} suppressHydrationWarning><Camera className="mr-2 h-4 w-4"/>Use Camera</Button>
-               </div>
-               {imagePreviewUrl && (
-                <div className="relative group">
-                  <Image src={imagePreviewUrl} alt="Crop preview" width={500} height={300} className="rounded-md object-contain max-h-[300px] w-full border" data-ai-hint="crop health" />
-                  <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 opacity-70 group-hover:opacity-100 transition-opacity" onClick={handleRemoveImage} aria-label="Remove image" suppressHydrationWarning><XCircle className="h-5 w-5" /></Button>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label
+                htmlFor="crop-image-upload"
+                className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-background/50 hover:bg-background/70 transition-colors"
+              >
+                <div className="flex flex-col items-center justify-center">
+                  <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
+                  <p className="text-sm text-foreground font-semibold">Upload from File</p>
                 </div>
-              )}
-             </div>
+                <input id="crop-image-upload" type="file" className="hidden" ref={fileInputRef} onChange={handleImageChange} accept="image/jpeg,image/png,image/webp" disabled={isCameraOpen} />
+              </label>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="h-24 text-base"
+                onClick={() => setIsCameraOpen(true)}
+                disabled={isCameraOpen}
+                suppressHydrationWarning
+              >
+                <Camera className="mr-2 h-6 w-6"/> Use Camera
+              </Button>
+            </div>
+
+            {imagePreviewUrl && (
+              <div className="relative group w-full max-w-md mx-auto">
+                <Image
+                  src={imagePreviewUrl}
+                  alt="Crop preview"
+                  width={400}
+                  height={250}
+                  className="rounded-md border bg-background object-contain w-full"
+                  data-ai-hint="crop health"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity h-7 w-7"
+                  onClick={handleRemoveImage}
+                  aria-label="Remove image"
+                  suppressHydrationWarning
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -371,11 +402,17 @@ export default function CropHealthAnalysisPage() {
               <form onSubmit={(e: FormEvent<HTMLFormElement>) => { e.preventDefault(); handleAnalysis(); }}>
                 <TabsContent value="disease" forceMount={true} className={activeTab === 'disease' ? 'block' : 'hidden'}>
                   <CardHeader><CardTitle className="flex items-center"><Microscope className="mr-2 h-5 w-5 text-primary" />Analyze for Diseases</CardTitle><CardDescription>Provide the crop type to improve diagnosis accuracy.</CardDescription></CardHeader>
-                  <CardContent><Label htmlFor="crop-type">Crop Type (Optional)</Label><Input id="crop-type" type="text" placeholder="e.g., Tomato, Wheat, Rice" value={cropType} onChange={(e) => setCropType(e.target.value)} className="mt-1" suppressHydrationWarning /></CardContent>
+                  <CardContent>
+                    <label htmlFor="crop-type" className='text-sm font-medium mb-1 block'>Crop Type (Optional)</label>
+                    <Textarea id="crop-type" placeholder="e.g., Tomato, Wheat, Rice" value={cropType} onChange={(e) => setCropType(e.target.value)} className="mt-1" suppressHydrationWarning />
+                  </CardContent>
                 </TabsContent>
                 <TabsContent value="pest" forceMount={true} className={activeTab === 'pest' ? 'block' : 'hidden'}>
                   <CardHeader><CardTitle className="flex items-center"><Bug className="mr-2 h-5 w-5 text-primary" />Analyze for Pests & Weeds</CardTitle><CardDescription>Add optional notes about where you found it.</CardDescription></CardHeader>
-                  <CardContent><Label htmlFor="context-notes">Context Notes (Optional)</Label><Textarea id="context-notes" placeholder="e.g., Found on the underside of leaves" value={contextNotes} onChange={(e) => setContextNotes(e.target.value)} className="mt-1" suppressHydrationWarning /></CardContent>
+                  <CardContent>
+                    <label htmlFor="context-notes" className='text-sm font-medium mb-1 block'>Context Notes (Optional)</label>
+                    <Textarea id="context-notes" placeholder="e.g., Found on the underside of leaves" value={contextNotes} onChange={(e) => setContextNotes(e.target.value)} className="mt-1" suppressHydrationWarning />
+                  </CardContent>
                 </TabsContent>
                 <CardFooter>
                   <Button type="submit" className="w-full" disabled={isLoading || !imageFile} suppressHydrationWarning>
