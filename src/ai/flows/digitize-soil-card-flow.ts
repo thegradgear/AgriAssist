@@ -1,8 +1,10 @@
+
 'use server';
 /**
  * @fileOverview Improved AI flow to digitize Indian Soil Health Cards.
  * 
  * Key improvements:
+ * - Added an initial validation step to ensure the image is a Soil Health Card.
  * - Removed hardcoded values from prompts
  * - Added progressive extraction strategy
  * - Enhanced OCR-specific instructions
@@ -36,6 +38,29 @@ const DigitizeSoilCardOutputSchema = z.object({
   copper: z.number().optional().describe('Available Copper (Cu) in ppm'),
 });
 export type DigitizeSoilCardOutput = z.infer<typeof DigitizeSoilCardOutputSchema>;
+
+
+// NEW: Image Validation Schema and Prompt
+const ImageValidationSchema = z.object({
+  isSoilCard: z.boolean().describe('Set to true only if the image is a clear, readable Indian Soil Health Card document.'),
+  reason: z.string().describe('If not a soil card, explain why (e.g., "Image appears to be a plant leaf.", "Image is too blurry."). Otherwise, state "Image is a valid soil card."'),
+});
+
+const imageValidationPrompt = ai.definePrompt({
+  name: 'soilCardImageValidation',
+  input: { schema: DigitizeSoilCardInputSchema },
+  output: { schema: ImageValidationSchema },
+  prompt: `You are an expert image classifier. Your only task is to determine if the provided image is an official Indian Soil Health Card.
+
+  Image: {{media url=photoDataUri}}
+
+  - If the image clearly shows a document with a table titled "Soil Test Results" (or similar wording) and rows for parameters like pH, EC, Nitrogen, etc., you MUST set isSoilCard to true.
+  - If the image is of ANYTHING ELSE (e.g., a plant, a person, an animal, a landscape, a different document), you MUST set isSoilCard to false and briefly explain what you see in the 'reason' field. For example: "Image appears to be a plant leaf." or "Image is a picture of a tractor."
+  - If the image IS a soil card but is too blurry, dark, or unreadable to extract data from, you MUST set isSoilCard to false and state that the image is unclear in the 'reason' field.
+  
+  Your response must be accurate. Do not attempt to find a soil card in an image where one does not exist.`,
+});
+
 
 // Main extraction prompt - generic without hardcoded values
 const mainExtractionPrompt = ai.definePrompt({
@@ -258,6 +283,19 @@ const digitizeSoilCardFlow = ai.defineFlow(
     outputSchema: DigitizeSoilCardOutputSchema,
   },
   async input => {
+    // Step 0: Validate the image first
+    console.log('Step 0: Validating image...');
+    const validationResult = await imageValidationPrompt(input);
+    
+    if (!validationResult.output || !validationResult.output.isSoilCard) {
+      const reason = validationResult.output?.reason || 'The provided image is not a valid Soil Health Card.';
+      console.error('Image validation failed:', reason);
+      // Throw an error that the frontend will catch and display in a toast.
+      throw new Error(reason); 
+    }
+    console.log('Image validation successful. Proceeding with extraction.');
+
+
     let result: DigitizeSoilCardOutput = {};
     
     // Step 1: Main extraction attempt
