@@ -101,7 +101,7 @@ const WeatherWidget = () => {
 
   if (!weather) {
     return (
-       <Card className="h-full flex flex-col justify-between">
+       <Card className="h-full flex flex-col justify-between group hover:border-primary transition-all hover:shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline flex items-center"><CloudSun className="mr-2 h-5 w-5"/>Live Weather</CardTitle>
           <CardDescription>No location set</CardDescription>
@@ -111,7 +111,7 @@ const WeatherWidget = () => {
         </CardContent>
         <CardContent className="pt-0">
           <Link href="/weather" className="text-sm font-medium text-primary flex items-center">
-            Set Location <ArrowRight className="ml-2 h-4 w-4" />
+            <span className="group-hover:underline">Set Location</span> <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </CardContent>
       </Card>
@@ -119,7 +119,7 @@ const WeatherWidget = () => {
   }
 
   return (
-     <Card className="h-full flex flex-col justify-between">
+     <Card className="h-full flex flex-col justify-between group hover:border-primary transition-all hover:shadow-lg">
       <CardHeader>
          <CardTitle className="font-headline flex items-center"><CloudSun className="mr-2 h-5 w-5"/>{weather.cityName}</CardTitle>
          <CardDescription>Current Conditions</CardDescription>
@@ -140,7 +140,7 @@ const WeatherWidget = () => {
       </CardContent>
       <CardContent className="pt-0">
         <Link href="/weather" className="text-sm font-medium text-primary flex items-center">
-            View Full Forecast <ArrowRight className="ml-2 h-4 w-4" />
+            <span className="group-hover:underline">View Full Forecast</span> <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </CardContent>
     </Card>
@@ -202,16 +202,16 @@ const CalendarWidget = () => {
   }
   
   return (
-    <Card className="h-full flex flex-col justify-between lg:col-span-2">
+    <Card className="h-full flex flex-col justify-between lg:col-span-2 group hover:border-primary transition-all hover:shadow-lg">
       <CardHeader>
         <CardTitle className="font-headline flex items-center"><Calendar className="mr-2 h-5 w-5"/>Upcoming Tasks</CardTitle>
         <CardDescription>From your most recent farming calendar.</CardDescription>
       </CardHeader>
       <CardContent>
         {tasks.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {tasks.map(task => (
-              <div key={task.eventName} className="flex items-start gap-3">
+              <div key={task.eventName} className="flex items-start gap-3 p-2 -m-2 rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex flex-col items-center pt-1">
                     <span className="font-bold text-primary text-lg">{format(parseISO(task.startDate), 'dd')}</span>
                     <span className="text-xs text-muted-foreground -mt-1">{format(parseISO(task.startDate), 'MMM')}</span>
@@ -229,7 +229,7 @@ const CalendarWidget = () => {
       </CardContent>
       <CardContent className="pt-0">
           <Link href="/farming-calendar" className="text-sm font-medium text-primary flex items-center">
-            Go to Calendar <ArrowRight className="ml-2 h-4 w-4" />
+            <span className="group-hover:underline">Go to Calendar</span> <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </CardContent>
     </Card>
