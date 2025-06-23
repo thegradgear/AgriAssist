@@ -70,12 +70,16 @@ export function IrrigationResult({ result, inputs, loading, error }: IrrigationR
         title: 'Schedule Saved',
         description: 'Your irrigation plan has been saved to your profile.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving schedule:', error);
+      let description = 'Could not save the schedule. Please try again.';
+      if (error.code === 'unavailable') {
+        description = 'Cannot connect to the database. Please check your internet connection and try again.';
+      }
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: 'Could not save the schedule. Please try again.',
+        description,
       });
     } finally {
       setIsSaving(false);

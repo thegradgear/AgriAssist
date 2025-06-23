@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { db, collection, query, orderBy, getDocs, deleteDoc, doc } from '@/lib/firebase';
 import type { IrrigationReport } from '@/components/irrigation-management/IrrigationResult';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,6 +31,7 @@ interface ReportWithId extends IrrigationReport {
 
 export function SavedIrrigationSchedules() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [reports, setReports] = useState<ReportWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export function SavedIrrigationSchedules() {
 
     const fetchReports = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const reportsRef = collection(db, 'users', user.uid, 'irrigationSchedules');
         const q = query(reportsRef, orderBy('createdAt', 'desc'));
@@ -55,22 +58,32 @@ export function SavedIrrigationSchedules() {
       } catch (err: any) {
         console.error("Failed to fetch irrigation schedules:", err);
         setError("Could not load your saved schedules. Please try again later.");
+         toast({
+            variant: 'destructive',
+            title: 'Error Loading Schedules',
+            description: err.code === 'unavailable' ? 'Could not connect to the database. Please check your internet connection.' : 'An unexpected error occurred.'
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchReports();
-  }, [user]);
+  }, [user, toast]);
 
   const handleDelete = async (reportId: string) => {
     if (!user) return;
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'irrigationSchedules', reportId));
       setReports(prev => prev.filter(r => r.id !== reportId));
-    } catch (err) {
+       toast({ title: 'Schedule Deleted', description: 'The irrigation schedule has been successfully deleted.' });
+    } catch (err: any) {
       console.error("Failed to delete schedule:", err);
-      setError("Could not delete the schedule.");
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: 'Could not delete the schedule. Please try again.'
+      });
     }
   };
 
@@ -83,8 +96,15 @@ export function SavedIrrigationSchedules() {
     );
   }
 
-  if (error) {
-    return <p className="text-destructive">{error}</p>;
+  if (error && reports.length === 0) {
+    return (
+        <Card className="text-center">
+            <CardContent className="p-8">
+                 <Info className="mx-auto h-12 w-12 text-destructive mb-4" />
+                 <p className="text-muted-foreground">{error}</p>
+            </CardContent>
+        </Card>
+    );
   }
 
   if (reports.length === 0) {

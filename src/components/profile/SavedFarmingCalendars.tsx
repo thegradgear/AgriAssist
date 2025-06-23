@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { db, collection, query, orderBy, getDocs, deleteDoc, doc } from '@/lib/firebase';
 import { FarmingCalendarDisplay, type FarmingCalendarReport } from '@/components/farming-calendar/FarmingCalendarDisplay';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +18,7 @@ interface ReportWithId extends FarmingCalendarReport {
 
 export function SavedFarmingCalendars() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [reports, setReports] = useState<ReportWithId[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,7 @@ export function SavedFarmingCalendars() {
 
     const fetchReports = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const reportsRef = collection(db, 'users', user.uid, 'farmingCalendars');
         const q = query(reportsRef, orderBy('createdAt', 'desc'));
@@ -55,13 +58,18 @@ export function SavedFarmingCalendars() {
       } catch (err: any) {
         console.error("Failed to fetch calendars:", err);
         setError("Could not load your saved calendars. Please try again later.");
+         toast({
+            variant: 'destructive',
+            title: 'Error Loading Calendars',
+            description: err.code === 'unavailable' ? 'Could not connect to the database. Please check your internet connection.' : 'An unexpected error occurred.'
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchReports();
-  }, [user]);
+  }, [user, toast]);
   
   const handleUpdateCompletedTasks = (reportId: string, updatedTasks: string[]) => {
     setReports(prevReports => 
@@ -78,9 +86,14 @@ export function SavedFarmingCalendars() {
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'farmingCalendars', reportId));
       setReports(prev => prev.filter(r => r.id !== reportId));
-    } catch (err) {
+      toast({ title: 'Calendar Deleted', description: 'The farming calendar has been successfully deleted.' });
+    } catch (err: any) {
       console.error("Failed to delete calendar:", err);
-      setError("Could not delete the calendar.");
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Failed',
+        description: 'Could not delete the calendar. Please try again.'
+      });
     }
   };
 
@@ -93,8 +106,15 @@ export function SavedFarmingCalendars() {
     );
   }
 
-  if (error) {
-    return <p className="text-destructive">{error}</p>;
+  if (error && reports.length === 0) {
+    return (
+        <Card className="text-center">
+            <CardContent className="p-8">
+                 <Info className="mx-auto h-12 w-12 text-destructive mb-4" />
+                 <p className="text-muted-foreground">{error}</p>
+            </CardContent>
+        </Card>
+    );
   }
 
   if (reports.length === 0) {

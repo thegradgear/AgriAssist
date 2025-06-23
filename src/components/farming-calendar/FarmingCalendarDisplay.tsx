@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -126,12 +127,16 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
         if (onUpdate) {
           onUpdate(reportId, Array.from(newSet));
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to update task status:", err);
+        let description = 'Could not save task progress. Please try again.';
+        if (err.code === 'unavailable') {
+          description = 'Cannot connect to the database. Please check your internet connection and try again.';
+        }
         toast({
             variant: 'destructive',
             title: 'Update Failed',
-            description: 'Could not save task progress. Please check your connection.',
+            description,
         });
         // Revert local state on failure
         const revertedSet = new Set(completedTasks);
@@ -161,8 +166,6 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
         createdAt: serverTimestamp(),
         inputs: {
           ...inputs,
-          // Firestore doesn't allow 'undefined', so we convert to 'null' for storage.
-          // This now aligns with the updated schema which is nullable.
           soilType: inputs.soilType ?? null,
           farmingPractice: inputs.farmingPractice ?? null,
         },
@@ -179,10 +182,14 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
       });
     } catch (error: any) {
       console.error('Error saving calendar:', error);
+      let description = 'Could not save the calendar. Please try again.';
+      if (error.code === 'unavailable') {
+        description = 'Cannot connect to the database. Please check your internet connection and try again.';
+      }
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: error.message || 'Could not save the calendar. Please try again.',
+        description,
       });
     } finally {
       setIsSaving(false);

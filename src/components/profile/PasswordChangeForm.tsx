@@ -15,6 +15,17 @@ import { Loader2, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
+const getAuthErrorMessage = (errorCode: string): string => {
+  switch (errorCode) {
+    case 'auth/wrong-password':
+      return 'The current password you entered is incorrect. Please try again.';
+    case 'auth/too-many-requests':
+      return 'Access to this account has been temporarily disabled due to many failed attempts. Please try again later.';
+    default:
+      return 'An unexpected error occurred while updating your password.';
+  }
+};
+
 export function PasswordChangeForm() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -48,7 +59,7 @@ export function PasswordChangeForm() {
       toast({
         variant: 'destructive',
         title: 'Error updating password',
-        description: error.code === 'auth/wrong-password' ? 'The current password you entered is incorrect.' : error.message,
+        description: getAuthErrorMessage(error.code),
       });
     } finally {
       setIsLoading(false);

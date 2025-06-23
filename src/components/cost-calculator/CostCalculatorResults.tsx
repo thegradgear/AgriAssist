@@ -63,12 +63,16 @@ export function CostCalculatorResults({ results, inputs, loading }: CostCalculat
         title: 'Report Saved',
         description: 'Your cost analysis has been saved to your profile.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving report:', error);
+      let description = 'Could not save the report. Please try again.';
+      if (error.code === 'unavailable') {
+        description = 'Cannot connect to the database. Please check your internet connection and try again.';
+      }
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: 'Could not save the report. Please try again.',
+        description,
       });
     } finally {
       setIsSaving(false);

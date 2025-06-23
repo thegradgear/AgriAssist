@@ -17,6 +17,21 @@ import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Leaf, Eye, EyeOff } from 'lucide-react';
 
+const getAuthErrorMessage = (errorCode: string): string => {
+  switch (errorCode) {
+    case 'auth/invalid-credential':
+      return 'Invalid email or password. Please check your credentials and try again.';
+    case 'auth/user-not-found':
+      return 'No account found with this email address.';
+    case 'auth/wrong-password':
+      return 'Incorrect password. Please try again.';
+    case 'auth/too-many-requests':
+      return 'Access to this account has been temporarily disabled due to many failed login attempts. Please reset your password or try again later.';
+    default:
+      return 'An unexpected error occurred. Please try again.';
+  }
+};
+
 export function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
@@ -49,7 +64,7 @@ export function LoginForm() {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error.message || 'An unexpected error occurred. Please try again.',
+        description: getAuthErrorMessage(error.code),
       });
     } finally {
       setIsLoading(false);

@@ -66,12 +66,16 @@ export function SignupForm() {
       });
       router.push('/login'); 
     } catch (error: any) {
+      let description = 'An unexpected error occurred. Please try again.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'This email address is already in use. Please try another or log in.';
+      } else if (error.code === 'auth/weak-password') {
+        description = 'The password is too weak. Please use a stronger password.';
+      }
       toast({
         variant: 'destructive',
         title: 'Signup Failed',
-        description: error.code === 'auth/email-already-in-use' 
-          ? 'This email address is already in use. Please try another.'
-          : error.message || 'An unexpected error occurred. Please try again.',
+        description,
       });
     } finally {
       setIsLoading(false);

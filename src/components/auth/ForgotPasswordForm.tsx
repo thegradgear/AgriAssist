@@ -39,14 +39,18 @@ export function ForgotPasswordForm() {
       await sendPasswordResetEmail(auth, data.email);
       toast({
         title: 'Password Reset Email Sent',
-        description: 'Check your inbox for instructions to reset your password.',
+        description: "If an account exists, you'll receive a password reset link shortly. Please also check your spam folder.",
       });
       setEmailSent(true);
     } catch (error: any) {
+      let description = 'Could not send password reset email. Please try again.';
+      if (error.code === 'auth/invalid-email') {
+        description = 'The email address you entered is not valid.';
+      }
       toast({
         variant: 'destructive',
         title: 'Error Sending Email',
-        description: error.message || 'Could not send password reset email. Please try again.',
+        description,
       });
     } finally {
       setIsLoading(false);

@@ -233,9 +233,13 @@ export default function CropHealthAnalysisPage() {
 
         toast({ title: 'Analysis Saved', description: 'Your analysis has been saved to your profile.' });
 
-     } catch (err) {
+     } catch (err: any) {
         console.error('Error saving analysis:', err);
-        toast({ variant: 'destructive', title: 'Save Failed', description: 'There was an error saving your analysis.' });
+        let description = 'Could not save your analysis. Please try again.';
+        if (err.code === 'unavailable') {
+          description = 'Cannot connect to the database. Please check your internet connection and try again.';
+        }
+        toast({ variant: 'destructive', title: 'Save Failed', description });
      } finally {
         setIsSaving(false);
      }
