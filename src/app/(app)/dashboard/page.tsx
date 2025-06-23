@@ -2,7 +2,7 @@
 'use client';
 
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { NAV_ITEMS } from '@/lib/constants';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -285,25 +285,25 @@ export default function DashboardPage() {
       <h2 className="text-2xl font-semibold font-headline mb-4">Explore Tools</h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {features.map((feature) => (
-          <Card key={feature.href} className="h-full flex flex-col hover:border-primary transition-colors hover:shadow-lg rounded-lg">
-            <Link href={feature.href} className="flex flex-col flex-grow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="font-headline">{feature.label}</CardTitle>
-                <feature.icon className="h-6 w-6 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <CardDescription>
-                  Access {feature.label.toLowerCase()} tools and insights.
-                </CardDescription>
-              </CardContent>
-              <CardContent className="pt-0">
-                  <div className="text-sm font-medium text-primary flex items-center">
-                  Go to {feature.label}
-                  <ArrowRight className="ml-2 h-4 w-4" />
+          <Link key={feature.href} href={feature.href} className="group block h-full">
+            <Card className="h-full flex flex-col justify-between hover:border-primary transition-all duration-300 hover:shadow-xl rounded-lg group-hover:-translate-y-1">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-headline group-hover:text-primary transition-colors">{feature.label}</CardTitle>
+                  <feature.icon className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-              </CardContent>
-            </Link>
-          </Card>
+                <CardDescription className="!mt-4">
+                  {feature.description}
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="mt-auto">
+                <div className="text-sm font-medium text-primary flex items-center">
+                  Open Tool
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </CardFooter>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>
