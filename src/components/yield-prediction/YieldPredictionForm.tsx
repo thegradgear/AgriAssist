@@ -91,7 +91,7 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
 
   if (!isClient) {
     return (
-      <Card className="shadow-lg animate-pulse">
+      <Card className="shadow-lg animate-pulse h-full">
         <CardHeader>
           <Skeleton className="h-7 w-3/5" />
           <Skeleton className="h-5 w-4/5 mt-2" />
@@ -136,14 +136,14 @@ export function YieldPredictionForm({ onPredictionResult, onPredictionLoading }:
   }
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg h-full flex flex-col">
       <CardHeader>
         <CardTitle className="font-headline">Enter Crop Details</CardTitle>
         <CardDescription>Provide the necessary information to predict your crop yield.</CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-grow">
+          <CardContent className="space-y-6 flex-grow">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}

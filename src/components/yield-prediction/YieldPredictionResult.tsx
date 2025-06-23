@@ -14,12 +14,12 @@ interface YieldPredictionResultProps {
 export function YieldPredictionResult({ result, loading }: YieldPredictionResultProps) {
   if (loading) {
     return (
-      <Card className="shadow-lg animate-pulse">
+      <Card className="shadow-lg animate-pulse h-full flex flex-col">
         <CardHeader>
           <div className="h-6 bg-muted rounded w-3/5 mb-1" />
           <div className="h-4 bg-muted rounded w-4/5" />
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 flex-grow">
           <div className="h-8 bg-muted rounded w-3/4" />
           <div className="h-6 bg-muted rounded w-1/2" />
           <div className="h-16 bg-muted rounded-lg" />
@@ -33,7 +33,7 @@ export function YieldPredictionResult({ result, loading }: YieldPredictionResult
   }
   
   return (
-    <Card className="shadow-lg mt-8">
+    <Card className="shadow-lg h-full flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center">
           <BarChart3 className="mr-2 h-5 w-5 text-primary" />
@@ -43,7 +43,7 @@ export function YieldPredictionResult({ result, loading }: YieldPredictionResult
           Based on the provided information, here is the estimated crop yield.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 flex-grow">
         <div>
           <p className="text-sm font-medium text-muted-foreground leading-normal">Most Likely Yield</p>
           <p className="text-3xl font-bold text-primary leading-tight">
