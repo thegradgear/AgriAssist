@@ -186,10 +186,10 @@ export function CropPricePredictionResult({ result, loading }: CropPricePredicti
             </Card>
         )}
 
-        <Alert variant="default" className="bg-accent/50 border-accent">
-            <AlertTriangle className="h-4 w-4 text-primary" />
-            <AlertTitle className="font-semibold text-primary text-base leading-snug">Disclaimer</AlertTitle>
-            <AlertDescription className="text-xs leading-normal">
+        <Alert variant="default" className="bg-warning/10 border-warning/30">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <AlertTitle className="font-semibold text-foreground text-base leading-snug">Disclaimer</AlertTitle>
+            <AlertDescription className="text-xs leading-normal text-muted-foreground">
                 Crop prices are volatile and subject to numerous unpredictable factors. This AI prediction is for informational purposes only and should not be considered financial advice or a guarantee of future prices. Always consult with market experts and local advisors.
             </AlertDescription>
         </Alert>
