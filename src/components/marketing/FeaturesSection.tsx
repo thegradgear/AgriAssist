@@ -117,8 +117,8 @@ export function FeaturesSection() {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-2 z-10 bg-background/50 hover:bg-background" />
-          <CarouselNext className="right-2 z-10 bg-background/50 hover:bg-background" />
+          <CarouselPrevious className="left-2 z-10 bg-background/50 hover:bg-background hover:text-primary" />
+          <CarouselNext className="right-2 z-10 bg-background/50 hover:bg-background hover:text-primary" />
         </Carousel>
         <div className="flex items-center justify-center gap-2 mt-8">
           {appFeatures.map((_, index) => (
