@@ -80,58 +80,50 @@ export default function BestPracticesPage() {
       const response = await fetch(`/api/news?query=${encodeURIComponent(query)}&pageSize=12`);
       
       if (!response.ok) {
-        let errorMsg = `Error: ${response.statusText} (${response.status})`;
-        try {
-            const errorData = await response.json();
-            if (errorData && errorData.error) {
-                 errorMsg = errorData.error;
-                 if(response.status === 401 || errorData.newsApiStatus === 426) {
-                    errorMsg = "NewsAPI configuration error on the server or plan issue. Contact support.";
-                 } else if (response.status === 429) {
-                    errorMsg = "NewsAPI rate limit exceeded. Please try again later.";
-                 }
-            }
-        } catch(e) {/* ignore json parse error */}
-        
-        setError(errorMsg);
-        setArticles([]);
-        
-        const isRelevanceError = errorMsg.toLowerCase().includes('not relevant');
-        
-        toast({
-          variant: "destructive",
-          title: isRelevanceError ? "Irrelevant Topic" : "Error Fetching Articles",
-          description: errorMsg,
-        });
+        const status = response.status;
+        let errorMsg = `An unknown error occurred (Status: ${status}). Please try again later.`;
 
-      } else {
-        const data = await response.json();
-      
-        if (data.articles && data.articles.length > 0) {
-          setArticles(data.articles.map(mapArticleToPractice));
-        } else if (data.articles && data.articles.length === 0) {
-          setArticles([]);
-          if (query.trim() !== '') {
-              toast({
-                  title: "No Articles Found",
-                  description: `No articles found for your query: "${query}". Try a different search term.`,
-              });
+        try {
+          const errorData = await response.json();
+          // Check for specific NewsAPI error codes and messages
+          if (status === 401 || (errorData.code && errorData.code === 'apiKeyInvalid')) {
+            errorMsg = "NewsAPI configuration error. The API key may be missing, invalid, or expired.";
+          } else if (status === 426) {
+             errorMsg = "NewsAPI access has changed. Please check your service plan.";
+          } else if (status === 429) {
+            errorMsg = "The news service is busy (rate limit exceeded). Please wait a moment before trying again.";
+          } else if (errorData && errorData.error) {
+            errorMsg = errorData.error; // Use the API's specific error message if available
           }
-        } else if (data.error) {
-          throw new Error(data.error);
-        }
+        } catch (e) { /* Failed to parse JSON body, the default message will be used */ }
+
+        throw new Error(errorMsg);
       }
+      
+      const data = await response.json();
+    
+      if (data.articles) {
+        setArticles(data.articles.map(mapArticleToPractice));
+        if (data.articles.length === 0 && query.trim() !== '') {
+            toast({
+                title: "No Articles Found",
+                description: `No articles found for your query: "${query}". Try a different search term.`,
+            });
+        }
+      } else if (data.error) {
+        // Handle cases where the API returns a 200 OK but with an error in the body
+        throw new Error(data.error);
+      }
+
     } catch (err: any) {
       console.error("Failed to fetch articles:", err);
-      const displayError = err.message || 'Failed to fetch articles.';
+      const displayError = err.message || 'An unknown network error occurred. Please check your connection.';
       setError(displayError);
       setArticles([]);
       
-      const isRelevanceError = displayError.toLowerCase().includes('not relevant');
-      
       toast({
         variant: "destructive",
-        title: isRelevanceError ? "Irrelevant Topic" : "Error Fetching Articles",
+        title: "Error Fetching Articles",
         description: displayError,
       });
 
@@ -230,14 +222,14 @@ export default function BestPracticesPage() {
         </div>
       )}
 
-      {!isLoading && error && !error.toLowerCase().includes('not relevant') && (
+      {!isLoading && error && (
         <Alert variant="destructive" className="mb-8">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
-           {(error.toLowerCase().includes("newsapi key") || error.toLowerCase().includes("newsapi configuration error")) && (
+           {(error.toLowerCase().includes("newsapi configuration error") || error.toLowerCase().includes("api key")) && (
                 <p className="text-xs mt-2 leading-normal">
-                    There might be an issue with the NewsAPI configuration on the server. Please contact support or check server logs.
+                    There might be an issue with the NewsAPI configuration on the server. Please ensure the API key is correctly set in the environment variables.
                 </p>
             )}
         </Alert>
@@ -248,7 +240,7 @@ export default function BestPracticesPage() {
             <BookOpen className="mx-auto h-16 w-16 text-primary mb-4" />
             <p className="text-xl font-medium leading-snug">No Articles Found</p>
             <p className="text-muted-foreground mt-1 text-base leading-normal">
-              {`No articles found for your query: "${currentQuery}". Try a different topic or search term.`}
+              {`We couldn't find articles for "${currentQuery}". Try a different topic or search term.`}
             </p>
         </div>
       )}

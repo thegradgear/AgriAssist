@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, RefreshCw, AlertTriangle, CloudSun, MapPin, Search, Navigation, Star, Trash2, Droplets } from 'lucide-react';
+import { Loader2, RefreshCw, AlertTriangle, MapPin, Search, Navigation, Star, Trash2, Droplets } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -122,9 +122,9 @@ export default function WeatherPage() {
   const geocodeCity = useCallback(async (city: string): Promise<SavedLocation> => {
     if (!OPENWEATHERMAP_API_KEY) throw new Error("API key is not configured.");
     const geoResponse = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${OPENWEATHERMAP_API_KEY}`);
-    if (!geoResponse.ok) throw new Error(`Failed to find location for '${city}'.`);
+    if (!geoResponse.ok) throw new Error(`The location service failed to respond for '${city}'.`);
     const geoData = await geoResponse.json();
-    if (geoData.length === 0) throw new Error(`Could not find location: '${city}'. Please check the spelling.`);
+    if (geoData.length === 0) throw new Error(`Could not find location: '${city}'. Please check the spelling or be more specific.`);
     
     const { lat, lon, name, state, country } = geoData[0];
     return { name: `${name}${state ? ', ' + state : ''}, ${country}`, latitude: lat, longitude: lon };
@@ -132,7 +132,9 @@ export default function WeatherPage() {
 
   const fetchWeatherData = useCallback(async (location: SavedLocation) => {
     if (!OPENWEATHERMAP_API_KEY) {
-      setError("OpenWeatherMap API key is not configured. Please set NEXT_PUBLIC_OPENWEATHERMAP_API_KEY.");
+      const errorMsg = "OpenWeatherMap API key is not configured. Please set NEXT_PUBLIC_OPENWEATHERMAP_API_KEY.";
+      setError(errorMsg);
+      toast({ variant: 'destructive', title: 'Configuration Error', description: errorMsg });
       setIsLoading(false);
       return;
     }
@@ -148,14 +150,20 @@ export default function WeatherPage() {
         fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`),
         fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${OPENWEATHERMAP_API_KEY}&units=metric`),
       ]);
-      
-      if (!currentWeatherResponse.ok) {
-        const errorData = await currentWeatherResponse.json();
-        throw new Error(`Current Weather: ${errorData.message || 'Failed to fetch'}`);
-      }
-       if (!forecastResponse.ok) {
-        const errorData = await forecastResponse.json();
-        throw new Error(`Forecast: ${errorData.message || 'Failed to fetch'}`);
+
+      for (const response of [currentWeatherResponse, forecastResponse]) {
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            let message = `The weather service returned an error (${response.status}).`;
+            if (response.status === 401) {
+                message = "The OpenWeatherMap API key is invalid. Please check your configuration.";
+            } else if (response.status === 404) {
+                message = `Could not find weather data for "${name}". The location may not be supported.`;
+            } else if (errorData && errorData.message) {
+                message = capitalizeWords(errorData.message);
+            }
+            throw new Error(message);
+        }
       }
       
       const currentData = await currentWeatherResponse.json();
@@ -226,7 +234,7 @@ export default function WeatherPage() {
 
     } catch (err: any) {
       setError(err.message);
-      toast({ variant: 'destructive', title: 'Error', description: err.message });
+      toast({ variant: 'destructive', title: 'Error Fetching Weather', description: err.message });
     } finally {
       setIsLoading(false);
     }
@@ -240,7 +248,7 @@ export default function WeatherPage() {
         fetchWeatherData(location);
     } catch(err: any) {
         setError(err.message);
-        toast({ variant: 'destructive', title: 'Error', description: err.message });
+        toast({ variant: 'destructive', title: 'Location Error', description: err.message });
     }
   };
 
@@ -257,14 +265,21 @@ export default function WeatherPage() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        // Reverse geocode to get city name
-        const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${OPENWEATHERMAP_API_KEY}`);
-        const data = await response.json();
-        const name = data[0] ? `${data[0].name}, ${data[0].country}` : "Current Location";
-        fetchWeatherData({ name, latitude, longitude });
+        try {
+          const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${OPENWEATHERMAP_API_KEY}`);
+          if (!response.ok) throw new Error("Failed to get location name from coordinates.");
+          const data = await response.json();
+          const name = data[0] ? `${data[0].name}, ${data[0].country}` : "Current Location";
+          fetchWeatherData({ name, latitude, longitude });
+        } catch (err: any) {
+           setError(err.message);
+           toast({ variant: 'destructive', title: 'Location Error', description: err.message });
+           setIsLoading(false);
+        }
       },
       () => {
-        setError("Unable to retrieve your location. Please enable location services.");
+        setError("Unable to retrieve your location. Please enable location services in your browser settings.");
+        toast({ variant: 'destructive', title: 'Location Denied', description: 'Please enable location services for this site.' });
         setIsLoading(false);
       }
     );
@@ -385,8 +400,13 @@ export default function WeatherPage() {
             <CardContent className="p-4 flex items-center gap-4">
                 <AlertTriangle className="h-8 w-8 text-destructive" />
                 <div>
-                    <h3 className="font-semibold text-destructive">Failed to Load Data</h3>
+                    <h3 className="font-semibold text-destructive">Failed to Load Weather Data</h3>
                     <p className="text-sm text-destructive/80">{error}</p>
+                     {error.toLowerCase().includes("api key") && (
+                        <p className="text-xs mt-2 leading-normal">
+                            There might be an issue with the OpenWeatherMap configuration on the server. Please check environment variables.
+                        </p>
+                    )}
                 </div>
             </CardContent>
         </Card>

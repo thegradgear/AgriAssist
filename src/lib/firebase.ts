@@ -13,7 +13,6 @@ import {
   orderBy,
   deleteDoc,
   serverTimestamp,
-  where,
   limit
 } from 'firebase/firestore';
 
@@ -47,7 +46,6 @@ export {
     orderBy,
     deleteDoc,
     serverTimestamp,
-    where,
     limit,
     EmailAuthProvider,
     reauthenticateWithCredential,

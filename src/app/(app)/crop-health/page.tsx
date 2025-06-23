@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, addDoc, collection, serverTimestamp } from '@/lib/firebase';
-import { UploadCloud, Microscope, Bug, Leaf, CheckCircle, AlertTriangle, Lightbulb, Loader2, XCircle, HelpCircle, Camera, Video, Save } from 'lucide-react';
+import { UploadCloud, Microscope, Bug, Leaf, CheckCircle, AlertTriangle, Loader2, XCircle, HelpCircle, Camera, Video, Save } from 'lucide-react';
 
 import { diagnoseCropDisease, type DiagnoseCropDiseaseOutput } from '@/ai/flows/diagnose-crop-disease';
 import { identifyPestWeed, type IdentifyPestWeedOutput } from '@/ai/flows/identify-pest-weed-flow';
