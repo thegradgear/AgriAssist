@@ -1,35 +1,24 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection:
-    // - Authenticated users can create their own user document if their UID matches the document ID.
-    // - Authenticated users can read and update their own user document if their UID matches the document ID.
-    // - Deleting user documents directly from the client is disallowed.
-    // - Listing all users is disallowed for security.
+    // Allow users to create, read, and update their own profile document
     match /users/{userId} {
-      allow read, update: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      // Example of data validation (optional but recommended):
-      // allow create: if request.auth != null && request.auth.uid == userId
-      //                  && request.resource.data.name is string
-      //                  && request.resource.data.email == request.auth.token.email
-      //                  && request.resource.data.createdAt is timestamp;
-      // allow update: if request.auth != null && request.auth.uid == userId
-      //                  && request.resource.data.name is string
-      //                  && (request.resource.data.contactNumber is string || request.resource.data.contactNumber == null)
-      //                  && (request.resource.data.otherDetails is string || request.resource.data.otherDetails == null)
-      //                  && !(request.resource.data.email != resource.data.email) // Prevent changing email
-      //                  && !(request.resource.data.createdAt != resource.data.createdAt); // Prevent changing createdAt
-      allow delete: if false;
-    }
+      allow create, read, update: if request.auth != null && request.auth.uid == userId;
 
-    // Add rules for other collections as your application grows.
-    // For example, if you add a 'posts' collection:
-    // match /posts/{postId} {
-    //   allow read: if true; // Publicly readable posts
-    //   allow create, update, delete: if request.auth != null && request.auth.uid == request.resource.data.authorId;
-    // }
+      // Allow users to create, read, and delete their own cost reports
+      match /costReports/{reportId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
+       match /irrigationSchedules/{scheduleId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
+      match /farmingCalendars/{calendarId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
+      match /healthAnalyses/{analysisId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
   }
 }
