@@ -266,11 +266,11 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
                             className="h-5 w-5 mt-1.5 flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
-                           <div className="flex flex-col items-start gap-y-1 sm:flex-row sm:items-start sm:justify-between sm:gap-x-4">
+                           <div className="flex flex-col items-start gap-y-1 sm:flex-row sm:items-start sm:gap-x-4">
                                 <TimelineTitle className={cn("ml-0", isCompleted && "line-through text-muted-foreground")}>
                                     {event.eventName}
                                 </TimelineTitle>
-                                <Badge variant={getCategoryBadgeVariant(event.category)} className="flex-shrink-0">
+                                <Badge variant={getCategoryBadgeVariant(event.category)} className="flex-shrink-0 sm:ml-auto">
                                     {event.category}
                                 </Badge>
                             </div>
