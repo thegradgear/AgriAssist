@@ -39,10 +39,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    // New approach: Search the user's query only within the specified domains.
-    // This is more reliable than AI validation for ensuring topic relevance.
+    // Augment the user's query to ensure it's related to agriculture.
+    // This combines the user's search term with mandatory agricultural keywords.
+    const augmentedQuery = `(${query}) AND (agriculture OR farming OR crop OR farmer OR rural)`;
+
     const newsApiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(
-      query
+      augmentedQuery
     )}&domains=${RELEVANT_DOMAINS}&language=en&sortBy=relevancy&pageSize=${pageSize}&apiKey=${NEWSAPI_KEY}`;
     
     const apiResponse = await fetch(newsApiUrl, {
