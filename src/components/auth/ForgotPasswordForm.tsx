@@ -86,7 +86,7 @@ export function ForgotPasswordForm() {
         <CardTitle className="text-3xl font-headline">Forgot Your Password?</CardTitle>
         <CardDescription>
           {emailSent 
-            ? "If an account exists for this email, you'll receive a password reset link shortly."
+            ? "If an account exists for this email, you'll receive a password reset link shortly. Please also check your spam folder."
             : "Enter your email address and we'll send you a link to reset your password."
           }
         </CardDescription>
