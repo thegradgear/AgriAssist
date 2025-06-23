@@ -12,8 +12,8 @@ export const farmingCalendarSchema = z.object({
     required_error: "A planting date is required.",
     invalid_type_error: "That's not a valid date!",
   }),
-  soilType: z.enum(soilTypes).optional(),
-  farmingPractice: z.enum(farmingPractices).optional(),
+  soilType: z.enum(soilTypes).optional().nullable(),
+  farmingPractice: z.enum(farmingPractices).optional().nullable(),
 });
 
 export type FarmingCalendarFormData = z.infer<typeof farmingCalendarSchema>;
@@ -23,6 +23,8 @@ export const formatDataForAI = (data: FarmingCalendarFormData) => {
   return {
     ...data,
     plantingDate: format(data.plantingDate, 'yyyy-MM-dd'),
-    soilType: data.soilType === "Not Sure" ? undefined : data.soilType,
+    // AI prompt expects undefined for optional fields, not null.
+    soilType: (data.soilType === "Not Sure" || data.soilType === null) ? undefined : data.soilType,
+    farmingPractice: data.farmingPractice === null ? undefined : data.farmingPractice,
   };
 };

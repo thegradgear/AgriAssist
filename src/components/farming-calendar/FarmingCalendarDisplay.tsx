@@ -159,7 +159,13 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
       const reportData: Omit<FarmingCalendarReport, 'id'> = {
         userId: user.uid,
         createdAt: serverTimestamp(),
-        inputs,
+        inputs: {
+          ...inputs,
+          // Firestore doesn't allow 'undefined', so we convert to 'null' for storage.
+          // This now aligns with the updated schema which is nullable.
+          soilType: inputs.soilType ?? null,
+          farmingPractice: inputs.farmingPractice ?? null,
+        },
         results: {
             ...result,
             completedTasks: [], // Initialize with empty completed tasks
@@ -171,12 +177,12 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
         title: 'Calendar Saved',
         description: 'Your farming calendar has been saved to your profile.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving calendar:', error);
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: 'Could not save the calendar. Please try again.',
+        description: error.message || 'Could not save the calendar. Please try again.',
       });
     } finally {
       setIsSaving(false);
@@ -266,7 +272,7 @@ export function FarmingCalendarDisplay({ result, inputs, loading, error, reportI
                             className="h-5 w-5 mt-1.5 flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
-                           <div className="flex flex-col items-start gap-y-1 sm:flex-row sm:items-start sm:gap-x-4">
+                           <div className="flex flex-col items-start gap-y-1 sm:flex-row sm:items-center sm:gap-x-4">
                                 <TimelineTitle className={cn("ml-0", isCompleted && "line-through text-muted-foreground")}>
                                     {event.eventName}
                                 </TimelineTitle>
